@@ -14,12 +14,17 @@ export default function AuthGuard({
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.replace("/connexion");
+    if (!loading) {
+      if (!user) {
+        router.replace("/connexion");
+      } else if (user.role === "admin") {
+        // L'administrateur ne doit jamais être affiché comme un testeur dans l'espace testeur
+        router.replace("/admin");
+      }
     }
   }, [loading, user, router]);
 
-  if (loading || !user) {
+  if (loading || !user || user.role === "admin") {
     return (
       <div className="flex min-h-screen items-center justify-center bg-mist">
         <Loader2 size={24} className="animate-spin text-brand-orange" />

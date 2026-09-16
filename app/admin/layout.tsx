@@ -130,18 +130,9 @@ export default function AdminLayout({
           })}
         </div>
 
-        {/* Raccourci vers le portail testeur */}
+        {/* Profil Admin & Déconnexion */}
         <div className="p-3 border-t border-slate-800/80">
-          <Link
-            href="/dashboard"
-            className="flex items-center justify-between rounded-xl bg-slate-800/50 p-2.5 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition"
-          >
-            <span className="text-[11px] font-medium">Accéder à la vue testeur</span>
-            <ArrowUpRight size={14} className="text-slate-400" />
-          </Link>
-
-          {/* Profil Admin & Déconnexion */}
-          <div className="mt-3 flex items-center justify-between pt-2">
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5 overflow-hidden">
               <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-rose-500/20 text-xs font-bold text-rose-400">
                 {user.prenom?.[0] || user.nom?.[0] || "A"}

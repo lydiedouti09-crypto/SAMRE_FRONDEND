@@ -158,6 +158,7 @@ export default function MissionDetailPage() {
   function handleCopyReference() {
     if (!currentReference?.reference) return;
     navigator.clipboard.writeText(currentReference.reference);
+    setInputCode(currentReference.reference);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }
@@ -634,10 +635,10 @@ export default function MissionDetailPage() {
                         <button
                           type="button"
                           onClick={handleCopyReference}
-                          className="flex items-center gap-1 rounded-lg bg-white/10 px-2.5 py-1 text-[11px] font-medium text-white transition hover:bg-white/20"
+                          className="flex items-center gap-1.5 rounded-lg bg-brand-orange/20 border border-brand-orange/40 px-3 py-1.5 text-[11px] font-semibold text-brand-orange transition hover:bg-brand-orange hover:text-white"
                         >
                           {copied ? <Check size={13} className="text-emerald-400" /> : <Copy size={13} />}
-                          <span>{copied ? "Copié" : "Copier"}</span>
+                          <span>{copied ? "Copié & Inséré !" : "Copier & Remplir"}</span>
                         </button>
                       </div>
                     ) : (
@@ -645,6 +646,9 @@ export default function MissionDetailPage() {
                         Aucune référence requise pour cette étape.
                       </p>
                     )}
+                    <p className="mt-1.5 text-[11px] text-slate-500">
+                      💡 C&apos;est ce code officiel ci-dessus que vous devez saisir dans le champ ci-dessous pour valider l&apos;étape.
+                    </p>
                   </div>
 
                   {/* Champ de saisie de la référence */}
