@@ -51,6 +51,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     refresh();
+
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === "samre_token") {
+        refresh();
+      }
+    };
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
   }, [refresh]);
 
   const login = async (email: string, password: string): Promise<User> => {

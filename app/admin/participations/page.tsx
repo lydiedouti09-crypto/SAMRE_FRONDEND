@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, Suspense } from "react";
+import { createPortal } from "react-dom";
 import { useSearchParams } from "next/navigation";
 import {
   Layers,
@@ -33,6 +34,7 @@ function AdminParticipationsContent() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState(urlStatus || "tous");
+  const [mounted, setMounted] = useState(false);
 
   // Inspection Modal
   const [inspectModalOpen, setInspectModalOpen] = useState(false);
@@ -72,6 +74,7 @@ function AdminParticipationsContent() {
   };
 
   useEffect(() => {
+    setMounted(true);
     fetchParticipations();
   }, []);
 
@@ -448,9 +451,9 @@ function AdminParticipationsContent() {
       )}
 
       {/* MODAL INSPECTION DES RÉFÉRENCES ET VALIDATION - PARFAITEMENT CENTRÉ */}
-      {inspectModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-navy-950/75 p-3 sm:p-6 backdrop-blur-sm overflow-y-auto">
-          <div className="relative w-full max-w-3xl my-auto rounded-3xl bg-white shadow-2xl border border-slate-100 flex flex-col max-h-[90vh] overflow-hidden">
+      {inspectModalOpen && mounted && createPortal(
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-navy-950/80 p-3 sm:p-6 backdrop-blur-md overflow-y-auto">
+          <div className="relative w-full max-w-3xl my-auto rounded-3xl bg-white shadow-2xl border border-slate-100 flex flex-col max-h-[90vh] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
             {/* Header Fixe */}
             <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4 sm:px-8 bg-white shrink-0">
               <div>
@@ -645,7 +648,8 @@ function AdminParticipationsContent() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Modal de Confirmation Élégant */}

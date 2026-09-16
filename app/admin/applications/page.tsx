@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import {
   Smartphone,
@@ -32,10 +33,14 @@ import {
   X,
   FileCode,
   Laptop,
+  Upload,
+  Image as ImageIcon,
 } from "lucide-react";
 import {
   applicationsApi,
   sdkApi,
+  adminApi,
+  getImageUrl,
   type ApplicationItem,
   type ApplicationPayload,
   type ApplicationDetail,
@@ -53,6 +58,7 @@ export default function AdminApplicationsPage() {
   // Notifications feedback
   const [successMsg, setSuccessMsg] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
+  const [mounted, setMounted] = useState(false);
 
   // Modal Create/Edit
   const [showModal, setShowModal] = useState(false);
@@ -71,6 +77,28 @@ export default function AdminApplicationsPage() {
   const [dureeJoursDefaut, setDureeJoursDefaut] = useState(12);
   const [nbMaxPanelistes, setNbMaxPanelistes] = useState(12);
   const [statut, setStatut] = useState("en_attente_integration");
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const logoInputRef = useRef<HTMLInputElement>(null);
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setErrorMsg("Veuillez sélectionner un fichier image valide (PNG, JPG, WebP, SVG).");
+      return;
+    }
+    try {
+      setUploadingLogo(true);
+      setErrorMsg("");
+      const res = await adminApi.uploadImage(file);
+      setLogo(res.url);
+    } catch (err: any) {
+      setErrorMsg(err.message || "Erreur lors du téléversement du logo.");
+    } finally {
+      setUploadingLogo(false);
+      if (e.target) e.target.value = "";
+    }
+  };
 
   // Drawer / Modal SDK Details & Simulator
   const [selectedApp, setSelectedApp] = useState<ApplicationDetail | null>(null);
@@ -78,7 +106,7 @@ export default function AdminApplicationsPage() {
   const [copiedKey, setCopiedKey] = useState<number | null>(null);
   const [copiedLink, setCopiedLink] = useState<number | null>(null);
   const [visibleKeyId, setVisibleKeyId] = useState<number | null>(null);
-  const [sdkSnippetTab, setSdkSnippetTab] = useState<"html" | "react" | "curl">("html");
+  const [sdkSnippetTab, setSdkSnippetTab] = useState<"flutter" | "kotlin" | "curl">("flutter");
 
   // Simulator state
   const [simTesterId, setSimTesterId] = useState("");
@@ -122,6 +150,7 @@ export default function AdminApplicationsPage() {
   };
 
   useEffect(() => {
+    setMounted(true);
     loadApplications();
   }, []);
 
@@ -368,15 +397,8 @@ export default function AdminApplicationsPage() {
     }
   };
 
-  const getPlatformIcon = (plat: string) => {
-    switch (plat) {
-      case "iOS":
-        return <Smartphone className="h-4 w-4 text-slate-700" />;
-      case "Web":
-        return <Laptop className="h-4 w-4 text-blue-600" />;
-      default:
-        return <Smartphone className="h-4 w-4 text-emerald-600" />;
-    }
+  const getPlatformIcon = (_plat?: string) => {
+    return <Smartphone className="h-4 w-4 text-emerald-600" />;
   };
 
   const getIntegrationUrl = (token: string) => {
@@ -551,19 +573,9 @@ export default function AdminApplicationsPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-medium text-slate-500">Plateforme :</span>
-            <select
-              value={platformFilter}
-              onChange={(e) => setPlatformFilter(e.target.value)}
-              className="rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-1.5 text-xs font-medium text-slate-700 focus:border-blue-500 focus:outline-none"
-            >
-              <option value="tous">Toutes les plateformes</option>
-              <option value="Android">Android</option>
-              <option value="iOS">iOS</option>
-              <option value="Web">Web</option>
-              <option value="Multiplateforme">Multiplateforme</option>
-            </select>
+          <div className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50/80 px-3 py-1.5 text-xs font-semibold text-emerald-800">
+            <Smartphone className="h-3.5 w-3.5 text-emerald-600" />
+            <span>Plateforme Android</span>
           </div>
 
           <div className="flex items-center gap-2">
@@ -612,123 +624,135 @@ export default function AdminApplicationsPage() {
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
           {filteredApps.map((app) => {
             const isVisible = visibleKeyId === app.id;
             return (
               <div
                 key={app.id}
-                className="group relative flex flex-col justify-between rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm transition hover:shadow-lg hover:border-blue-200"
+                className="group relative flex flex-col justify-between rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs transition-all duration-200 hover:shadow-lg hover:border-blue-300"
               >
                 <div>
-                  {/* Carte Top : Titre, Statut et Plateforme */}
+                  {/* Carte Top : Logo réel, Titre, Statut et Plateforme */}
                   <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      <div className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-md font-bold text-lg">
-                        {app.nom.slice(0, 2).toUpperCase()}
-                      </div>
-                      <div>
-                        <h3 className="text-base font-bold text-slate-900 group-hover:text-blue-600 transition">
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      {app.logo ? (
+                        <div className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-slate-100 bg-white p-1.5 shadow-2xs overflow-hidden">
+                          <img
+                            src={getImageUrl(app.logo)}
+                            alt={app.nom}
+                            className="h-full w-full object-contain rounded-xl"
+                            onError={(e) => {
+                              (e.currentTarget as HTMLElement).style.display = "none";
+                            }}
+                          />
+                        </div>
+                      ) : (
+                        <div className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-violet-600 text-white shadow-2xs font-bold text-base tracking-tight">
+                          {app.nom.slice(0, 2).toUpperCase()}
+                        </div>
+                      )}
+
+                      <div className="min-w-0 flex-1">
+                        <h3 className="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition truncate tracking-tight">
                           {app.nom}
                         </h3>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          <span className="inline-flex items-center gap-1 text-xs text-slate-500 font-medium">
-                            {getPlatformIcon(app.plateforme)}
-                            {app.plateforme}
+                        <div className="flex items-center gap-1.5 mt-1">
+                          <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-md border border-emerald-100">
+                            <Smartphone className="h-2.5 w-2.5 text-emerald-600" />
+                            {app.plateforme || "Android"}
                           </span>
                           <span className="text-slate-300">•</span>
-                          <span className="text-xs text-slate-500 font-mono">
+                          <span className="text-[10px] text-slate-500 font-mono">
                             v{app.version}
                           </span>
                         </div>
                       </div>
                     </div>
 
-                    <div>{getStatusBadge(app.statut)}</div>
+                    <div className="shrink-0">{getStatusBadge(app.statut)}</div>
                   </div>
 
                   {/* Description */}
-                  <p className="mt-4 text-xs text-slate-600 line-clamp-2">
+                  <p className="mt-3 text-xs text-slate-500 line-clamp-2 leading-relaxed min-h-[32px]">
                     {app.description || "Aucune description renseignée pour cette application."}
                   </p>
 
                   {/* Paramètres Clés : 12j & 12 panélistes */}
-                  <div className="mt-4 grid grid-cols-2 gap-2 rounded-xl bg-slate-50 p-3 text-xs">
+                  <div className="mt-3 grid grid-cols-2 gap-2 rounded-xl bg-slate-50/80 border border-slate-100 p-2.5 text-[11px]">
                     <div>
-                      <span className="text-slate-400 block font-medium">Cycle de test</span>
+                      <span className="text-slate-400 block text-[10px] font-medium">Cycle de test</span>
                       <span className="font-semibold text-slate-800">
                         {app.dureeJoursDefaut || 12} jours
                       </span>
                     </div>
                     <div>
-                      <span className="text-slate-400 block font-medium">Panélistes max</span>
+                      <span className="text-slate-400 block text-[10px] font-medium">Panélistes max</span>
                       <span className="font-semibold text-slate-800">
                         {app.nbMaxPanelistes || 12} testeurs
                       </span>
                     </div>
-                    <div>
-                      <span className="text-slate-400 block font-medium">Missions liées</span>
+                    <div className="pt-1.5 border-t border-slate-200/50">
+                      <span className="text-slate-400 block text-[10px] font-medium">Missions liées</span>
                       <span className="font-semibold text-blue-600">
-                        {app.nbMissions} mission(s)
+                        {app.nbMissions || 0} mission(s)
                       </span>
                     </div>
-                    <div>
-                      <span className="text-slate-400 block font-medium">Testeurs actifs</span>
+                    <div className="pt-1.5 border-t border-slate-200/50">
+                      <span className="text-slate-400 block text-[10px] font-medium">Testeurs actifs</span>
                       <span className="font-semibold text-purple-600">
-                        {app.nbPanelistes} inscrit(s)
+                        {app.nbPanelistes || 0} inscrit(s)
                       </span>
                     </div>
                   </div>
 
-                  {/* Clé SDK Widget */}
-                  <div className="mt-4 rounded-xl border border-slate-200/90 bg-slate-900 p-3 text-white">
-                    <div className="flex items-center justify-between text-[11px] text-slate-400 mb-1">
-                      <span className="flex items-center gap-1.5 font-medium">
-                        <Key className="h-3.5 w-3.5 text-amber-400" />
-                        Clé d'intégration SDK
-                      </span>
-                      <div className="flex items-center gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => setVisibleKeyId(isVisible ? null : app.id)}
-                          className="hover:text-white transition"
-                          title={isVisible ? "Masquer" : "Afficher"}
-                        >
-                          {isVisible ? (
-                            <EyeOff className="h-3.5 w-3.5" />
-                          ) : (
-                            <Eye className="h-3.5 w-3.5" />
-                          )}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleCopy(app.apiKey, app.id, "key")}
-                          className="inline-flex items-center gap-1 text-[11px] text-blue-400 hover:text-blue-300 font-medium transition"
-                        >
-                          {copiedKey === app.id ? (
-                            <>
-                              <Check className="h-3 w-3 text-emerald-400" />
-                              <span className="text-emerald-400">Copié</span>
-                            </>
-                          ) : (
-                            <>
-                              <Copy className="h-3 w-3" />
-                              <span>Copier</span>
-                            </>
-                          )}
-                        </button>
-                      </div>
+                  {/* Clé SDK Widget - Épuré et compact */}
+                  <div className="mt-3 flex items-center justify-between gap-2 rounded-xl bg-slate-900 px-3 py-2 text-white">
+                    <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                      <Key className="h-3 w-3 text-amber-400 shrink-0" />
+                      <span className="text-[10px] text-slate-400 font-medium shrink-0">Clé SDK:</span>
+                      <code className="font-mono text-[11px] text-slate-200 truncate select-all">
+                        {isVisible ? app.apiKey : `${app.apiKey.slice(0, 10)}••••••••••••••••`}
+                      </code>
                     </div>
-                    <code className="block font-mono text-xs text-slate-200 tracking-wider truncate select-all">
-                      {isVisible ? app.apiKey : `${app.apiKey.slice(0, 10)}••••••••••••••••`}
-                    </code>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => setVisibleKeyId(isVisible ? null : app.id)}
+                        className="text-slate-400 hover:text-white transition p-1"
+                        title={isVisible ? "Masquer" : "Afficher"}
+                      >
+                        {isVisible ? (
+                          <EyeOff className="h-3 w-3" />
+                        ) : (
+                          <Eye className="h-3 w-3" />
+                        )}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleCopy(app.apiKey, app.id, "key")}
+                        className="inline-flex items-center gap-1 text-[10px] font-semibold text-blue-400 hover:text-blue-300 transition px-1.5 py-0.5 rounded hover:bg-slate-800"
+                      >
+                        {copiedKey === app.id ? (
+                          <>
+                            <Check className="h-3 w-3 text-emerald-400" />
+                            <span className="text-emerald-400">Copié</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="h-3 w-3" />
+                            <span>Copier</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
                   </div>
 
                   {/* Développeur Contact */}
                   {(app.developpeurNom || app.developpeurEmail) && (
-                    <div className="mt-3 flex items-center justify-between text-[11px] text-slate-500">
+                    <div className="mt-2.5 flex items-center justify-between text-[11px] text-slate-400 px-0.5">
                       <span>Développeur :</span>
-                      <span className="font-medium text-slate-700 truncate max-w-[200px]">
+                      <span className="font-medium text-slate-600 truncate max-w-[180px]">
                         {app.developpeurNom || app.developpeurEmail}
                       </span>
                     </div>
@@ -736,10 +760,10 @@ export default function AdminApplicationsPage() {
                 </div>
 
                 {/* Actions au bas de la carte */}
-                <div className="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between gap-2">
+                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
                   <button
                     onClick={() => handleOpenSdkDrawer(app)}
-                    className="inline-flex items-center gap-1.5 rounded-xl bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700 hover:bg-blue-100 transition"
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-blue-50 px-2.5 py-1.5 text-xs font-semibold text-blue-700 hover:bg-blue-100 transition shadow-2xs"
                   >
                     <Code2 className="h-3.5 w-3.5" />
                     SDK & Intégration
@@ -751,28 +775,28 @@ export default function AdminApplicationsPage() {
                         router.push(`/admin/missions?action=new&appId=${app.id}`)
                       }
                       title="Créer une mission pour cette application"
-                      className="inline-flex items-center gap-1 rounded-lg border border-slate-200 p-2 text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition"
+                      className="rounded-lg border border-slate-200 p-1.5 text-slate-600 hover:bg-slate-50 hover:text-emerald-600 hover:border-emerald-200 transition"
                     >
-                      <Plus className="h-3.5 w-3.5 text-emerald-600" />
+                      <Plus className="h-3.5 w-3.5" />
                     </button>
                     <button
                       onClick={() => handleOpenEditModal(app)}
                       title="Modifier l'application"
-                      className="rounded-lg border border-slate-200 p-2 text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition"
+                      className="rounded-lg border border-slate-200 p-1.5 text-slate-600 hover:bg-slate-50 hover:text-blue-600 hover:border-blue-200 transition"
                     >
                       <Edit3 className="h-3.5 w-3.5" />
                     </button>
                     <button
                       onClick={() => handleRegenerateKey(app)}
                       title="Régénérer la clé SDK"
-                      className="rounded-lg border border-slate-200 p-2 text-slate-600 hover:bg-slate-50 hover:text-amber-600 transition"
+                      className="rounded-lg border border-slate-200 p-1.5 text-slate-600 hover:bg-slate-50 hover:text-amber-600 transition"
                     >
                       <RefreshCw className="h-3.5 w-3.5" />
                     </button>
                     <button
                       onClick={() => handleDelete(app)}
                       title="Supprimer"
-                      className="rounded-lg border border-slate-200 p-2 text-slate-600 hover:bg-rose-50 hover:text-rose-600 transition"
+                      className="rounded-lg border border-slate-200 p-1.5 text-slate-600 hover:bg-rose-50 hover:text-rose-600 transition"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
@@ -785,10 +809,11 @@ export default function AdminApplicationsPage() {
       )}
 
       {/* Modal Créer / Modifier Application */}
-      {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 overflow-y-auto">
-          <div className="w-full max-w-2xl rounded-2xl bg-white p-6 sm:p-8 shadow-2xl transition-all my-8">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-4 mb-6">
+      {showModal && mounted && createPortal(
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-navy-950/80 p-3 sm:p-6 backdrop-blur-md overflow-y-auto">
+          <div className="relative w-full max-w-2xl my-auto rounded-3xl bg-white shadow-2xl border border-slate-100 flex flex-col max-h-[90vh] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            {/* Header Modal Fixe */}
+            <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4 sm:px-8 bg-white shrink-0">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
                   <Smartphone className="h-5 w-5" />
@@ -803,172 +828,251 @@ export default function AdminApplicationsPage() {
                 </div>
               </div>
               <button
+                type="button"
                 onClick={() => setShowModal(false)}
-                className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                className="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            <form onSubmit={handleSubmitModal} className="space-y-4">
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <form onSubmit={handleSubmitModal} className="flex flex-col flex-1 overflow-hidden">
+              {/* Corps Défilant */}
+              <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-4">
+                {/* Logo / Icône de l'application */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                    Logo / Icône de l&apos;application
+                  </label>
+                  <div className="flex items-center gap-4 rounded-2xl border border-slate-200 bg-slate-50/70 p-3.5">
+                    {logo ? (
+                      <div className="relative flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-white p-1.5 shadow-xs">
+                        <img
+                          src={getImageUrl(logo)}
+                          alt="Logo preview"
+                          className="h-full w-full object-contain rounded-xl"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setLogo("")}
+                          className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-rose-500 text-white shadow-xs hover:bg-rose-600 transition"
+                          title="Supprimer le logo"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border-2 border-dashed border-slate-300 bg-white text-slate-400">
+                        <ImageIcon className="h-7 w-7 stroke-1" />
+                      </div>
+                    )}
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <input
+                          type="file"
+                          ref={logoInputRef}
+                          accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                          onChange={handleLogoUpload}
+                          className="hidden"
+                        />
+                        <button
+                          type="button"
+                          disabled={uploadingLogo}
+                          onClick={() => logoInputRef.current?.click()}
+                          className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-blue-600 transition shadow-2xs disabled:opacity-50"
+                        >
+                          {uploadingLogo ? (
+                            <>
+                              <Loader2 className="h-3.5 w-3.5 animate-spin text-blue-600" />
+                              <span>Téléversement...</span>
+                            </>
+                          ) : (
+                            <>
+                              <Upload className="h-3.5 w-3.5" />
+                              <span>Importer une image</span>
+                            </>
+                          )}
+                        </button>
+                        {logo && (
+                          <span className="text-[11px] text-emerald-600 font-medium">
+                            ✓ Logo actif
+                          </span>
+                        )}
+                      </div>
+                      <p className="mt-1 text-[11px] text-slate-500">
+                        PNG, JPG, WebP ou SVG (taille carrée recommandée).
+                      </p>
+                      <input
+                        type="text"
+                        placeholder="Ou saisissez l'URL directe du logo (ex: https://...)"
+                        value={logo}
+                        onChange={(e) => setLogo(e.target.value)}
+                        className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-800 placeholder-slate-400 focus:border-blue-500 focus:outline-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Nom de l'application *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Ex: WariPay Mobile"
+                      value={nom}
+                      onChange={(e) => setNom(e.target.value)}
+                      className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-sm text-slate-800 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Plateforme cible
+                    </label>
+                    <div className="flex items-center justify-between rounded-xl border border-emerald-200 bg-emerald-50/60 px-3.5 py-2 text-sm font-medium text-emerald-950">
+                      <div className="flex items-center gap-2">
+                        <Smartphone className="h-4 w-4 text-emerald-600" />
+                        <span>Android (APK / Google Play)</span>
+                      </div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-200/80 text-emerald-800 px-2 py-0.5 rounded-full">
+                        Unique
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Version
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="1.0.0"
+                      value={version}
+                      onChange={(e) => setVersion(e.target.value)}
+                      className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-sm text-slate-800 focus:border-blue-500 focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Durée par défaut (jours)
+                    </label>
+                    <input
+                      type="number"
+                      min={1}
+                      max={60}
+                      value={dureeJoursDefaut}
+                      onChange={(e) => setDureeJoursDefaut(parseInt(e.target.value) || 12)}
+                      className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-sm text-slate-800 focus:border-blue-500 focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Max Panélistes
+                    </label>
+                    <input
+                      type="number"
+                      min={1}
+                      max={500}
+                      value={nbMaxPanelistes}
+                      onChange={(e) => setNbMaxPanelistes(parseInt(e.target.value) || 12)}
+                      className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-sm text-slate-800 focus:border-blue-500 focus:outline-none"
+                    />
+                  </div>
+                </div>
+
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Nom de l'application *
+                    Lien de téléchargement / Accès Panélistes
                   </label>
                   <input
-                    type="text"
-                    required
-                    placeholder="Ex: WariPay Mobile"
-                    value={nom}
-                    onChange={(e) => setNom(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-sm text-slate-800 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                    type="url"
+                    placeholder="https://play.google.com/... ou lien APK / URL"
+                    value={lienTelechargement}
+                    onChange={(e) => setLienTelechargement(e.target.value)}
+                    className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-sm text-slate-800 focus:border-blue-500 focus:outline-none"
                   />
                 </div>
 
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Plateforme
+                    Description de l'application & fonctionnalités à tester
+                  </label>
+                  <textarea
+                    rows={3}
+                    placeholder="Décrivez brièvement l'application et les points clés à évaluer..."
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-sm text-slate-800 focus:border-blue-500 focus:outline-none"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Nom du développeur / Contact
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Ex: Équipe Dev WariPay"
+                      value={developpeurNom}
+                      onChange={(e) => setDeveloppeurNom(e.target.value)}
+                      className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-sm text-slate-800 focus:border-blue-500 focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Email développeur (pour envoi du lien)
+                    </label>
+                    <input
+                      type="email"
+                      placeholder="dev@client.com"
+                      value={developpeurEmail}
+                      onChange={(e) => setDeveloppeurEmail(e.target.value)}
+                      className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-sm text-slate-800 focus:border-blue-500 focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Statut de l'application
                   </label>
                   <select
-                    value={plateforme}
-                    onChange={(e) => setPlateforme(e.target.value)}
+                    value={statut}
+                    onChange={(e) => setStatut(e.target.value)}
                     className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-sm text-slate-800 focus:border-blue-500 focus:outline-none"
                   >
-                    <option value="Android">Android (APK / Play Store)</option>
-                    <option value="iOS">iOS (TestFlight / App Store)</option>
-                    <option value="Web">Application Web / SaaS</option>
-                    <option value="Multiplateforme">Multiplateforme</option>
+                    <option value="en_attente_integration">En attente d'intégration SDK</option>
+                    <option value="active">Active (Prête pour les tests)</option>
+                    <option value="en_test">En cours de test (Mission active)</option>
+                    <option value="pause">En pause</option>
+                    <option value="archivee">Archivée</option>
                   </select>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Version
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="1.0.0"
-                    value={version}
-                    onChange={(e) => setVersion(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-sm text-slate-800 focus:border-blue-500 focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Durée par défaut (jours)
-                  </label>
-                  <input
-                    type="number"
-                    min={1}
-                    max={60}
-                    value={dureeJoursDefaut}
-                    onChange={(e) => setDureeJoursDefaut(parseInt(e.target.value) || 12)}
-                    className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-sm text-slate-800 focus:border-blue-500 focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Max Panélistes
-                  </label>
-                  <input
-                    type="number"
-                    min={1}
-                    max={500}
-                    value={nbMaxPanelistes}
-                    onChange={(e) => setNbMaxPanelistes(parseInt(e.target.value) || 12)}
-                    className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-sm text-slate-800 focus:border-blue-500 focus:outline-none"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Lien de téléchargement / Accès Panélistes
-                </label>
-                <input
-                  type="url"
-                  placeholder="https://play.google.com/... ou lien APK / URL Web"
-                  value={lienTelechargement}
-                  onChange={(e) => setLienTelechargement(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-sm text-slate-800 focus:border-blue-500 focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Description de l'application & fonctionnalités à tester
-                </label>
-                <textarea
-                  rows={3}
-                  placeholder="Décrivez brièvement l'application et les points clés à évaluer..."
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-sm text-slate-800 focus:border-blue-500 focus:outline-none"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Nom du développeur / Contact
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Ex: Équipe Dev WariPay"
-                    value={developpeurNom}
-                    onChange={(e) => setDeveloppeurNom(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-sm text-slate-800 focus:border-blue-500 focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Email développeur (pour envoi du lien)
-                  </label>
-                  <input
-                    type="email"
-                    placeholder="dev@client.com"
-                    value={developpeurEmail}
-                    onChange={(e) => setDeveloppeurEmail(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-sm text-slate-800 focus:border-blue-500 focus:outline-none"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Statut de l'application
-                </label>
-                <select
-                  value={statut}
-                  onChange={(e) => setStatut(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-sm text-slate-800 focus:border-blue-500 focus:outline-none"
-                >
-                  <option value="en_attente_integration">En attente d'intégration SDK</option>
-                  <option value="active">Active (Prête pour les tests)</option>
-                  <option value="en_test">En cours de test (Mission active)</option>
-                  <option value="pause">En pause</option>
-                  <option value="archivee">Archivée</option>
-                </select>
-              </div>
-
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+              {/* Footer Modal Fixe */}
+              <div className="flex items-center justify-end gap-3 px-6 py-4 sm:px-8 border-t border-slate-100 bg-slate-50/80 shrink-0">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                  className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition"
                 >
                   Annuler
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 disabled:opacity-60"
+                  className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-xs font-semibold text-white shadow-sm hover:bg-blue-700 disabled:opacity-60 transition"
                 >
                   {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
                   {editingId ? "Enregistrer les modifications" : "Créer et Générer SDK"}
@@ -976,15 +1080,16 @@ export default function AdminApplicationsPage() {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Drawer / Modal Détails & Intégration SDK */}
-      {selectedApp && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 overflow-y-auto">
-          <div className="w-full max-w-4xl rounded-2xl bg-white shadow-2xl my-8 overflow-hidden">
+      {selectedApp && mounted && createPortal(
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-navy-950/80 p-3 sm:p-6 backdrop-blur-md overflow-y-auto">
+          <div className="relative w-full max-w-4xl my-auto rounded-3xl bg-white shadow-2xl border border-slate-100 flex flex-col max-h-[90vh] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
             {/* Header Drawer */}
-            <div className="flex items-center justify-between border-b border-slate-200 bg-slate-900 px-6 py-4 text-white">
+            <div className="flex items-center justify-between border-b border-slate-200 bg-slate-900 px-6 py-4 text-white shrink-0">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500/20 text-blue-400 border border-blue-500/30 font-bold">
                   <Code2 className="h-5 w-5" />
@@ -999,14 +1104,15 @@ export default function AdminApplicationsPage() {
                 </div>
               </div>
               <button
+                type="button"
                 onClick={() => setSelectedApp(null)}
-                className="rounded-lg p-2 text-slate-400 hover:bg-slate-800 hover:text-white transition"
+                className="rounded-full p-2 text-slate-400 hover:bg-slate-800 hover:text-white transition"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            <div className="p-6 sm:p-8 space-y-6 max-h-[80vh] overflow-y-auto">
+            <div className="p-6 sm:p-8 space-y-6 flex-1 overflow-y-auto">
               {/* Étape 1 & 2 Rappel schéma */}
               <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-4 text-xs text-blue-900">
                 <div className="flex items-start gap-3">
@@ -1116,24 +1222,24 @@ export default function AdminApplicationsPage() {
 
                   <div className="flex items-center gap-1 bg-slate-200/80 rounded-lg p-1 text-xs">
                     <button
-                      onClick={() => setSdkSnippetTab("html")}
+                      onClick={() => setSdkSnippetTab("flutter")}
                       className={`px-3 py-1 rounded-md font-medium transition ${
-                        sdkSnippetTab === "html"
+                        sdkSnippetTab === "flutter"
                           ? "bg-white text-slate-900 shadow-sm"
                           : "text-slate-600 hover:text-slate-900"
                       }`}
                     >
-                      Web / HTML
+                      Flutter / Dart
                     </button>
                     <button
-                      onClick={() => setSdkSnippetTab("react")}
+                      onClick={() => setSdkSnippetTab("kotlin")}
                       className={`px-3 py-1 rounded-md font-medium transition ${
-                        sdkSnippetTab === "react"
+                        sdkSnippetTab === "kotlin"
                           ? "bg-white text-slate-900 shadow-sm"
                           : "text-slate-600 hover:text-slate-900"
                       }`}
                     >
-                      React / Mobile
+                      Android (Kotlin)
                     </button>
                     <button
                       onClick={() => setSdkSnippetTab("curl")}
@@ -1143,71 +1249,107 @@ export default function AdminApplicationsPage() {
                           : "text-slate-600 hover:text-slate-900"
                       }`}
                     >
-                      cURL / API
+                      cURL / CLI
                     </button>
                   </div>
                 </div>
 
                 <div className="bg-slate-950 p-4 font-mono text-xs text-slate-200 overflow-x-auto">
-                  {sdkSnippetTab === "html" && (
-                    <pre className="text-emerald-400">
-{`<!-- Formulaire de Test Samré pour ${selectedApp.nom} -->
-<form id="samre-test-form" onsubmit="validerTestSamre(event)">
-  <input type="text" id="panelisteId" placeholder="Votre ID Panéliste (ex: TST-A1B2C3)" required />
-  <input type="text" id="codeDuJour" placeholder="Code du Jour (ex: SAMRE-J01-XXXX)" required />
-  <button type="submit">Valider mon jour de test</button>
-  <div id="samre-message"></div>
-</form>
+                  {sdkSnippetTab === "flutter" && (
+                    <pre className="text-cyan-300">
+{`// 1. Dépendance dans pubspec.yaml :
+// dependencies:
+//   http: ^1.2.0
 
-<script>
-async function validerTestSamre(e) {
-  e.preventDefault();
-  const res = await fetch("${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/sdk/verify-day", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-App-Key": "${selectedApp.apiKey}"
-    },
-    body: JSON.stringify({
-      panelisteId: document.getElementById('panelisteId').value,
-      code: document.getElementById('codeDuJour').value
-    })
-  });
-  const data = await res.json();
-  document.getElementById('samre-message').innerText = data.message || data.error;
-}
-</script>`}
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+
+class SamreSdk {
+  static const String _endpoint =
+      "${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/sdk/verify-day";
+  static const String _apiKey = "${selectedApp.apiKey}";
+
+  /// Valide la journée de test pour un panéliste Samré
+  static Future<Map<String, dynamic>> verifyDay({
+    required String panelisteId,
+    required String codeDuJour,
+  }) async {
+    final response = await http.post(
+      Uri.parse(_endpoint),
+      headers: {
+        'Content-Type': 'application/json',
+        'X-App-Key': _apiKey,
+      },
+      body: jsonEncode({
+        'panelisteId': panelisteId.trim(),
+        'code': codeDuJour.trim(),
+      }),
+    );
+
+    final data = jsonDecode(response.body) as Map<String, dynamic>;
+    if (response.statusCode == 200 && data['success'] == true) {
+      // Journée validée avec succès !
+      return data;
+    } else {
+      throw Exception(data['error'] ?? 'Échec de validation Samré');
+    }
+  }
+}`}
                     </pre>
                   )}
 
-                  {sdkSnippetTab === "react" && (
-                    <pre className="text-blue-300">
-{`// Intégration React Native / Flutter / React
-import React, { useState } from 'react';
+                  {sdkSnippetTab === "kotlin" && (
+                    <pre className="text-emerald-300">
+{`// 1. Dépendances dans build.gradle.kts (Module: app) :
+// implementation("com.squareup.okhttp3:okhttp:4.12.0")
+// implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
 
-export function SamreTestingWidget() {
-  const [panelisteId, setPanelisteId] = useState('');
-  const [code, setCode] = useState('');
-  const [status, setStatus] = useState(null);
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
+import org.json.JSONObject
 
-  const handleSubmit = async () => {
-    try {
-      const response = await fetch('${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/sdk/verify-day', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-App-Key': '${selectedApp.apiKey}'
-        },
-        body: JSON.stringify({ panelisteId, code })
-      });
-      const data = await response.json();
-      setStatus(data.message || data.error);
-    } catch (err) {
-      setStatus('Erreur de connexion au serveur Samré');
-    }
-  };
+object SamreSdk {
+    private const val API_URL =
+        "${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/sdk/verify-day"
+    private const val API_KEY = "${selectedApp.apiKey}"
+    private val client = OkHttpClient()
 
-  return (/* Vos inputs UI de test */);
+    /**
+     * Valide la journée de test auprès du serveur central Samré
+     */
+    suspend fun verifyDay(panelisteId: String, codeDuJour: String): Result<String> =
+        withContext(Dispatchers.IO) {
+            try {
+                val payload = JSONObject().apply {
+                    put("panelisteId", panelisteId.trim())
+                    put("code", codeDuJour.trim())
+                }.toString()
+
+                val body = payload.toRequestBody("application/json; charset=utf-8".toMediaType())
+                val request = Request.Builder()
+                    .url(API_URL)
+                    .addHeader("X-App-Key", API_KEY)
+                    .post(body)
+                    .build()
+
+                client.newCall(request).execute().use { response ->
+                    val resStr = response.body?.string().orEmpty()
+                    val json = JSONObject(resStr)
+
+                    if (response.isSuccessful && json.optBoolean("success", false)) {
+                        Result.success(json.optString("message", "Journée validée avec succès !"))
+                    } else {
+                        Result.failure(Exception(json.optString("error", "Code ou panéliste invalide")))
+                    }
+                }
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
 }`}
                     </pre>
                   )}
@@ -1370,19 +1512,21 @@ curl -X POST "${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/
               </div>
             </div>
 
-            <div className="border-t border-slate-200 bg-slate-50 px-6 py-4 flex items-center justify-between">
+            <div className="border-t border-slate-200 bg-slate-50 px-6 py-4 flex items-center justify-between shrink-0">
               <span className="text-xs text-slate-500">
                 Serveur Central Samré • Intégration SDK v1.0
               </span>
               <button
+                type="button"
                 onClick={() => setSelectedApp(null)}
-                className="rounded-xl bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800"
+                className="rounded-xl bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800 transition"
               >
                 Fermer
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Confirmation Modal */}

@@ -282,7 +282,7 @@ export default function AdminDashboardPage() {
               Créez une mission avec parcours journalier et codes secrets
             </h2>
             <p className="mt-1.5 text-xs text-slate-300 leading-relaxed">
-              Définissez les applications cibles (Android/iOS/Web), structurez les journées de travail en Todo List (Jour 1, Jour 2...), imposez les conditions contractuelles et attribuez des références secrètes de validation pour chaque étape.
+              Définissez les applications cibles Android (APK, Play Store), structurez les journées de travail en Todo List (Jour 1, Jour 2...), imposez les conditions contractuelles et attribuez des références secrètes de validation pour chaque étape.
             </p>
           </div>
           <div className="flex items-center gap-3 shrink-0">

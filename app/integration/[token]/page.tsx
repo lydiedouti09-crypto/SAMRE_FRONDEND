@@ -32,7 +32,7 @@ export default function DeveloperIntegrationPage() {
   const [info, setInfo] = useState<IntegrationInfo | null>(null);
   const [copiedKey, setCopiedKey] = useState(false);
   const [copiedSnippet, setCopiedSnippet] = useState(false);
-  const [activeTab, setActiveTab] = useState<"html" | "react" | "curl">("html");
+  const [activeTab, setActiveTab] = useState<"flutter" | "kotlin" | "curl">("flutter");
 
   // Live test on the developer page
   const [testTesterId, setTestTesterId] = useState("");
@@ -181,8 +181,8 @@ export default function DeveloperIntegrationPage() {
                   <span className="rounded-full bg-slate-800 px-2.5 py-0.5 text-xs text-slate-300 font-mono">
                     v{app.version}
                   </span>
-                  <span className="rounded-full bg-blue-500/10 px-2.5 py-0.5 text-xs text-blue-400 font-medium">
-                    {app.plateforme}
+                  <span className="rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs text-emerald-400 font-medium border border-emerald-500/20">
+                    Android (APK / Play Store)
                   </span>
                 </div>
                 <p className="mt-1.5 text-sm text-slate-400 max-w-2xl leading-relaxed">
@@ -293,24 +293,24 @@ export default function DeveloperIntegrationPage() {
 
             <div className="flex items-center gap-1 bg-slate-950 rounded-xl p-1 text-xs border border-slate-800">
               <button
-                onClick={() => setActiveTab("html")}
+                onClick={() => setActiveTab("flutter")}
                 className={`px-3 py-1.5 rounded-lg font-medium transition ${
-                  activeTab === "html"
+                  activeTab === "flutter"
                     ? "bg-blue-600 text-white shadow-sm"
                     : "text-slate-400 hover:text-white"
                 }`}
               >
-                HTML / Vanilla JS
+                Flutter / Dart
               </button>
               <button
-                onClick={() => setActiveTab("react")}
+                onClick={() => setActiveTab("kotlin")}
                 className={`px-3 py-1.5 rounded-lg font-medium transition ${
-                  activeTab === "react"
+                  activeTab === "kotlin"
                     ? "bg-blue-600 text-white shadow-sm"
                     : "text-slate-400 hover:text-white"
                 }`}
               >
-                React / Mobile
+                Android (Kotlin)
               </button>
               <button
                 onClick={() => setActiveTab("curl")}
@@ -320,111 +320,123 @@ export default function DeveloperIntegrationPage() {
                     : "text-slate-400 hover:text-white"
                 }`}
               >
-                cURL / HTTP Request
+                cURL / Terminal
               </button>
             </div>
           </div>
 
           <div className="p-6 bg-slate-950 font-mono text-xs overflow-x-auto">
-            {activeTab === "html" && (
-              <pre className="text-emerald-400 leading-relaxed">
-{`<!-- Formulaire de Test Samré pour ${app.nom} -->
-<form id="samre-test-form" onsubmit="soumettreValidationSamre(event)">
-  <div>
-    <label>Identifiant Panéliste Samré :</label>
-    <input type="text" id="panelisteId" placeholder="ex: TST-A1B2C3" required />
-  </div>
-  <div>
-    <label>Code Unique du Jour :</label>
-    <input type="text" id="codeDuJour" placeholder="ex: SAMRE-J01-9F3B" required />
-  </div>
-  <button type="submit" id="btn-valider">Valider le jour de test</button>
-  <div id="resultat-validation"></div>
-</form>
+            {activeTab === "flutter" && (
+              <pre className="text-cyan-300 leading-relaxed">
+{`// 1. Ajouter dans votre pubspec.yaml :
+// dependencies:
+//   http: ^1.2.0
 
-<script>
-async function soumettreValidationSamre(event) {
-  event.preventDefault();
-  const btn = document.getElementById('btn-valider');
-  const resultDiv = document.getElementById('resultat-validation');
-  btn.disabled = true;
-  resultDiv.innerText = "Vérification auprès de Samré...";
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
-  try {
-    const response = await fetch("${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/sdk/verify-day", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-App-Key": "${info.apiKey}"
-      },
-      body: JSON.stringify({
-        panelisteId: document.getElementById('panelisteId').value.trim(),
-        code: document.getElementById('codeDuJour').value.trim()
-      })
-    });
-    const data = await response.json();
-    if (data.success) {
-      resultDiv.innerText = "✓ " + (data.message || "Journée validée avec succès !");
-      resultDiv.style.color = "#10b981";
-    } else {
-      resultDiv.innerText = "✗ " + (data.error || "Code invalide");
-      resultDiv.style.color = "#ef4444";
+class SamreSdk {
+  static const String _endpoint =
+      "${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/sdk/verify-day";
+  static const String _apiKey = "${info.apiKey}";
+
+  /// Vérifie et valide le jour de test pour un panéliste
+  static Future<Map<String, dynamic>> verifyDay({
+    required String panelisteId,
+    required String codeDuJour,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse(_endpoint),
+        headers: {
+          'Content-Type': 'application/json',
+          'X-App-Key': _apiKey,
+        },
+        body: jsonEncode({
+          'panelisteId': panelisteId.trim(),
+          'code': codeDuJour.trim(),
+        }),
+      );
+
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+
+      if (response.statusCode == 200 && data['success'] == true) {
+        // Journée validée avec succès !
+        return {
+          'success': true,
+          'message': data['message'] ?? 'Journée validée',
+          'jour': data['jour'],
+          'progression': data['progression'],
+        };
+      } else {
+        return {
+          'success': false,
+          'error': data['error'] ?? 'Échec de validation Samré',
+        };
+      }
+    } catch (e) {
+      return {
+        'success': false,
+        'error': 'Impossible de joindre le serveur central Samré',
+      };
     }
-  } catch (err) {
-    resultDiv.innerText = "Erreur de connexion au serveur Samré.";
-  } finally {
-    btn.disabled = false;
   }
-}
-</script>`}
+}`}
               </pre>
             )}
 
-            {activeTab === "react" && (
-              <pre className="text-blue-300 leading-relaxed">
-{`// Composant d'intégration React / React Native
-import React, { useState } from 'react';
+            {activeTab === "kotlin" && (
+              <pre className="text-emerald-300 leading-relaxed">
+{`// 1. Dépendances dans build.gradle.kts (Module: app) :
+// implementation("com.squareup.okhttp3:okhttp:4.12.0")
+// implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
 
-export function SamreTestValidator() {
-  const [panelisteId, setPanelisteId] = useState('');
-  const [code, setCode] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [feedback, setFeedback] = useState(null);
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
+import org.json.JSONObject
 
-  const handleVerify = async () => {
-    setLoading(true);
-    setFeedback(null);
-    try {
-      const res = await fetch('${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/sdk/verify-day', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-App-Key': '${info.apiKey}'
-        },
-        body: JSON.stringify({
-          panelisteId: panelisteId.trim(),
-          code: code.trim()
-        })
-      });
-      const data = await res.json();
-      setFeedback(data);
-    } catch (e) {
-      setFeedback({ success: false, error: 'Impossible de joindre le serveur central' });
-    } finally {
-      setLoading(false);
-    }
-  };
+object SamreSdk {
+    private const val API_URL =
+        "${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/sdk/verify-day"
+    private const val API_KEY = "${info.apiKey}"
+    private val client = OkHttpClient()
 
-  return (
-    <div>
-      <input value={panelisteId} onChange={e => setPanelisteId(e.target.value)} placeholder="ID Panéliste" />
-      <input value={code} onChange={e => setCode(e.target.value)} placeholder="Code du Jour" />
-      <button onClick={handleVerify} disabled={loading}>
-        {loading ? 'Validation en cours...' : 'Valider'}
-      </button>
-      {feedback && <p>{feedback.message || feedback.error}</p>}
-    </div>
-  );
+    /**
+     * Valide le jour de test auprès du serveur central Samré
+     */
+    suspend fun verifyDay(panelisteId: String, codeDuJour: String): Result<String> =
+        withContext(Dispatchers.IO) {
+            try {
+                val payload = JSONObject().apply {
+                    put("panelisteId", panelisteId.trim())
+                    put("code", codeDuJour.trim())
+                }.toString()
+
+                val body = payload.toRequestBody("application/json; charset=utf-8".toMediaType())
+                val request = Request.Builder()
+                    .url(API_URL)
+                    .addHeader("X-App-Key", API_KEY)
+                    .post(body)
+                    .build()
+
+                client.newCall(request).execute().use { response ->
+                    val resStr = response.body?.string().orEmpty()
+                    val json = JSONObject(resStr)
+
+                    if (response.isSuccessful && json.optBoolean("success", false)) {
+                        Result.success(json.optString("message", "Journée validée avec succès !"))
+                    } else {
+                        Result.failure(Exception(json.optString("error", "Code ou panéliste invalide")))
+                    }
+                }
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
 }`}
               </pre>
             )}

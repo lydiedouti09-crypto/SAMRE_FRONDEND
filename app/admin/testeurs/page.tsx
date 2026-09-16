@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import {
   Users,
@@ -32,6 +33,7 @@ export default function AdminTesteursPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("tous");
   const [actionLoadingId, setActionLoadingId] = useState<number | null>(null);
+  const [mounted, setMounted] = useState(false);
 
   // Custom Confirm Modal
   const [confirmConfig, setConfirmConfig] = useState<{
@@ -66,6 +68,7 @@ export default function AdminTesteursPage() {
   };
 
   useEffect(() => {
+    setMounted(true);
     fetchUsers();
   }, []);
 
@@ -428,10 +431,11 @@ export default function AdminTesteursPage() {
       )}
 
       {/* MODAL FICHE PROFIL DU TESTEUR - CENTRÉ */}
-      {selectedUser && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-navy-950/75 p-4 backdrop-blur-sm overflow-y-auto">
-          <div className="relative w-full max-w-lg my-auto rounded-3xl bg-white p-6 sm:p-8 shadow-2xl border border-slate-100">
-            <div className="flex items-start justify-between border-b border-slate-100 pb-4">
+      {selectedUser && mounted && createPortal(
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-navy-950/80 p-3 sm:p-6 backdrop-blur-md overflow-y-auto">
+          <div className="relative w-full max-w-lg my-auto rounded-3xl bg-white shadow-2xl border border-slate-100 flex flex-col max-h-[90vh] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            {/* Header Fixe */}
+            <div className="flex items-start justify-between border-b border-slate-100 p-6 sm:p-8 pb-4 bg-white shrink-0">
               <div className="flex items-center gap-3">
                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-orange text-white text-base font-bold shadow-md shadow-brand-orange/20">
                   {selectedUser.prenom?.[0] || selectedUser.nom?.[0] || "U"}
@@ -458,6 +462,7 @@ export default function AdminTesteursPage() {
                 </div>
               </div>
               <button
+                type="button"
                 onClick={() => setSelectedUser(null)}
                 className="rounded-full p-2 text-slate-400 hover:bg-slate-100 transition"
               >
@@ -465,7 +470,8 @@ export default function AdminTesteursPage() {
               </button>
             </div>
 
-            <div className="mt-5 space-y-4 text-xs">
+            {/* Corps Défilant */}
+            <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-4 text-xs">
               <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4 space-y-2.5">
                 <h4 className="font-bold uppercase tracking-wider text-slate-400 text-[10px]">
                   Informations personnelles
@@ -544,10 +550,12 @@ export default function AdminTesteursPage() {
               </div>
             </div>
 
-            <div className="mt-6 flex items-center justify-between border-t border-slate-100 pt-4">
+            {/* Footer Fixe */}
+            <div className="flex items-center justify-between border-t border-slate-100 px-6 py-4 bg-slate-50/80 shrink-0">
               <div className="flex items-center gap-2">
                 {selectedUser.statut === "en_attente" && (
                   <button
+                    type="button"
                     onClick={() => handleApproveUser(selectedUser)}
                     className="rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white hover:bg-emerald-700 transition"
                   >
@@ -555,6 +563,7 @@ export default function AdminTesteursPage() {
                   </button>
                 )}
                 <button
+                  type="button"
                   onClick={() => handleToggleSuspend(selectedUser)}
                   className={`rounded-xl px-4 py-2 text-xs font-bold transition ${
                     selectedUser.statut === "suspendu"
@@ -567,14 +576,16 @@ export default function AdminTesteursPage() {
               </div>
 
               <button
+                type="button"
                 onClick={() => setSelectedUser(null)}
-                className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 transition"
+                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 transition"
               >
                 Fermer
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Modal de Confirmation Élégant */}

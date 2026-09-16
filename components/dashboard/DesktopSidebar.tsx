@@ -11,6 +11,7 @@ import {
   User,
   LogOut,
   ShieldCheck,
+  ArrowLeft,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 
@@ -29,7 +30,7 @@ export default function DesktopSidebar() {
   return (
     <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r border-slate-100 bg-white px-4 py-5 lg:flex">
       {/* Brand logo */}
-      <Link href="/dashboard" className="mb-6 flex items-center gap-2.5 px-2 group">
+      <Link href="/dashboard" className="mb-4 flex items-center gap-2.5 px-2 group">
         <div className="relative flex h-10 w-10 shrink-0 items-center justify-center transition group-hover:scale-105">
           <Image
             src="/logo.png"
@@ -47,6 +48,33 @@ export default function DesktopSidebar() {
           <span className="text-[10px] text-slate-400">Plateforme de test</span>
         </div>
       </Link>
+
+      {/* Mode Prévisualisation Admin */}
+      {user?.role === "admin" && (
+        <div className="mb-4 rounded-2xl border border-rose-200 bg-gradient-to-b from-rose-50/90 to-rose-50/40 p-3 shadow-2xs">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5 text-rose-700">
+              <span className="flex h-2 w-2 rounded-full bg-rose-500 animate-pulse" />
+              <span className="text-[11px] font-bold uppercase tracking-wider">
+                Vue Testeur
+              </span>
+            </div>
+            <span className="rounded-md border border-rose-300/80 bg-white px-1.5 py-0.5 text-[9px] font-bold text-rose-600 shadow-2xs">
+              ADMIN
+            </span>
+          </div>
+          <p className="mt-1.5 text-[11px] text-slate-600 leading-tight">
+            Vous naviguez dans l&apos;espace testeur en mode prévisualisation.
+          </p>
+          <Link
+            href="/admin"
+            className="mt-2.5 flex items-center justify-center gap-1.5 rounded-xl bg-rose-600 px-3 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-rose-700 transition active:scale-95"
+          >
+            <ArrowLeft size={13} strokeWidth={2.5} />
+            <span>Retour à l&apos;Admin</span>
+          </Link>
+        </div>
+      )}
 
       {/* Navigation */}
       <nav className="flex flex-col gap-1">
@@ -112,9 +140,16 @@ export default function DesktopSidebar() {
             </div>
           )}
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-bold text-navy-900 truncate leading-tight">
-              {user?.prenom} {user?.nom}
-            </p>
+            <div className="flex items-center gap-1.5">
+              <p className="text-xs font-bold text-navy-900 truncate leading-tight">
+                {user?.prenom} {user?.nom}
+              </p>
+              {user?.role === "admin" && (
+                <span className="rounded bg-rose-500/10 px-1 py-0.2 text-[9px] font-bold text-rose-600 border border-rose-500/20">
+                  ADMIN
+                </span>
+              )}
+            </div>
             <p className="text-[10px] text-slate-400 truncate mt-0.5">{user?.email}</p>
           </div>
         </Link>
