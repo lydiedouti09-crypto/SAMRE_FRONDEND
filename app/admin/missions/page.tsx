@@ -34,7 +34,13 @@ import {
   Image as ImageIcon,
   Users,
 } from "lucide-react";
-import { adminApi, type AdminMission, type MissionPayload } from "@/lib/api";
+import {
+  adminApi,
+  applicationsApi,
+  type AdminMission,
+  type MissionPayload,
+  type ApplicationItem,
+} from "@/lib/api";
 import ConfirmModal, { type ConfirmVariant } from "@/components/ui/ConfirmModal";
 
 type TodoStep = {
@@ -84,17 +90,19 @@ export default function AdminMissionsPage() {
   });
 
   // Form Fields
+  const [registeredApps, setRegisteredApps] = useState<ApplicationItem[]>([]);
+  const [selectedAppId, setSelectedAppId] = useState<number | null>(null);
   const [titre, setTitre] = useState("");
   const [application, setApplication] = useState("");
   const [versionApplication, setVersionApplication] = useState("1.0.0");
   const [image, setImage] = useState("");
   const [uploadingImage, setUploadingImage] = useState(false);
   const [lienApplication, setLienApplication] = useState("");
-  const [dureEstime, setDureEstime] = useState("14 jours");
+  const [dureEstime, setDureEstime] = useState("12 jours");
   const [dateDebut, setDateDebut] = useState("");
   const [dateFin, setDateFin] = useState("");
   const [remuneration, setRemuneration] = useState("5000");
-  const [nombreParticipantsSouhaites, setNombreParticipantsSouhaites] = useState(50);
+  const [nombreParticipantsSouhaites, setNombreParticipantsSouhaites] = useState(12);
   const [description, setDescription] = useState("");
   const [objectif, setObjectif] = useState("");
   const [conditionsParticipation, setConditionsParticipation] = useState(
@@ -137,8 +145,12 @@ export default function AdminMissionsPage() {
   const loadMissions = async () => {
     setLoading(true);
     try {
-      const res = await adminApi.missions();
-      setMissions(res || []);
+      const [resMissions, resApps] = await Promise.allSettled([
+        adminApi.missions(),
+        applicationsApi.list(),
+      ]);
+      if (resMissions.status === "fulfilled") setMissions(resMissions.value || []);
+      if (resApps.status === "fulfilled") setRegisteredApps(resApps.value || []);
     } catch (err) {
       console.error("Erreur chargement missions:", err);
     } finally {
@@ -149,10 +161,22 @@ export default function AdminMissionsPage() {
   useEffect(() => {
     setMounted(true);
     loadMissions();
+  }, []);
+
+  useEffect(() => {
+    if (!mounted || registeredApps.length === 0) return;
+    const appIdParam = searchParams.get("appId");
+    if (appIdParam) {
+      const targetApp = registeredApps.find((a) => a.id === parseInt(appIdParam));
+      if (targetApp) {
+        openCreateModal(targetApp);
+        return;
+      }
+    }
     if (searchParams.get("create") === "true") {
       openCreateModal();
     }
-  }, [searchParams]);
+  }, [searchParams, mounted, registeredApps]);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -171,22 +195,37 @@ export default function AdminMissionsPage() {
     }
   };
 
-  const openCreateModal = () => {
+  const openCreateModal = (initialApp?: ApplicationItem | unknown) => {
     setEditingId(null);
-    setTitre("");
-    setApplication("");
-    setVersionApplication("1.0.0");
-    setImage("");
-    setLienApplication("");
-    setDureEstime("14 jours");
+    if (initialApp && typeof initialApp === "object" && "nom" in initialApp) {
+      const app = initialApp as ApplicationItem;
+      setSelectedAppId(app.id);
+      setTitre(`Campagne de Test - ${app.nom}`);
+      setApplication(app.nom);
+      setVersionApplication(app.version || "1.0.0");
+      setImage(app.logo || "");
+      setLienApplication(app.lienTelechargement || "");
+      setDureEstime(`${app.dureeJoursDefaut || 12} jours`);
+      setNombreParticipantsSouhaites(app.nbMaxPanelistes || 12);
+      setDescription(app.description || "Mission d'évaluation et de test sur application mobile.");
+      setObjectif("Tester les fonctionnalités clés et valider le cycle quotidien sur 12 jours.");
+    } else {
+      setSelectedAppId(null);
+      setTitre("");
+      setApplication("");
+      setVersionApplication("1.0.0");
+      setImage("");
+      setLienApplication("");
+      setDureEstime("12 jours");
+      setNombreParticipantsSouhaites(12);
+      setDescription("");
+      setObjectif("");
+    }
     setDateDebut(new Date().toISOString().split("T")[0]);
     const dFin = new Date();
-    dFin.setDate(dFin.getDate() + 30);
+    dFin.setDate(dFin.getDate() + 12);
     setDateFin(dFin.toISOString().split("T")[0]);
     setRemuneration("5000");
-    setNombreParticipantsSouhaites(50);
-    setDescription("");
-    setObjectif("");
     setStatut("disponible");
     setEtapes([
       {
@@ -209,16 +248,17 @@ export default function AdminMissionsPage() {
 
   const openEditModal = (m: AdminMission) => {
     setEditingId(m.id);
+    setSelectedAppId(m.applicationId || null);
     setTitre(m.titre);
     setApplication(m.application);
     setVersionApplication(m.versionApplication || "1.0.0");
     setImage(m.image || "");
     setLienApplication(m.lienApplication || "");
-    setDureEstime(m.dureEstime || "14 jours");
+    setDureEstime(m.dureEstime || "12 jours");
     setDateDebut(m.dateDebut || "");
     setDateFin(m.dateFin || "");
     setRemuneration(m.remuneration || "0");
-    setNombreParticipantsSouhaites((m as any).nombreParticipantsSouhaites || 50);
+    setNombreParticipantsSouhaites((m as any).nombreParticipantsSouhaites || 12);
     setDescription(m.description || "");
     setObjectif(m.objectif || "");
     setConditionsParticipation(m.conditionsParticipation || "");
@@ -321,13 +361,14 @@ export default function AdminMissionsPage() {
     const payload: MissionPayload = {
       titre: titre.trim(),
       application: application.trim(),
+      applicationId: selectedAppId || undefined,
       versionApplication: versionApplication.trim(),
       platforme: "Android",
       image: image.trim() || null,
       lienApplication: lienApplication.trim(),
       dureEstime: dureEstime.trim(),
       remuneration,
-      nombreParticipantsSouhaites: Number(nombreParticipantsSouhaites) || 20,
+      nombreParticipantsSouhaites: Number(nombreParticipantsSouhaites) || 12,
       description: description.trim(),
       objectif: objectif.trim(),
       conditionsParticipation: conditionsParticipation.trim(),
@@ -424,7 +465,7 @@ export default function AdminMissionsPage() {
             <span>Actualiser</span>
           </button>
           <button
-            onClick={openCreateModal}
+            onClick={() => openCreateModal()}
             className="flex items-center gap-2 rounded-xl bg-brand-orange px-4 py-2 text-xs font-bold text-white shadow-sm shadow-brand-orange/25 hover:bg-brand-orange/90 transition"
           >
             <Plus size={15} />
@@ -486,7 +527,7 @@ export default function AdminMissionsPage() {
               : "Créez votre première mission de test Android pour commencer."}
           </p>
           <button
-            onClick={openCreateModal}
+            onClick={() => openCreateModal()}
             className="mt-4 inline-flex items-center gap-2 rounded-xl bg-brand-orange px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-brand-orange/90 transition"
           >
             <Plus size={14} />
@@ -904,18 +945,61 @@ export default function AdminMissionsPage() {
                         />
                       </div>
 
-                      <div>
-                        <label className="block text-xs font-bold text-slate-700 mb-1">
-                          Application à tester *
-                        </label>
-                        <input
-                          type="text"
-                          required
-                          value={application}
-                          onChange={(e) => setApplication(e.target.value)}
-                          placeholder="Ex: Wave CI, Yassir, Moov Money"
-                          className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-xs outline-none focus:border-brand-orange"
-                        />
+                      <div className="space-y-2">
+                        <div>
+                          <label className="block text-xs font-bold text-slate-700 mb-1">
+                            Sélectionner une Application Enregistrée (Recommandé)
+                          </label>
+                          <select
+                            value={selectedAppId || ""}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              if (!val) {
+                                setSelectedAppId(null);
+                              } else {
+                                const found = registeredApps.find((a) => a.id === parseInt(val));
+                                if (found) {
+                                  setSelectedAppId(found.id);
+                                  setApplication(found.nom);
+                                  setVersionApplication(found.version || "1.0.0");
+                                  setLienApplication(found.lienTelechargement || "");
+                                  setDureEstime(`${found.dureeJoursDefaut || 12} jours`);
+                                  setNombreParticipantsSouhaites(found.nbMaxPanelistes || 12);
+                                  if (found.logo) setImage(found.logo);
+                                  if (!titre.trim()) setTitre(`Campagne de Test - ${found.nom}`);
+                                }
+                              }
+                            }}
+                            className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3.5 py-2.5 text-xs outline-none focus:border-brand-orange text-slate-800"
+                          >
+                            <option value="">-- Choisir une application enregistrée --</option>
+                            {registeredApps.map((a) => (
+                              <option key={a.id} value={a.id}>
+                                {a.nom} ({a.plateforme} v{a.version}) • Clé SDK liée
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-bold text-slate-700 mb-1">
+                            Nom de l'application affiché *
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            value={application}
+                            onChange={(e) => setApplication(e.target.value)}
+                            placeholder="Ex: Wave CI, Yassir, Moov Money"
+                            className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-xs outline-none focus:border-brand-orange"
+                          />
+                          {selectedAppId && (
+                            <p className="text-[11px] text-emerald-600 font-medium mt-1 flex items-center gap-1">
+                              <CheckCircle2 size={12} />
+                              Clé SDK liée & cycle quotidien sur {dureEstime}
+                            </p>
+                          )}
+                        </div>
                       </div>
                     </div>
 

@@ -312,6 +312,7 @@ export type AdminMission = {
   id: number;
   titre: string;
   application: string;
+  applicationId?: number;
   versionApplication?: string;
   platforme: string;
   image?: string | null;
@@ -335,6 +336,7 @@ export type AdminMission = {
 export type MissionPayload = {
   titre: string;
   application: string;
+  applicationId?: number;
   versionApplication?: string;
   platforme: string;
   image?: string | null;
@@ -366,6 +368,7 @@ export type AdminParticipation = {
   testeurNom: string;
   testeurEmail: string;
   testeurTelephone?: string;
+  panelisteUid?: string;
   missionId?: number;
   missionTitre: string;
   application: string;
@@ -383,6 +386,7 @@ export type AdminParticipation = {
 
 export type ParticipationDetail = {
   id: number;
+  panelisteUid?: string;
   statut: string;
   progression: number;
   contratAccepte: boolean;
@@ -529,6 +533,120 @@ export const adminApi = {
     message: string;
     type?: string;
   }) => api.post<{ message: string; destinataires: number }>("/api/admin/notifications/send", data),
+};
+
+export type ApplicationItem = {
+  id: number;
+  nom: string;
+  description?: string;
+  logo?: string;
+  plateforme: string;
+  version: string;
+  lienTelechargement?: string;
+  developpeurNom?: string;
+  developpeurEmail?: string;
+  apiKey: string;
+  tokenIntegration: string;
+  dureeJoursDefaut: number;
+  nbMaxPanelistes: number;
+  statut: string;
+  dateCreation: string;
+  dateModification: string;
+  nbMissions: number;
+  nbPanelistes: number;
+};
+
+export type ApplicationPayload = {
+  nom: string;
+  description?: string;
+  logo?: string;
+  plateforme?: string;
+  version?: string;
+  lienTelechargement?: string;
+  developpeurNom?: string;
+  developpeurEmail?: string;
+  dureeJoursDefaut?: number;
+  nbMaxPanelistes?: number;
+  statut?: string;
+};
+
+export type ApplicationDetail = ApplicationItem & {
+  missions: Array<{
+    id: number;
+    titre: string;
+    statut: string;
+    duree: string;
+    remuneration: string;
+    participants: number;
+  }>;
+  panelistes: Array<{
+    id: number;
+    panelisteUid: string;
+    nom: string;
+    email?: string;
+    missionId: number;
+    missionTitre: string;
+    progression: number;
+    statut: string;
+  }>;
+};
+
+export type IntegrationInfo = {
+  application: {
+    id: number;
+    nom: string;
+    description?: string;
+    plateforme: string;
+    version: string;
+    statut: string;
+    dureeJours: number;
+    nbMaxPanelistes: number;
+  };
+  apiKey: string;
+  tokenIntegration: string;
+  instructions: {
+    step1: string;
+    step2: string;
+    step3: string;
+  };
+  endpoints: {
+    verify: string;
+    info: string;
+  };
+};
+
+export const applicationsApi = {
+  list: () => api.get<ApplicationItem[]>("/api/admin/applications"),
+  show: (id: number) => api.get<ApplicationDetail>(`/api/admin/applications/${id}`),
+  create: (data: ApplicationPayload) =>
+    api.post<{ message: string; id: number; apiKey: string; tokenIntegration: string }>(
+      "/api/admin/applications",
+      data
+    ),
+  update: (id: number, data: Partial<ApplicationPayload>) =>
+    api.put<{ message: string; id: number }>(`/api/admin/applications/${id}`, data),
+  regenerateKey: (id: number) =>
+    api.patch<{ message: string; apiKey: string }>(
+      `/api/admin/applications/${id}/regenerate-key`
+    ),
+  delete: (id: number) =>
+    api.delete<{ message: string }>(`/api/admin/applications/${id}`),
+};
+
+export const sdkApi = {
+  verifyDay: (data: { apiKey: string; panelisteId: string; code: string }) =>
+    api.post<{
+      success: boolean;
+      alreadyValidated?: boolean;
+      message: string;
+      jour?: number;
+      progression?: number;
+      application?: string;
+      paneliste?: string;
+      error?: string;
+    }>("/api/sdk/verify-day", data),
+  getIntegrationInfo: (token: string) =>
+    api.get<IntegrationInfo>(`/api/public/integration/${token}`),
 };
 
 

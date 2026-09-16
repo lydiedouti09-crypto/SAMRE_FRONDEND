@@ -16,11 +16,13 @@ import {
   MessageSquare,
   Bell,
   ListTodo,
+  Smartphone,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 
 const adminNav = [
   { href: "/admin", label: "Vue d'ensemble", icon: LayoutDashboard, exact: true },
+  { href: "/admin/applications", label: "Applications à tester", icon: Smartphone, exact: false },
   { href: "/admin/missions", label: "Missions & Programme", icon: ListTodo, exact: false },
   { href: "/admin/participations", label: "Candidatures & Suivi", icon: CheckCircle2, exact: false },
   { href: "/admin/testeurs", label: "Gestion Testeurs", icon: Users, exact: false },
