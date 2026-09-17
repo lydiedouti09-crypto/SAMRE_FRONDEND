@@ -23,7 +23,7 @@ import {
   ShieldCheck,
   AlertCircle,
 } from "lucide-react";
-import { adminApi, type AdminParticipation, type ParticipationDetail } from "@/lib/api";
+import { adminApi, getImageUrl, type AdminParticipation, type ParticipationDetail } from "@/lib/api";
 import ConfirmModal, { type ConfirmVariant } from "@/components/ui/ConfirmModal";
 
 function AdminParticipationsContent() {
@@ -299,9 +299,20 @@ function AdminParticipationsContent() {
                       {/* Testeur */}
                       <td className="px-5 py-3.5">
                         <div className="flex items-center gap-3">
-                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-orange/10 text-xs font-bold text-brand-orange">
-                            {p.testeurNom ? p.testeurNom[0].toUpperCase() : "T"}
-                          </div>
+                          {p.testeurPhoto ? (
+                            <img
+                              src={getImageUrl(p.testeurPhoto)}
+                              alt={p.testeurNom}
+                              className="h-9 w-9 shrink-0 rounded-full object-cover border border-slate-200 shadow-2xs"
+                              onError={(e) => {
+                                (e.currentTarget as HTMLElement).style.display = "none";
+                              }}
+                            />
+                          ) : (
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-orange/10 text-xs font-bold text-brand-orange">
+                              {p.testeurNom ? p.testeurNom[0].toUpperCase() : "T"}
+                            </div>
+                          )}
                           <div>
                             <p className="font-bold text-navy-900">{p.testeurNom}</p>
                             <p className="text-[11px] text-slate-400">{p.testeurEmail}</p>
@@ -485,15 +496,31 @@ function AdminParticipationsContent() {
               <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-5">
                 {/* Résumé Testeur & Mission */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 rounded-2xl border border-slate-100 bg-slate-50/70 p-4 text-xs">
-                  <div>
-                    <span className="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">
-                      Profil du testeur
-                    </span>
-                    <p className="font-bold text-navy-900 text-sm">{inspectDetail.testeur.nom}</p>
-                    <p className="text-slate-500">{inspectDetail.testeur.email}</p>
-                    {inspectDetail.testeur.telephone && (
-                      <p className="text-slate-500">{inspectDetail.testeur.telephone}</p>
+                  <div className="flex items-start gap-3">
+                    {inspectDetail.testeur.photo ? (
+                      <img
+                        src={getImageUrl(inspectDetail.testeur.photo)}
+                        alt={inspectDetail.testeur.nom}
+                        className="h-10 w-10 shrink-0 rounded-full object-cover border border-slate-200 shadow-2xs mt-0.5"
+                        onError={(e) => {
+                          (e.currentTarget as HTMLElement).style.display = "none";
+                        }}
+                      />
+                    ) : (
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-orange/10 text-xs font-bold text-brand-orange mt-0.5">
+                        {inspectDetail.testeur.nom ? inspectDetail.testeur.nom[0].toUpperCase() : "T"}
+                      </div>
                     )}
+                    <div>
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">
+                        Profil du testeur
+                      </span>
+                      <p className="font-bold text-navy-900 text-sm">{inspectDetail.testeur.nom}</p>
+                      <p className="text-slate-500">{inspectDetail.testeur.email}</p>
+                      {inspectDetail.testeur.telephone && (
+                        <p className="text-slate-500">{inspectDetail.testeur.telephone}</p>
+                      )}
+                    </div>
                   </div>
                   <div>
                     <span className="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">

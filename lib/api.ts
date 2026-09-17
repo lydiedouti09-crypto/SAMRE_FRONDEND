@@ -283,6 +283,7 @@ export type Mission = {
 export type Participation = {
   id: number;
   mission: Mission;
+  panelisteUid?: string;
   statut: string;
   progression: number;
   etapesCompletees: number;
@@ -314,6 +315,9 @@ export type Reference = {
   dateExpiration?: string;
   dateValidation?: string;
   referenceSaisie?: string;
+  panelisteUid?: string;
+  jour?: number;
+  apiKey?: string;
 };
 
 export type NotificationItem = {
@@ -400,6 +404,7 @@ export const referencesApi = {
       reference,
     }),
 };
+
 
 export const feedbackApi = {
   create: (data: FeedbackPayload) =>
@@ -500,6 +505,7 @@ export type AdminParticipation = {
   testeurNom: string;
   testeurEmail: string;
   testeurTelephone?: string;
+  testeurPhoto?: string | null;
   panelisteUid?: string;
   missionId?: number;
   missionTitre: string;
@@ -530,6 +536,7 @@ export type ParticipationDetail = {
     email?: string;
     telephone?: string;
     statut?: string;
+    photo?: string | null;
   };
   mission: {
     id?: number;
@@ -564,6 +571,7 @@ export type AdminFeedback = {
   dateCreation?: string;
   testeurNom: string;
   testeurEmail?: string;
+  testeurPhoto?: string | null;
   missionTitre: string;
   missionId?: number;
 };

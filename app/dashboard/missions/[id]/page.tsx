@@ -22,12 +22,17 @@ import {
   Users,
   Lock,
   ShieldCheck,
+  RefreshCw,
+  Play,
+  Send,
+  KeyRound,
 } from "lucide-react";
 import {
   missionsApi,
   participationsApi,
   etapesApi,
   referencesApi,
+  sdkApi,
   feedbackApi,
   getImageUrl,
   type Mission,
@@ -52,11 +57,25 @@ export default function MissionDetailPage() {
   const [currentReference, setCurrentReference] = useState<Reference | null>(null);
   const [loadingRef, setLoadingRef] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [copiedDailyCode, setCopiedDailyCode] = useState(false);
   const [inputCode, setInputCode] = useState("");
   const [validating, setValidating] = useState(false);
+  const [copiedTesterId, setCopiedTesterId] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [validationResult, setValidationResult] = useState<{
     valid: boolean;
     message: string;
+  } | null>(null);
+
+  // Simulateur de formulaire de l'application testée (Étape 4 du schéma)
+  const [simPanelisteId, setSimPanelisteId] = useState("");
+  const [simCode, setSimCode] = useState("");
+  const [simLoading, setSimLoading] = useState(false);
+  const [simResult, setSimResult] = useState<{
+    success: boolean;
+    message: string;
+    jour?: number;
+    progression?: number;
   } | null>(null);
 
   // Inscription & Contrat
@@ -75,7 +94,9 @@ export default function MissionDetailPage() {
   const [sendingFeedback, setSendingFeedback] = useState(false);
   const [feedbackSent, setFeedbackSent] = useState(false);
 
-  async function loadAll() {
+  async function loadAll(quiet = false) {
+    if (!quiet) setLoading(true);
+    else setRefreshing(true);
     try {
       const [m, parts, eta] = await Promise.all([
         missionsApi.show(missionId),
@@ -89,30 +110,77 @@ export default function MissionDetailPage() {
       const sorted = eta.sort((a, b) => a.ordre - b.ordre);
       setEtapes(sorted);
 
-      // Auto-sélectionner l'étape en cours
+      // Auto-sélectionner l'étape en cours pour ce panéliste
       if (userPart && sorted.length > 0) {
-        const firstUncompleted = sorted.find((e) => e.statut !== "validee") || sorted[0];
-        setSelectedEtape(firstUncompleted);
-        loadReferenceForEtape(firstUncompleted.id);
+        const completedCount = userPart.etapesCompletees || 0;
+        const currentEtape = sorted[completedCount] || sorted[sorted.length - 1];
+        setSelectedEtape(currentEtape);
+        await loadReferenceForEtape(currentEtape.id, userPart);
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Erreur de chargement de la mission.");
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   }
 
-  async function loadReferenceForEtape(etapeId: number) {
+  async function loadReferenceForEtape(etapeId: number, userPart?: Participation | null) {
     setLoadingRef(true);
     setValidationResult(null);
+    setSimResult(null);
     setInputCode("");
     try {
       const ref = await referencesApi.forEtape(etapeId);
       setCurrentReference(ref);
+      if (ref) {
+        setSimCode(ref.reference || "");
+        setSimPanelisteId(ref.panelisteUid || userPart?.panelisteUid || participation?.panelisteUid || "");
+      }
     } catch {
       setCurrentReference(null);
     } finally {
       setLoadingRef(false);
+    }
+  }
+
+  async function handleValidateViaSdk(e?: React.FormEvent) {
+    if (e) e.preventDefault();
+    const code = simCode.trim().toUpperCase();
+    const panelisteId = simPanelisteId.trim();
+    if (!code || !panelisteId) return;
+
+    setSimLoading(true);
+    setSimResult(null);
+    try {
+      const apiKey = currentReference?.apiKey || (mission as any)?.applicationEntity?.apiKey || "";
+      const res = await sdkApi.verifyDay({
+        apiKey,
+        panelisteId,
+        code,
+      });
+
+      if (res.success) {
+        setSimResult({
+          success: true,
+          message: res.message || "Félicitations ! Journée validée avec succès par le serveur central.",
+          jour: res.jour,
+          progression: res.progression,
+        });
+        await loadAll(true);
+      } else {
+        setSimResult({
+          success: false,
+          message: res.error || "Code non reconnu par le serveur central.",
+        });
+      }
+    } catch (err) {
+      setSimResult({
+        success: false,
+        message: err instanceof Error ? err.message : "Erreur de communication avec le serveur central.",
+      });
+    } finally {
+      setSimLoading(false);
     }
   }
 
@@ -474,6 +542,67 @@ export default function MissionDetailPage() {
         {/* 5. Suivi de progression & Test actif (uniquement si en cours ou terminée) */}
         {participation && (participation.statut === "en_cours" || participation.statut === "contrat_accepte" || participation.statut === "terminee") && (
           <>
+            {/* Carte Identifiant Unique Panéliste & Téléchargement (Étape 3 du Protocole) */}
+            <section className="rounded-2xl border border-indigo-100 bg-gradient-to-br from-indigo-50/80 via-white to-blue-50/60 p-5 shadow-xs">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-900 flex items-center gap-1.5">
+                    <ShieldCheck size={16} className="text-indigo-600" />
+                    Votre Identifiant Unique Panéliste
+                  </span>
+                  <p className="mt-1 text-xs text-slate-600">
+                    Cet identifiant relie votre compte à cette application (<strong>{mission.application}</strong>). Vous devez le saisir chaque jour dans le formulaire de l&apos;application testée.
+                  </p>
+                  <div className="mt-3 flex items-center gap-2">
+                    <div className="rounded-xl bg-slate-900 px-4 py-2 font-mono text-sm font-bold text-amber-400 select-all shadow-inner tracking-wider">
+                      {participation.panelisteUid || "TST-ATTRIBUÉ"}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (participation.panelisteUid) {
+                          navigator.clipboard.writeText(participation.panelisteUid);
+                          setCopiedTesterId(true);
+                          setTimeout(() => setCopiedTesterId(false), 2500);
+                        }
+                      }}
+                      className="inline-flex items-center gap-1.5 rounded-xl bg-white border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition shadow-2xs"
+                    >
+                      {copiedTesterId ? (
+                        <>
+                          <Check size={14} className="text-emerald-600" />
+                          <span className="text-emerald-600">Copié !</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy size={14} />
+                          <span>Copier mon identifiant</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {mission.lienApplication && (
+                  <div className="shrink-0 flex flex-col items-start sm:items-end">
+                    <span className="text-[11px] text-slate-500 mb-1.5 font-medium">
+                      Application à tester :
+                    </span>
+                    <a
+                      href={mission.lienApplication}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-indigo-700 transition"
+                    >
+                      <Smartphone size={15} />
+                      <span>Télécharger l&apos;application</span>
+                      <ExternalLink size={13} />
+                    </a>
+                  </div>
+                )}
+              </div>
+            </section>
+
             {/* Barre d'avancement globale */}
             <section className="rounded-2xl border border-slate-100 bg-white p-4 shadow-xs">
               <div className="flex items-center justify-between">
@@ -500,10 +629,9 @@ export default function MissionDetailPage() {
               {/* Liste des statuts des étapes demandée */}
               <div className="mt-4 divide-y divide-slate-100 border-t border-slate-100 pt-2">
                 {etapes.map((etape, index) => {
-                  const done = etape.statut === "validee";
+                  const isCompletedForUser = index < (participation.etapesCompletees || 0) || etape.statut === "validee";
                   const isCurrent = selectedEtape?.id === etape.id;
-                  const isPast = done;
-                  const isUpcoming = !done && !isCurrent;
+                  const isPast = isCompletedForUser;
 
                   return (
                     <div
@@ -530,7 +658,7 @@ export default function MissionDetailPage() {
                           <p className={`text-xs font-semibold truncate ${
                             isCurrent ? "text-navy-900" : isPast ? "text-slate-700" : "text-slate-400"
                           }`}>
-                            Étape {index + 1} — {etape.titre}
+                            Jour {etape.ordre} — {etape.titre}
                           </p>
                         </div>
                       </div>
@@ -542,7 +670,7 @@ export default function MissionDetailPage() {
                           ? "text-brand-orange"
                           : "text-slate-400"
                       }`}>
-                        {isPast ? "✓ Terminée" : isCurrent ? "● En cours" : "○ À venir"}
+                        {isPast ? "✓ Validé" : isCurrent ? "● En cours" : "○ À venir"}
                       </span>
                     </div>
                   );
@@ -550,157 +678,295 @@ export default function MissionDetailPage() {
               </div>
             </section>
 
-            {/* 3. Bloc de validation de l'étape sélectionnée */}
-            {selectedEtape && !isCompleted && (
-              <section className="rounded-2xl border border-slate-100 bg-white p-5 shadow-xs">
-                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                  <div>
-                    <span className="rounded bg-brand-orange/10 px-2 py-0.5 text-[10px] font-bold text-brand-orange uppercase">
-                      Étape {selectedEtape.ordre}
-                    </span>
-                    <h3 className="mt-1 font-display text-sm font-bold text-navy-900">
-                      {selectedEtape.titre}
-                    </h3>
-                  </div>
-                  {selectedEtape.statut === "validee" && (
-                    <span className="flex items-center gap-1 text-xs font-semibold text-emerald-600">
-                      <CheckCircle size={14} />
-                      Validée
-                    </span>
-                  )}
-                </div>
+            {/* 3. Bloc de validation de l'étape sélectionnée : Étape 4 du protocole */}
+            {selectedEtape && !isCompleted && (() => {
+              const etapeIndex = etapes.findIndex((e) => e.id === selectedEtape.id);
+              const isDayValidated = etapeIndex < (participation.etapesCompletees || 0) || currentReference?.statut === "validee";
 
-                {/* Instructions de l'étape */}
-                <div className="mt-3">
-                  <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-                    Instructions :
-                  </p>
-                  <p className="mt-1 text-xs leading-relaxed text-slate-700 bg-slate-50 p-3 rounded-xl">
-                    {selectedEtape.instructions || selectedEtape.description || "Effectuez le scénario décrit dans l'application."}
-                  </p>
-                </div>
-
-                {/* Bouton pour aller vers l'application externe */}
-                {mission.lienApplication && (
-                  <div className="mt-4">
-                    <a
-                      href={mission.lienApplication}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex w-full items-center justify-center gap-2 rounded-xl bg-navy-950 py-2.5 text-xs font-bold text-white shadow-xs transition hover:bg-navy-900"
-                    >
-                      <Smartphone size={15} className="text-brand-orange" />
-                      <span>Tester l&apos;application externe</span>
-                      <ExternalLink size={13} />
-                    </a>
-                  </div>
-                )}
-
-                {/* INTERFACE POUR EXPLIQUER LE CODE (Demande explicite de l'utilisateur) */}
-                <div className="mt-5 rounded-xl border border-slate-200/70 bg-[#FBFBFC] p-4">
-                  <h4 className="font-display text-xs font-bold text-navy-900">
-                    Validez cette étape
-                  </h4>
-                  <p className="mt-1 text-[11px] leading-relaxed text-slate-500">
-                    Pour confirmer que vous avez effectué l&apos;action demandée dans l&apos;application, utilisez la référence fournie pour cette étape.
-                  </p>
-
-                  <ol className="mt-3 space-y-1.5 text-[11px] text-slate-600 list-decimal list-inside bg-white p-3 rounded-lg border border-slate-100">
-                    <li>Ouvrez l&apos;application externe.</li>
-                    <li>Suivez les instructions de la mission.</li>
-                    <li>Effectuez l&apos;action demandée.</li>
-                    <li>Utilisez la référence lorsque l&apos;application vous la demande.</li>
-                    <li>Revenez sur SAMRE.</li>
-                    <li>Entrez la référence pour valider votre étape.</li>
-                  </ol>
-
-                  {/* Référence fournie par le backend */}
-                  <div className="mt-4">
-                    <p className="text-[11px] font-semibold text-slate-500">
-                      Votre référence pour cette étape :
-                    </p>
-
-                    {loadingRef ? (
-                      <div className="mt-2 flex items-center justify-center py-3">
-                        <Loader2 size={16} className="animate-spin text-brand-orange" />
+              return (
+                <section className="rounded-2xl border border-slate-100 bg-white p-5 shadow-xs space-y-4">
+                  {/* En-tête de l'Étape 4 */}
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between pb-3 border-b border-slate-100">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="rounded bg-brand-orange/10 px-2.5 py-0.5 text-[10px] font-bold text-brand-orange uppercase">
+                          Étape 4 : Test quotidien
+                        </span>
+                        <span className="rounded-full bg-purple-50 text-purple-700 border border-purple-200/60 px-2.5 py-0.5 text-[10px] font-semibold">
+                          Boucle sur 12 jours
+                        </span>
                       </div>
-                    ) : currentReference ? (
-                      <div className="mt-1.5 flex items-center justify-between rounded-xl bg-slate-900 px-4 py-2.5 text-white">
-                        <div>
-                          <span className="text-[10px] text-slate-400 block">Code officiel</span>
-                          <span className="font-mono text-sm font-bold tracking-widest text-brand-orange">
-                            {currentReference.reference}
-                          </span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={handleCopyReference}
-                          className="flex items-center gap-1.5 rounded-lg bg-brand-orange/20 border border-brand-orange/40 px-3 py-1.5 text-[11px] font-semibold text-brand-orange transition hover:bg-brand-orange hover:text-white"
-                        >
-                          {copied ? <Check size={13} className="text-emerald-400" /> : <Copy size={13} />}
-                          <span>{copied ? "Copié & Inséré !" : "Copier & Remplir"}</span>
-                        </button>
-                      </div>
-                    ) : (
-                      <p className="mt-1 text-xs text-slate-400 italic">
-                        Aucune référence requise pour cette étape.
-                      </p>
-                    )}
-                    <p className="mt-1.5 text-[11px] text-slate-500">
-                      💡 C&apos;est ce code officiel ci-dessus que vous devez saisir dans le champ ci-dessous pour valider l&apos;étape.
-                    </p>
-                  </div>
-
-                  {/* Champ de saisie de la référence */}
-                  <div className="mt-4">
-                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">
-                      Entrez votre référence
-                    </label>
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        value={inputCode}
-                        onChange={(e) => setInputCode(e.target.value.toUpperCase())}
-                        placeholder="Ex: WA-087C6F"
-                        autoCapitalize="characters"
-                        disabled={selectedEtape.statut === "validee"}
-                        className="flex-1 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-mono font-bold tracking-wider text-navy-900 placeholder:text-slate-400 placeholder:font-normal focus:border-brand-orange focus:outline-none focus:ring-1 focus:ring-brand-orange disabled:bg-slate-50"
-                      />
-                      <button
-                        type="button"
-                        onClick={handleValidateEtape}
-                        disabled={validating || !inputCode.trim() || selectedEtape.statut === "validee"}
-                        className="flex items-center justify-center gap-1.5 rounded-xl bg-brand-orange px-4 py-2 text-xs font-bold text-white shadow-xs transition hover:bg-orange-600 disabled:opacity-50"
-                      >
-                        {validating ? (
-                          <Loader2 size={14} className="animate-spin" />
-                        ) : (
-                          <span>Valider l&apos;étape</span>
-                        )}
-                      </button>
+                      <h3 className="mt-1 font-display text-base font-bold text-navy-900">
+                        Jour {selectedEtape.ordre} / {participation.etapesTotal || etapes.length || 12} — {selectedEtape.titre}
+                      </h3>
                     </div>
 
-                    {/* Messages de validation */}
-                    {validationResult && (
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => loadAll(true)}
+                        disabled={refreshing}
+                        className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-semibold text-slate-600 hover:bg-slate-50 transition"
+                        title="Actualiser le statut depuis le serveur central"
+                      >
+                        <RefreshCw size={13} className={refreshing ? "animate-spin text-brand-orange" : ""} />
+                        <span>{refreshing ? "Vérification..." : "Actualiser"}</span>
+                      </button>
+
+                      {isDayValidated ? (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-200 px-3 py-1 text-[11px] font-bold text-emerald-700">
+                          <CheckCircle2 size={14} className="text-emerald-600" />
+                          <span>Jour {selectedEtape.ordre} Validé ✓</span>
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 border border-amber-200 px-3 py-1 text-[11px] font-bold text-amber-700">
+                          <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
+                          <span>En attente de validation</span>
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Instructions */}
+                  <div className="rounded-xl bg-slate-50 p-3 text-xs text-slate-700 border border-slate-100">
+                    <p className="font-semibold text-navy-900 mb-1">Instructions de la journée :</p>
+                    <p className="text-slate-600 leading-relaxed">
+                      {selectedEtape.instructions || selectedEtape.description || "Lancez l'application à tester, effectuez les parcours utilisateurs prévus et validez avec votre code unique du jour."}
+                    </p>
+                  </div>
+
+                  {/* CARTE CODE UNIQUE DU JOUR (Généré par le serveur central - Étape 6 du schéma) */}
+                  <div className="rounded-2xl border border-slate-900/10 bg-gradient-to-br from-slate-900 via-navy-950 to-slate-900 p-5 text-white shadow-md">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-400/20 text-amber-400">
+                          <KeyRound size={16} />
+                        </span>
+                        <span className="text-[11px] font-bold uppercase tracking-wider text-amber-400">
+                          Code Unique du Jour (Généré par le serveur central)
+                        </span>
+                      </div>
+                      <span className="text-[10px] text-white/60 bg-white/10 px-2 py-0.5 rounded-full">
+                        Jour {selectedEtape.ordre} / 12
+                      </span>
+                    </div>
+
+                    <p className="mt-2 text-xs text-white/80 leading-relaxed">
+                      Chaque jour, le serveur central génère un code unique pour votre compte. Vous devez lire ce code ici sur Samré, puis le saisir dans le formulaire de l&apos;application testée.
+                    </p>
+
+                    <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-xl bg-white/10 p-3.5 border border-white/15">
+                      <div>
+                        <span className="text-[10px] text-white/60 uppercase block font-medium">Votre Code du Jour :</span>
+                        <span className="font-mono text-xl font-extrabold tracking-widest text-amber-400 select-all">
+                          {loadingRef ? "Génération en cours..." : (currentReference?.reference || "SAMRE-J01-XXXX")}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (currentReference?.reference) {
+                              navigator.clipboard.writeText(currentReference.reference);
+                              setSimCode(currentReference.reference);
+                              setCopiedDailyCode(true);
+                              setTimeout(() => setCopiedDailyCode(false), 2000);
+                            }
+                          }}
+                          disabled={!currentReference?.reference}
+                          className="inline-flex items-center gap-1.5 rounded-xl bg-amber-400 px-3.5 py-2 text-xs font-bold text-slate-950 hover:bg-amber-300 transition shadow-sm active:scale-95 disabled:opacity-50"
+                        >
+                          {copiedDailyCode ? (
+                            <>
+                              <Check size={14} className="text-emerald-950" />
+                              <span>Copié & Rempli !</span>
+                            </>
+                          ) : (
+                            <>
+                              <Copy size={14} />
+                              <span>Copier le code</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="mt-3 flex items-center justify-between text-[11px] text-white/70 border-t border-white/10 pt-2.5">
+                      <span>Identifiant Panéliste associé :</span>
+                      <span className="font-mono font-bold text-white bg-white/10 px-2 py-0.5 rounded">
+                        {participation.panelisteUid || "TST-ATTRIBUÉ"}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Les 4 étapes du flux quotidien (Reproduction fidèle du diagramme Image 4) */}
+                  <div className="rounded-2xl border border-indigo-100 bg-indigo-50/40 p-4">
+                    <p className="text-xs font-bold text-indigo-950 flex items-center gap-1.5">
+                      <Sparkles size={14} className="text-indigo-600" />
+                      Comment fonctionne la validation quotidienne :
+                    </p>
+                    <div className="mt-3 grid grid-cols-1 sm:grid-cols-4 gap-2.5 text-left">
+                      <div className="rounded-xl bg-white p-2.5 border border-indigo-100 shadow-2xs">
+                        <div className="flex items-center gap-1.5 text-indigo-600 font-bold text-[11px]">
+                          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-indigo-100 text-[10px]">1</span>
+                          <span>Serveur</span>
+                        </div>
+                        <p className="mt-1 text-[10px] text-slate-600 leading-tight">
+                          Génère un code unique par jour pour votre compte.
+                        </p>
+                      </div>
+
+                      <div className="rounded-xl bg-white p-2.5 border border-indigo-100 shadow-2xs">
+                        <div className="flex items-center gap-1.5 text-indigo-600 font-bold text-[11px]">
+                          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-indigo-100 text-[10px]">2</span>
+                          <span>Panéliste</span>
+                        </div>
+                        <p className="mt-1 text-[10px] text-slate-600 leading-tight">
+                          Lit le code ici sur Samré et copie son ID Panéliste.
+                        </p>
+                      </div>
+
+                      <div className="rounded-xl bg-white p-2.5 border border-indigo-100 shadow-2xs">
+                        <div className="flex items-center gap-1.5 text-indigo-600 font-bold text-[11px]">
+                          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-indigo-100 text-[10px]">3</span>
+                          <span>App testée</span>
+                        </div>
+                        <p className="mt-1 text-[10px] text-slate-600 leading-tight">
+                          Saisit son ID et le Code dans le formulaire de l&apos;app.
+                        </p>
+                      </div>
+
+                      <div className="rounded-xl bg-white p-2.5 border border-indigo-100 shadow-2xs">
+                        <div className="flex items-center gap-1.5 text-emerald-600 font-bold text-[11px]">
+                          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-100 text-[10px]">4</span>
+                          <span>Jour validé ✓</span>
+                        </div>
+                        <p className="mt-1 text-[10px] text-slate-600 leading-tight">
+                          Le serveur vérifie le code et valide automatiquement le jour.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Bouton de téléchargement / ouverture de l'application externe */}
+                  {mission.lienApplication && (
+                    <div>
+                      <a
+                        href={mission.lienApplication}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex w-full items-center justify-center gap-2 rounded-xl bg-navy-950 py-3 text-xs font-bold text-white shadow-xs transition hover:bg-navy-900"
+                      >
+                        <Smartphone size={16} className="text-brand-orange" />
+                        <span>Ouvrir l&apos;application testée ({mission.application})</span>
+                        <ExternalLink size={13} />
+                      </a>
+                    </div>
+                  )}
+
+                  {/* Simulateur de Formulaire Intégré (Permet de tester en direct ou de valider) */}
+                  <div className="rounded-2xl border border-slate-200 bg-white p-4.5 shadow-xs">
+                    <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                      <div>
+                        <div className="flex items-center gap-1.5">
+                          <Smartphone size={15} className="text-brand-orange" />
+                          <h4 className="font-display text-xs font-bold text-navy-900">
+                            Simulateur de validation : Formulaire de l&apos;application testée
+                          </h4>
+                        </div>
+                        <p className="mt-0.5 text-[11px] text-slate-500">
+                          Ce formulaire reproduit fidèlement celui intégré par le développeur dans {mission.application}. Vous pouvez tester la validation en direct :
+                        </p>
+                      </div>
+                      <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-mono font-bold text-slate-600">
+                        POST /api/sdk/verify-day
+                      </span>
+                    </div>
+
+                    <form onSubmit={handleValidateViaSdk} className="mt-4 space-y-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                            Identifiant Unique Panéliste
+                          </label>
+                          <input
+                            type="text"
+                            value={simPanelisteId}
+                            onChange={(e) => setSimPanelisteId(e.target.value.toUpperCase())}
+                            placeholder="Ex: TST-849201"
+                            disabled={isDayValidated}
+                            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-mono font-bold text-navy-900 placeholder:text-slate-400 focus:border-brand-orange focus:outline-none focus:ring-1 focus:ring-brand-orange disabled:bg-slate-50"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                            Code Unique du Jour
+                          </label>
+                          <input
+                            type="text"
+                            value={simCode}
+                            onChange={(e) => setSimCode(e.target.value.toUpperCase())}
+                            placeholder="Ex: WARI-J01-9F3B"
+                            disabled={isDayValidated}
+                            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-mono font-bold text-navy-900 placeholder:text-slate-400 focus:border-brand-orange focus:outline-none focus:ring-1 focus:ring-brand-orange disabled:bg-slate-50"
+                          />
+                        </div>
+                      </div>
+
+                      <button
+                        type="submit"
+                        disabled={simLoading || !simCode.trim() || !simPanelisteId.trim() || isDayValidated}
+                        className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-orange py-2.5 text-xs font-bold text-white shadow-xs transition hover:bg-orange-600 disabled:opacity-50"
+                      >
+                        {simLoading ? (
+                          <>
+                            <Loader2 size={15} className="animate-spin" />
+                            <span>Vérification par le serveur central en cours...</span>
+                          </>
+                        ) : isDayValidated ? (
+                          <>
+                            <CheckCircle2 size={15} className="text-white" />
+                            <span>Journée déjà validée avec succès par le serveur central ✓</span>
+                          </>
+                        ) : (
+                          <>
+                            <Send size={14} />
+                            <span>Valider dans l&apos;application testée (Vérification Serveur Central)</span>
+                          </>
+                        )}
+                      </button>
+                    </form>
+
+                    {/* Résultat du serveur central */}
+                    {simResult && (
                       <div
-                        className={`mt-2.5 flex items-center gap-2 rounded-xl p-2.5 text-xs font-medium ${
-                          validationResult.valid
-                            ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
-                            : "bg-red-50 text-red-700 border border-red-100"
+                        className={`mt-3 flex items-start gap-2.5 rounded-xl p-3 text-xs ${
+                          simResult.success
+                            ? "bg-emerald-50 text-emerald-800 border border-emerald-200/70"
+                            : "bg-red-50 text-red-700 border border-red-200/70"
                         }`}
                       >
-                        {validationResult.valid ? (
-                          <CheckCircle2 size={15} className="shrink-0" />
+                        {simResult.success ? (
+                          <CheckCircle2 size={17} className="shrink-0 text-emerald-600 mt-0.5" />
                         ) : (
-                          <AlertCircle size={15} className="shrink-0" />
+                          <AlertCircle size={17} className="shrink-0 text-red-600 mt-0.5" />
                         )}
-                        <span>{validationResult.message}</span>
+                        <div className="min-w-0">
+                          <p className="font-bold">{simResult.message}</p>
+                          {simResult.success && (
+                            <p className="mt-0.5 text-[11px] text-emerald-700">
+                              Progression globale mise à jour : <strong>{simResult.progression}%</strong> ({participation.etapesCompletees}/{participation.etapesTotal || 12} jours complétés).
+                            </p>
+                          )}
+                        </div>
                       </div>
                     )}
                   </div>
-                </div>
-              </section>
-            )}
+                </section>
+              );
+            })()}
 
             {/* 4. FEEDBACK À LA FIN (Demande explicite de l'utilisateur) */}
             {isCompleted && (

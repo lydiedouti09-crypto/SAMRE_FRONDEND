@@ -24,7 +24,7 @@ import {
   ArrowRight,
   Sparkles,
 } from "lucide-react";
-import { adminApi, type User } from "@/lib/api";
+import { adminApi, getImageUrl, type User } from "@/lib/api";
 import ConfirmModal, { type ConfirmVariant } from "@/components/ui/ConfirmModal";
 
 export default function AdminTesteursPage() {
@@ -288,9 +288,20 @@ export default function AdminTesteursPage() {
                       {/* Avatar et Nom */}
                       <td className="px-5 py-3.5">
                         <div className="flex items-center gap-3">
-                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-orange/10 text-xs font-bold text-brand-orange">
-                            {u.prenom?.[0] || u.nom?.[0] || "T"}
-                          </div>
+                          {u.photo ? (
+                            <img
+                              src={getImageUrl(u.photo)}
+                              alt={u.prenom || u.nom || "Testeur"}
+                              className="h-9 w-9 shrink-0 rounded-full object-cover border border-slate-200 shadow-2xs"
+                              onError={(e) => {
+                                (e.currentTarget as HTMLElement).style.display = "none";
+                              }}
+                            />
+                          ) : (
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-orange/10 text-xs font-bold text-brand-orange">
+                              {u.prenom?.[0] || u.nom?.[0] || "T"}
+                            </div>
+                          )}
                           <div>
                             <p className="font-bold text-navy-900">
                               {u.prenom} {u.nom}
@@ -437,9 +448,20 @@ export default function AdminTesteursPage() {
             {/* Header Fixe */}
             <div className="flex items-start justify-between border-b border-slate-100 p-6 sm:p-8 pb-4 bg-white shrink-0">
               <div className="flex items-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-orange text-white text-base font-bold shadow-md shadow-brand-orange/20">
-                  {selectedUser.prenom?.[0] || selectedUser.nom?.[0] || "U"}
-                </div>
+                {selectedUser.photo ? (
+                  <img
+                    src={getImageUrl(selectedUser.photo)}
+                    alt={selectedUser.prenom || selectedUser.nom || "Testeur"}
+                    className="h-12 w-12 rounded-2xl object-cover border border-slate-200 shadow-md shadow-brand-orange/10 shrink-0"
+                    onError={(e) => {
+                      (e.currentTarget as HTMLElement).style.display = "none";
+                    }}
+                  />
+                ) : (
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-orange text-white text-base font-bold shadow-md shadow-brand-orange/20 shrink-0">
+                    {selectedUser.prenom?.[0] || selectedUser.nom?.[0] || "U"}
+                  </div>
+                )}
                 <div>
                   <h3 className="font-bold text-base text-navy-900">
                     {selectedUser.prenom} {selectedUser.nom}
