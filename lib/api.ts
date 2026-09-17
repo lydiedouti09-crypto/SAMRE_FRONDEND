@@ -1,4 +1,6 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000";
+
+// ── Session Testeur / Utilisateur ────────────────────────────────────
 const TOKEN_KEY = "samre_token";
 
 export function getToken(): string | null {
@@ -14,12 +16,28 @@ export function clearToken() {
   localStorage.removeItem(TOKEN_KEY);
 }
 
+// ── Session Administrateur Dédiée & Indépendante ─────────────────────
+const ADMIN_TOKEN_KEY = "samre_admin_token";
+
+export function getAdminToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem(ADMIN_TOKEN_KEY);
+}
+
+export function setAdminToken(token: string) {
+  localStorage.setItem(ADMIN_TOKEN_KEY, token);
+}
+
+export function clearAdminToken() {
+  localStorage.removeItem(ADMIN_TOKEN_KEY);
+}
+
 export function getImageUrl(path?: string | null): string {
   if (!path || path.trim() === "") return "";
   if (path.startsWith("http://") || path.startsWith("https://") || path.startsWith("data:")) {
     return path;
   }
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
   return `${baseUrl.replace(/\/+$/, "")}/${path.replace(/^\/+/, "")}`;
 }
 
@@ -31,6 +49,7 @@ export class ApiError extends Error {
   }
 }
 
+// Client HTTP générique pour le testeur
 async function request<T>(
   path: string,
   options: RequestInit = {}
@@ -108,6 +127,84 @@ async function request<T>(
   return data as T;
 }
 
+// Client HTTP dédié à l'espace Administrateur (utilise samre_admin_token)
+async function adminRequest<T>(
+  path: string,
+  options: RequestInit = {}
+): Promise<T> {
+  const adminToken = getAdminToken();
+
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...(options.headers as Record<string, string>),
+  };
+
+  if (adminToken && !headers.Authorization) {
+    headers.Authorization = `Bearer ${adminToken}`;
+  }
+
+  const res = await fetch(`${API_URL}${path}`, { ...options, headers });
+
+  if (res.status === 401) {
+    clearAdminToken();
+    throw new ApiError("Session administrateur expirée. Reconnectez-vous.", 401);
+  }
+
+  const text = await res.text();
+  let data: any = null;
+
+  if (text) {
+    const trimmed = text.trim();
+    const isJsonLike = trimmed.startsWith("{") || trimmed.startsWith("[");
+
+    if (isJsonLike) {
+      try {
+        data = JSON.parse(trimmed);
+      } catch {
+        throw new ApiError(
+          "Le serveur a répondu avec une erreur de format JSON.",
+          res.status
+        );
+      }
+    } else {
+      const plainText = trimmed
+        .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, " ")
+        .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, " ")
+        .replace(/<[^>]+>/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+
+      const sanitized = plainText.slice(0, 220) || "Réponse serveur non valide.";
+
+      if (/SQLSTATE|No connection could be made|actively refused|Internal Server Error/i.test(sanitized)) {
+        data = {
+          message:
+            "La base de données n'est pas disponible. Démarrez MySQL/WAMP puis réessayez.",
+        };
+      } else {
+        data = { message: sanitized };
+      }
+    }
+  }
+
+  if (!res.ok) {
+    const message =
+      data?.error ??
+      data?.message ??
+      data?.errors ??
+      (res.status === 404
+        ? "Le serveur d'administration est introuvable. Vérifiez que l'API est démarrée."
+        : "Une erreur est survenue.");
+
+    throw new ApiError(
+      typeof message === "string" ? message : "Une erreur est survenue.",
+      res.status
+    );
+  }
+
+  return data as T;
+}
+
 export const api = {
   get: <T>(path: string) => request<T>(path),
   post: <T>(path: string, body?: unknown) =>
@@ -126,6 +223,26 @@ export const api = {
       body: body ? JSON.stringify(body) : undefined,
     }),
   delete: <T>(path: string) => request<T>(path, { method: "DELETE" }),
+};
+
+export const adminHttp = {
+  get: <T>(path: string) => adminRequest<T>(path),
+  post: <T>(path: string, body?: unknown) =>
+    adminRequest<T>(path, {
+      method: "POST",
+      body: body ? JSON.stringify(body) : undefined,
+    }),
+  put: <T>(path: string, body?: unknown) =>
+    adminRequest<T>(path, {
+      method: "PUT",
+      body: body ? JSON.stringify(body) : undefined,
+    }),
+  patch: <T>(path: string, body?: unknown) =>
+    adminRequest<T>(path, {
+      method: "PATCH",
+      body: body ? JSON.stringify(body) : undefined,
+    }),
+  delete: <T>(path: string) => adminRequest<T>(path, { method: "DELETE" }),
 };
 
 // ── Types correspondant aux réponses du backend Symfony ──────────────
@@ -231,6 +348,8 @@ export const authApi = {
     telephone: string;
     password: string;
   }) => api.post<User>("/api/register", data),
+  forgotPassword: (email: string) =>
+    api.post<{ message: string }>("/api/forgot-password", { email }),
   me: () => api.get<User>("/api/me"),
 };
 
@@ -254,9 +373,22 @@ export const etapesApi = {
     api.get<Etape[]>(`/api/etapes/mission/${missionId}`),
 };
 
+export type DailyCodeInfo = {
+  hasActiveMission: boolean;
+  code: string;
+  missionTitre?: string | null;
+  application?: string | null;
+  jour: number;
+  statut: string;
+  date: string;
+  dateKey: string;
+  panelisteUid: string;
+};
+
 export const referencesApi = {
   forEtape: (etapeId: number) =>
     api.get<Reference>(`/api/references/etape/${etapeId}`),
+  getDailyCode: () => api.get<DailyCodeInfo>("/api/references/daily-code"),
   validate: (etapeId: number, reference: string) =>
     api.post<{
       valid: boolean;
@@ -447,9 +579,25 @@ export type AdminNotification = {
   destinataireEmail?: string;
 };
 
+// ── API Authentification Administrateur Dédiée ───────────────────────
+export const adminAuthApi = {
+  login: (email: string, password: string) =>
+    adminRequest<{ token: string }>("/api/login", {
+      method: "POST",
+      body: JSON.stringify({ email, password }),
+    }),
+  me: (tokenOverride?: string) =>
+    adminRequest<User>(
+      "/api/me",
+      tokenOverride
+        ? { headers: { Authorization: `Bearer ${tokenOverride}` } }
+        : {}
+    ),
+};
+
 export const adminApi = {
   stats: () =>
-    api.get<{
+    adminHttp.get<{
       chercheurs: number;
       chercheursActifs: number;
       chercheursSuspendus: number;
@@ -467,15 +615,15 @@ export const adminApi = {
       participationsAbandons: number;
       feedbacks: number;
     }>("/api/admin/stats"),
-  users: () => api.get<User[]>("/api/admin/users"),
+  users: () => adminHttp.get<User[]>("/api/admin/users"),
   approveUser: (id: number) =>
-    api.patch<{ message: string; statut: string }>(`/api/admin/users/${id}/approve`),
+    adminHttp.patch<{ message: string; statut: string }>(`/api/admin/users/${id}/approve`),
   suspendUser: (id: number) =>
-    api.patch<{ message: string; statut: string }>(`/api/admin/users/${id}/suspend`),
+    adminHttp.patch<{ message: string; statut: string }>(`/api/admin/users/${id}/suspend`),
   reactivateUser: (id: number) =>
-    api.patch<{ message: string; statut: string }>(`/api/admin/users/${id}/reactivate`),
+    adminHttp.patch<{ message: string; statut: string }>(`/api/admin/users/${id}/reactivate`),
   uploadImage: async (file: File): Promise<{ url: string }> => {
-    const token = getToken();
+    const token = getAdminToken();
     const formData = new FormData();
     formData.append("image", file);
     const res = await fetch(`${API_URL}/api/admin/upload`, {
@@ -491,15 +639,15 @@ export const adminApi = {
     }
     return res.json();
   },
-  missions: () => api.get<AdminMission[]>("/api/admin/missions"),
+  missions: () => adminHttp.get<AdminMission[]>("/api/admin/missions"),
   createMission: (data: MissionPayload) =>
-    api.post<{ message: string; id: number; titre: string }>("/api/admin/missions", data),
+    adminHttp.post<{ message: string; id: number; titre: string }>("/api/admin/missions", data),
   updateMission: (id: number, data: MissionPayload) =>
-    api.put<{ message: string; id: number }>(`/api/admin/missions/${id}`, data),
+    adminHttp.put<{ message: string; id: number }>(`/api/admin/missions/${id}`, data),
   changeMissionStatus: (id: number, statut: string) =>
-    api.patch<{ message: string; statut: string }>(`/api/admin/missions/${id}/status`, { statut }),
+    adminHttp.patch<{ message: string; statut: string }>(`/api/admin/missions/${id}/status`, { statut }),
   deleteMission: (id: number) =>
-    api.delete<{ message: string }>(`/api/admin/missions/${id}`),
+    adminHttp.delete<{ message: string }>(`/api/admin/missions/${id}`),
   addEtape: (
     missionId: number,
     data: {
@@ -511,28 +659,28 @@ export const adminApi = {
       referenceCode?: string;
     }
   ) =>
-    api.post<{ message: string; id: number; titre: string }>(
+    adminHttp.post<{ message: string; id: number; titre: string }>(
       `/api/admin/missions/${missionId}/etapes`,
       data
     ),
-  participations: () => api.get<AdminParticipation[]>("/api/admin/participations"),
+  participations: () => adminHttp.get<AdminParticipation[]>("/api/admin/participations"),
   acceptParticipation: (id: number) =>
-    api.patch<{ message: string; statut: string }>(`/api/admin/participations/${id}/accept`),
+    adminHttp.patch<{ message: string; statut: string }>(`/api/admin/participations/${id}/accept`),
   refuseParticipation: (id: number) =>
-    api.patch<{ message: string; statut: string }>(`/api/admin/participations/${id}/refuse`),
+    adminHttp.patch<{ message: string; statut: string }>(`/api/admin/participations/${id}/refuse`),
   updateParticipationStatus: (id: number, statut: string) =>
-    api.patch<{ message: string; statut: string }>(`/api/admin/participations/${id}/status`, { statut }),
+    adminHttp.patch<{ message: string; statut: string }>(`/api/admin/participations/${id}/status`, { statut }),
   participationDetails: (id: number) =>
-    api.get<ParticipationDetail>(`/api/admin/participations/${id}/details`),
-  feedbacks: () => api.get<AdminFeedback[]>("/api/admin/feedbacks"),
-  notifications: () => api.get<AdminNotification[]>("/api/admin/notifications"),
+    adminHttp.get<ParticipationDetail>(`/api/admin/participations/${id}/details`),
+  feedbacks: () => adminHttp.get<AdminFeedback[]>("/api/admin/feedbacks"),
+  notifications: () => adminHttp.get<AdminNotification[]>("/api/admin/notifications"),
   sendNotification: (data: {
     target: "user" | "mission" | "all";
     targetId?: number;
     titre: string;
     message: string;
     type?: string;
-  }) => api.post<{ message: string; destinataires: number }>("/api/admin/notifications/send", data),
+  }) => adminHttp.post<{ message: string; destinataires: number }>("/api/admin/notifications/send", data),
 };
 
 export type ApplicationItem = {
@@ -616,21 +764,21 @@ export type IntegrationInfo = {
 };
 
 export const applicationsApi = {
-  list: () => api.get<ApplicationItem[]>("/api/admin/applications"),
-  show: (id: number) => api.get<ApplicationDetail>(`/api/admin/applications/${id}`),
+  list: () => adminHttp.get<ApplicationItem[]>("/api/admin/applications"),
+  show: (id: number) => adminHttp.get<ApplicationDetail>(`/api/admin/applications/${id}`),
   create: (data: ApplicationPayload) =>
-    api.post<{ message: string; id: number; apiKey: string; tokenIntegration: string }>(
+    adminHttp.post<{ message: string; id: number; apiKey: string; tokenIntegration: string }>(
       "/api/admin/applications",
       data
     ),
   update: (id: number, data: Partial<ApplicationPayload>) =>
-    api.put<{ message: string; id: number }>(`/api/admin/applications/${id}`, data),
+    adminHttp.put<{ message: string; id: number }>(`/api/admin/applications/${id}`, data),
   regenerateKey: (id: number) =>
-    api.patch<{ message: string; apiKey: string }>(
+    adminHttp.patch<{ message: string; apiKey: string }>(
       `/api/admin/applications/${id}/regenerate-key`
     ),
   delete: (id: number) =>
-    api.delete<{ message: string }>(`/api/admin/applications/${id}`),
+    adminHttp.delete<{ message: string }>(`/api/admin/applications/${id}`),
 };
 
 export const sdkApi = {

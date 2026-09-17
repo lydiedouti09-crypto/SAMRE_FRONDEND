@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -10,8 +11,17 @@ import {
   Activity,
   Layers,
   Sparkles,
+  KeyRound,
+  Copy,
+  Check,
 } from "lucide-react";
-import { getImageUrl, type Mission, type Participation, type NotificationItem } from "@/lib/api";
+import {
+  getImageUrl,
+  type Mission,
+  type Participation,
+  type NotificationItem,
+  type DailyCodeInfo,
+} from "@/lib/api";
 import DesktopActivityPanel from "./DesktopActivityPanel";
 
 type Props = {
@@ -24,6 +34,7 @@ type Props = {
   participations: Participation[];
   notifications: NotificationItem[];
   etapesValidees: number;
+  dailyCode?: DailyCodeInfo | null;
 };
 
 export default function DesktopDashboard({
@@ -36,7 +47,17 @@ export default function DesktopDashboard({
   participations,
   notifications,
   etapesValidees,
+  dailyCode,
 }: Props) {
+  const [copied, setCopied] = useState(false);
+
+  function handleCopyDailyCode(codeToCopy: string) {
+    if (!codeToCopy) return;
+    navigator.clipboard.writeText(codeToCopy);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
   const today = new Date();
   const dateFormatted = today.toLocaleDateString("fr-FR", {
     day: "numeric",
@@ -125,25 +146,51 @@ export default function DesktopDashboard({
             </div>
           </div>
 
-          {/* Card 3: Taux de réussite global */}
-          <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-xs transition hover:shadow-sm">
+          {/* Card 3: Code du jour pour les missions */}
+          <div className="rounded-2xl border border-indigo-100/70 bg-gradient-to-br from-white via-indigo-50/25 to-white p-4 shadow-xs transition hover:shadow-sm">
             <div className="flex items-center justify-between">
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-purple-50 text-purple-600">
-                <Activity size={18} />
+              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 shadow-2xs">
+                <KeyRound size={18} />
               </span>
-              <span className="rounded-full bg-purple-50 px-2 py-0.5 text-[10px] font-bold text-purple-600">
-                Taux global
+              <span className="flex items-center gap-1.5 rounded-full bg-indigo-50 border border-indigo-100 px-2.5 py-0.5 text-[10px] font-bold text-indigo-700">
+                <span className="h-1.5 w-1.5 rounded-full bg-indigo-500 animate-pulse" />
+                {dailyCode?.hasActiveMission ? `Jour ${dailyCode.jour}` : "Code du jour"}
               </span>
             </div>
             <p className="mt-3 text-[11px] font-medium text-slate-400 uppercase tracking-wider">
-              Progression générale
+              Code du jour
             </p>
-            <div className="mt-0.5 flex items-baseline gap-1.5">
-              <span className="font-display text-xl font-bold text-navy-900">
-                {active ? progression : completionRate}%
-              </span>
-              <span className="text-[11px] text-slate-500">d&apos;avancement</span>
+            <div className="mt-0.5 flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <span className="font-mono text-base font-extrabold tracking-wider text-navy-900 select-all sm:text-lg">
+                  {dailyCode?.code || "SAM-CHARGEMENT"}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => handleCopyDailyCode(dailyCode?.code || "")}
+                disabled={!dailyCode?.code}
+                className="flex items-center gap-1 rounded-lg border border-indigo-200/80 bg-white px-2 py-1 text-[11px] font-semibold text-indigo-700 shadow-2xs transition hover:bg-indigo-50 active:scale-95 disabled:opacity-50"
+                title="Copier le code du jour"
+              >
+                {copied ? (
+                  <>
+                    <Check size={12} className="text-emerald-600" />
+                    <span className="text-emerald-600 font-bold">Copié</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy size={12} />
+                    <span>Copier</span>
+                  </>
+                )}
+              </button>
             </div>
+            <p className="mt-1 text-[10px] text-slate-400 truncate">
+              {dailyCode?.hasActiveMission && dailyCode.application
+                ? `Pour valider ${dailyCode.application} aujourd'hui`
+                : "Renouvelé chaque jour automatiquement"}
+            </p>
           </div>
         </div>
 

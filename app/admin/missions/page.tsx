@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { createPortal } from "react-dom";
 import { useSearchParams } from "next/navigation";
 import {
@@ -25,7 +25,7 @@ import {
   PlayCircle,
   Clock,
   FileText,
-  DollarSign,
+  Coins,
   ListTodo,
   CheckSquare,
   Search,
@@ -54,7 +54,7 @@ type TodoStep = {
   dureeEstimee: string;
 };
 
-export default function AdminMissionsPage() {
+function AdminMissionsContent() {
   const searchParams = useSearchParams();
   const [mounted, setMounted] = useState(false);
   const [missions, setMissions] = useState<AdminMission[]>([]);
@@ -627,8 +627,8 @@ export default function AdminMissionsPage() {
                               Du {m.dateDebut} au {m.dateFin || "..."}
                             </span>
                           )}
-                          <span className="inline-flex items-center gap-1 font-semibold text-emerald-600">
-                            <DollarSign size={13} />
+                          <span className="inline-flex items-center gap-1.5 font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200/60 text-xs">
+                            <Coins size={13} className="text-emerald-600" />
                             {m.remuneration ? `${m.remuneration} FCFA` : "Gratuit"}
                           </span>
                         </div>
@@ -1409,5 +1409,13 @@ export default function AdminMissionsPage() {
         onCancel={() => setConfirmConfig((c) => ({ ...c, isOpen: false }))}
       />
     </div>
+  );
+}
+
+export default function AdminMissionsPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-xs text-slate-400">Chargement des missions...</div>}>
+      <AdminMissionsContent />
+    </Suspense>
   );
 }

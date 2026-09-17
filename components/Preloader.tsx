@@ -42,11 +42,12 @@ export default function Preloader({ children }: { children?: ReactNode }) {
 
       const tl = gsap.timeline({
         onComplete: () => {
+          if (overlay) overlay.style.pointerEvents = "none";
           gsap.to(overlay, {
             opacity: 0,
-            scale: 1.03,
-            duration: 0.6,
-            ease: "power2.inOut",
+            scale: 1.02,
+            duration: 0.2,
+            ease: "power2.out",
             onComplete: () => {
               try {
                 sessionStorage.setItem("samre-loaded", "1");
@@ -59,7 +60,7 @@ export default function Preloader({ children }: { children?: ReactNode }) {
 
       tl.to(obj, {
         value: 100,
-        duration: 1.6,
+        duration: 0.35,
         ease: "power2.out",
         onUpdate: () => {
           if (counter) {

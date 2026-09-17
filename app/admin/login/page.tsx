@@ -5,12 +5,11 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { Shield, Lock, Eye, EyeOff, Loader2, ArrowLeft, AlertTriangle } from "lucide-react";
-import { useAuth } from "@/lib/auth-context";
-import { clearToken } from "@/lib/api";
+import { useAdminAuth } from "@/lib/admin-auth-context";
 
 export default function AdminLoginPage() {
   const router = useRouter();
-  const { user, loading: authLoading, login, logout } = useAuth();
+  const { adminUser, adminLoading, adminLogin } = useAdminAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -18,12 +17,12 @@ export default function AdminLoginPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Si l'utilisateur est déjà connecté en tant qu'admin, rediriger directement vers /admin
+  // Si l'administrateur est déjà authentifié, rediriger directement vers /admin
   useEffect(() => {
-    if (!authLoading && user && user.role === "admin") {
+    if (!adminLoading && adminUser && adminUser.role === "admin") {
       router.replace("/admin");
     }
-  }, [user, authLoading, router]);
+  }, [adminUser, adminLoading, router]);
 
   async function handleAdminLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -36,17 +35,7 @@ export default function AdminLoginPage() {
 
     setSubmitting(true);
     try {
-      const loggedUser = await login(email.trim(), password);
-
-      if (loggedUser?.role !== "admin") {
-        // Déconnexion immédiate : utilisateur non admin
-        clearToken();
-        logout("/admin/login");
-        setError("Accès refusé : Ce compte ne dispose pas des privilèges administrateur.");
-        setSubmitting(false);
-        return;
-      }
-
+      await adminLogin(email.trim(), password);
       router.replace("/admin");
     } catch (err) {
       setError(
@@ -57,6 +46,7 @@ export default function AdminLoginPage() {
       setSubmitting(false);
     }
   }
+
 
   return (
     <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-[#070D18] px-4 py-12 text-slate-100 selection:bg-brand-orange selection:text-white">

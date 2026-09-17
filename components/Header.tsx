@@ -98,6 +98,7 @@ export default function Header() {
           </button>
           <Link
             href="/connexion"
+            prefetch={true}
             className="rounded-full bg-gradient-to-r from-brand-orange to-brand-orange-dark px-6 py-2 text-sm font-semibold text-white shadow-md shadow-brand-orange/25 transition-all duration-200 hover:shadow-lg hover:shadow-brand-orange/35 hover:-translate-y-0.5"
           >
             Se connecter
@@ -207,6 +208,7 @@ export default function Header() {
           <div className="mt-4 flex flex-col gap-2 border-t border-slate-100 pt-4">
             <Link
               href="/connexion"
+              prefetch={true}
               onClick={() => setMobileOpen(false)}
               className="rounded-full bg-gradient-to-r from-brand-orange to-brand-orange-dark px-5 py-2.5 text-center text-sm font-semibold text-white shadow-md shadow-brand-orange/20 transition-all"
             >

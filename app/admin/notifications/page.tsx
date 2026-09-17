@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   Bell,
@@ -22,7 +22,7 @@ import {
   type User as UserType,
 } from "@/lib/api";
 
-export default function AdminNotificationsPage() {
+function AdminNotificationsContent() {
   const searchParams = useSearchParams();
 
   const [notifications, setNotifications] = useState<AdminNotification[]>([]);
@@ -418,5 +418,13 @@ export default function AdminNotificationsPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function AdminNotificationsPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-xs text-slate-400">Chargement des notifications...</div>}>
+      <AdminNotificationsContent />
+    </Suspense>
   );
 }

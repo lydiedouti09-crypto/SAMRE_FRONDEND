@@ -6,19 +6,16 @@ import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
-  Briefcase,
   Users,
   CheckCircle2,
   LogOut,
-  Shield,
-  ArrowUpRight,
   Loader2,
   MessageSquare,
   Bell,
   ListTodo,
   Smartphone,
 } from "lucide-react";
-import { useAuth } from "@/lib/auth-context";
+import { AdminAuthProvider, useAdminAuth } from "@/lib/admin-auth-context";
 
 const adminNav = [
   { href: "/admin", label: "Vue d'ensemble", icon: LayoutDashboard, exact: true },
@@ -30,33 +27,25 @@ const adminNav = [
   { href: "/admin/notifications", label: "Centre Notifications", icon: Bell, exact: false },
 ];
 
-export default function AdminLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+function AdminLayoutInner({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, loading, logout } = useAuth();
+  const { adminUser, adminLoading, adminLogout } = useAdminAuth();
 
   const isLoginPage = pathname === "/admin/login";
 
   useEffect(() => {
     if (isLoginPage) return;
-    if (!loading && (!user || user.role !== "admin")) {
+    if (!adminLoading && (!adminUser || adminUser.role !== "admin")) {
       router.replace("/admin/login");
     }
-  }, [user, loading, router, isLoginPage]);
-
-  const handleAdminLogout = () => {
-    logout("/admin/login");
-  };
+  }, [adminUser, adminLoading, router, isLoginPage]);
 
   if (isLoginPage) {
     return <>{children}</>;
   }
 
-  if (loading) {
+  if (adminLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-900 text-white">
         <div className="flex flex-col items-center gap-3">
@@ -67,7 +56,7 @@ export default function AdminLayout({
     );
   }
 
-  if (!user || user.role !== "admin") {
+  if (!adminUser || adminUser.role !== "admin") {
     return null;
   }
 
@@ -135,17 +124,17 @@ export default function AdminLayout({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5 overflow-hidden">
               <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-rose-500/20 text-xs font-bold text-rose-400">
-                {user.prenom?.[0] || user.nom?.[0] || "A"}
+                {adminUser.prenom?.[0] || adminUser.nom?.[0] || "A"}
               </div>
               <div className="truncate">
                 <p className="truncate text-xs font-semibold text-white">
-                  {user.prenom} {user.nom}
+                  {adminUser.prenom} {adminUser.nom}
                 </p>
-                <p className="truncate text-[10px] text-slate-400">{user.email}</p>
+                <p className="truncate text-[10px] text-slate-400">{adminUser.email}</p>
               </div>
             </div>
             <button
-              onClick={handleAdminLogout}
+              onClick={() => adminLogout()}
               title="Déconnexion"
               className="rounded-lg p-1.5 text-slate-400 hover:bg-rose-500/10 hover:text-rose-400 transition"
             >
@@ -163,7 +152,7 @@ export default function AdminLayout({
             <Image src="/logo.png" alt="Samré Logo" width={28} height={28} />
             <span className="font-bold text-navy-900">samré ADMIN</span>
           </div>
-          <button onClick={handleAdminLogout} className="text-xs font-semibold text-rose-500 hover:underline">
+          <button onClick={() => adminLogout()} className="text-xs font-semibold text-rose-500 hover:underline">
             Déconnexion
           </button>
         </header>
@@ -172,5 +161,17 @@ export default function AdminLayout({
         <main className="flex-1 p-5 md:p-8 max-w-7xl w-full mx-auto">{children}</main>
       </div>
     </div>
+  );
+}
+
+export default function AdminLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <AdminAuthProvider>
+      <AdminLayoutInner>{children}</AdminLayoutInner>
+    </AdminAuthProvider>
   );
 }

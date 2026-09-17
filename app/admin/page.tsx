@@ -23,6 +23,7 @@ import {
   ExternalLink,
   Ban,
   UserCheck,
+  Coins,
 } from "lucide-react";
 import { adminApi, type AdminMission, type User } from "@/lib/api";
 
@@ -456,7 +457,8 @@ export default function AdminDashboardPage() {
                           Android
                         </span>
                         <span className="text-[10px] text-slate-300">•</span>
-                        <span className="text-[10px] text-brand-orange font-bold">
+                        <span className="inline-flex items-center gap-1 text-[10px] text-brand-orange font-bold">
+                          <Coins size={11} className="text-brand-orange" />
                           {m.remuneration ? `${m.remuneration} FCFA` : "Bénévole"}
                         </span>
                       </div>

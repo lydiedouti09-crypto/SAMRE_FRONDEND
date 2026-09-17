@@ -64,18 +64,18 @@ export default function ProfilPage() {
         setNom(data.nom || "");
         setPrenom(data.prenom || "");
         setTelephone(data.telephone || "");
-        setPays(data.pays || "Côte d'Ivoire");
+        setPays(data.pays || "");
         setVille(data.ville || "");
-        setGenre(data.genre || "Homme");
+        setGenre(data.genre || "");
       })
       .catch(() => {
         if (user) {
           setNom(user.nom || "");
           setPrenom(user.prenom || "");
           setTelephone(user.telephone || "");
-          setPays(user.pays || "Côte d'Ivoire");
+          setPays(user.pays || "");
           setVille(user.ville || "");
-          setGenre(user.genre || "Homme");
+          setGenre(user.genre || "");
         }
       })
       .finally(() => setLoading(false));
@@ -363,6 +363,7 @@ export default function ProfilPage() {
                   onChange={(e) => setPays(e.target.value)}
                   className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-xs text-navy-900 focus:border-brand-orange focus:outline-none focus:ring-1 focus:ring-brand-orange bg-white"
                 >
+                  <option value="">Sélectionnez votre pays</option>
                   {PAYS_LIST.map((p) => (
                     <option key={p} value={p}>
                       {p}
@@ -393,6 +394,7 @@ export default function ProfilPage() {
                   onChange={(e) => setGenre(e.target.value)}
                   className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-xs text-navy-900 focus:border-brand-orange focus:outline-none focus:ring-1 focus:ring-brand-orange bg-white"
                 >
+                  <option value="">Sélectionnez votre genre</option>
                   <option value="Homme">Homme</option>
                   <option value="Femme">Femme</option>
                   <option value="Non précisé">Non précisé</option>
@@ -474,8 +476,8 @@ export default function ProfilPage() {
                 <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
                   Pays de résidence
                 </p>
-                <p className="text-xs font-bold text-navy-900 mt-0.5">
-                  {profile?.pays || user?.pays || "Côte d'Ivoire"}
+                <p className={`text-xs font-bold mt-0.5 ${profile?.pays || user?.pays ? "text-navy-900" : "text-slate-400 italic font-normal"}`}>
+                  {profile?.pays || user?.pays || "Non renseigné"}
                 </p>
               </div>
             </div>
@@ -488,8 +490,8 @@ export default function ProfilPage() {
                 <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
                   Ville
                 </p>
-                <p className="text-xs font-bold text-navy-900 mt-0.5">
-                  {profile?.ville || user?.ville || "Abidjan"}
+                <p className={`text-xs font-bold mt-0.5 ${profile?.ville || user?.ville ? "text-navy-900" : "text-slate-400 italic font-normal"}`}>
+                  {profile?.ville || user?.ville || "Non renseignée"}
                 </p>
               </div>
             </div>
@@ -502,7 +504,7 @@ export default function ProfilPage() {
                 <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
                   Genre
                 </p>
-                <p className="text-xs font-bold text-navy-900 mt-0.5">
+                <p className={`text-xs font-bold mt-0.5 ${profile?.genre || user?.genre ? "text-navy-900" : "text-slate-400 italic font-normal"}`}>
                   {profile?.genre || user?.genre || "Non précisé"}
                 </p>
               </div>

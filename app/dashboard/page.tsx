@@ -13,16 +13,21 @@ import {
   Star,
   ArrowRight,
   Sparkles,
+  KeyRound,
+  Copy,
+  Check,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import {
   missionsApi,
   participationsApi,
   notificationsApi,
+  referencesApi,
   getImageUrl,
   type Mission,
   type Participation,
   type NotificationItem,
+  type DailyCodeInfo,
 } from "@/lib/api";
 import DesktopDashboard from "@/components/dashboard/DesktopDashboard";
 
@@ -31,6 +36,8 @@ export default function DashboardPage() {
   const [participations, setParticipations] = useState<Participation[]>([]);
   const [missions, setMissions] = useState<Mission[]>([]);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [dailyCode, setDailyCode] = useState<DailyCodeInfo | null>(null);
+  const [copiedMobile, setCopiedMobile] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -39,16 +46,25 @@ export default function DashboardPage() {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedDay, setSelectedDay] = useState<number>(15);
 
+  function handleCopyMobile(codeToCopy: string) {
+    if (!codeToCopy) return;
+    navigator.clipboard.writeText(codeToCopy);
+    setCopiedMobile(true);
+    setTimeout(() => setCopiedMobile(false), 2000);
+  }
+
   useEffect(() => {
     Promise.all([
       participationsApi.mine(),
       missionsApi.list(),
       notificationsApi.list().catch(() => []),
+      referencesApi.getDailyCode().catch(() => null),
     ])
-      .then(([parts, miss, notifs]) => {
+      .then(([parts, miss, notifs, code]) => {
         setParticipations(parts);
         setMissions(miss);
         setNotifications(notifs);
+        setDailyCode(code);
       })
       .catch((e) =>
         setError(e instanceof Error ? e.message : "Erreur de chargement.")
@@ -277,8 +293,54 @@ export default function DashboardPage() {
           </div>
         )}
 
+        {/* Carte Code du jour Mobile */}
+        <div className="mt-4 rounded-2xl border border-indigo-100/80 bg-gradient-to-br from-white via-indigo-50/20 to-white p-4 shadow-xs">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+                <KeyRound size={15} />
+              </span>
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                Code du jour (Missions)
+              </span>
+            </div>
+            <span className="flex items-center gap-1 rounded-full bg-indigo-50 border border-indigo-100 px-2 py-0.5 text-[10px] font-bold text-indigo-700">
+              <span className="h-1.5 w-1.5 rounded-full bg-indigo-500 animate-pulse" />
+              {dailyCode?.hasActiveMission ? `Jour ${dailyCode.jour}` : "Aujourd'hui"}
+            </span>
+          </div>
+          <div className="mt-2.5 flex items-center justify-between gap-2">
+            <span className="font-mono text-base font-extrabold tracking-wider text-navy-900 select-all">
+              {dailyCode?.code || "SAM-XXXXXX"}
+            </span>
+            <button
+              type="button"
+              onClick={() => handleCopyMobile(dailyCode?.code || "")}
+              disabled={!dailyCode?.code}
+              className="flex items-center gap-1 rounded-lg border border-indigo-200/80 bg-white px-2.5 py-1 text-xs font-semibold text-indigo-700 shadow-2xs transition active:scale-95 disabled:opacity-50"
+            >
+              {copiedMobile ? (
+                <>
+                  <Check size={12} className="text-emerald-600" />
+                  <span className="text-emerald-600 font-bold">Copié</span>
+                </>
+              ) : (
+                <>
+                  <Copy size={12} />
+                  <span>Copier</span>
+                </>
+              )}
+            </button>
+          </div>
+          <p className="mt-1 text-[10px] text-slate-400">
+            {dailyCode?.hasActiveMission && dailyCode.application
+              ? `Code pour valider ${dailyCode.application} aujourd'hui`
+              : "Code testeur quotidien • Renouvelé chaque jour"}
+          </p>
+        </div>
+
         {/* 2 Cartes de Métriques de test */}
-        <div className="mt-4 grid grid-cols-2 gap-3">
+        <div className="mt-3 grid grid-cols-2 gap-3">
           <div className="rounded-2xl border border-slate-100 bg-white p-3.5 shadow-xs">
             <div className="flex items-center gap-1.5 text-slate-400">
               <Sparkles size={14} className="text-brand-orange" />
@@ -391,6 +453,7 @@ export default function DashboardPage() {
           participations={participations}
           notifications={notifications}
           etapesValidees={joursValides}
+          dailyCode={dailyCode}
         />
       </div>
     </>
