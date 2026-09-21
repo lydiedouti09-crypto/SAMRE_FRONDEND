@@ -35,7 +35,7 @@ export default function HistoriquePage() {
 
   return (
     <div className="min-h-screen bg-[#F8F9FB] px-4 pt-5 pb-24 lg:px-8">
-      <div className="max-w-4xl mx-auto space-y-4">
+      <div className="max-w-md sm:max-w-2xl lg:max-w-4xl mx-auto space-y-4">
         {/* Header */}
         <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
           <div>

@@ -23,6 +23,7 @@ import {
   Play,
   Send,
   KeyRound,
+  Flame,
 } from "lucide-react";
 import {
   missionsApi,
@@ -91,6 +92,23 @@ export default function MissionDetailPage() {
   const [commentaires, setCommentaires] = useState("");
   const [sendingFeedback, setSendingFeedback] = useState(false);
   const [feedbackSent, setFeedbackSent] = useState(false);
+
+  // Commentaire quotidien optionnel
+  const [dailyComment, setDailyComment] = useState("");
+  const [dailyRating, setDailyRating] = useState<number>(5);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [sendingDailyComment, setSendingDailyComment] = useState(false);
+  const [dailyCommentSent, setDailyCommentSent] = useState(false);
+
+  const [showAllStepsList, setShowAllStepsList] = useState(false);
+
+  const quickTagsList = [
+    { label: "🚀 Fluide & Rapide", value: "Fluide & Rapide" },
+    { label: "🐛 Bug rencontré", value: "Bug rencontré" },
+    { label: "🎨 Beau design", value: "Beau design" },
+    { label: "⚠️ Ralentissement", value: "Ralentissement" },
+    { label: "💡 Suggestion", value: "Suggestion" },
+  ];
 
   async function loadAll(quiet = false) {
     if (!quiet) setLoading(true);
@@ -161,7 +179,7 @@ export default function MissionDetailPage() {
       if (res.success) {
         setSimResult({
           success: true,
-          message: res.message || "Félicitations ! Journée validée avec succès par le serveur central.",
+          message: res.message || "Félicitations ! Votre journée de test a été validée avec succès.",
           jour: res.jour,
           progression: res.progression,
         });
@@ -169,13 +187,13 @@ export default function MissionDetailPage() {
       } else {
         setSimResult({
           success: false,
-          message: res.error || "Code non reconnu par le serveur central.",
+          message: res.error || "Code invalide. Vérifiez le code saisi et réessayez.",
         });
       }
     } catch (err) {
       setSimResult({
         success: false,
-        message: err instanceof Error ? err.message : "Erreur de communication avec le serveur central.",
+        message: err instanceof Error ? err.message : "Erreur de communication. Veuillez réessayer.",
       });
     } finally {
       setSimLoading(false);
@@ -218,6 +236,8 @@ export default function MissionDetailPage() {
 
   function handleSelectEtape(etape: Etape) {
     setSelectedEtape(etape);
+    setDailyComment("");
+    setDailyCommentSent(false);
     loadReferenceForEtape(etape.id);
   }
 
@@ -257,6 +277,36 @@ export default function MissionDetailPage() {
     }
   }
 
+  async function handleSendDailyComment(e: React.FormEvent) {
+    e.preventDefault();
+    if (!participation) return;
+
+    const finalComment = [
+      selectedTags.length > 0 ? `[Tags : ${selectedTags.join(", ")}]` : "",
+      dailyComment.trim(),
+    ]
+      .filter(Boolean)
+      .join("\n");
+
+    if (!finalComment) return;
+
+    setSendingDailyComment(true);
+    try {
+      await feedbackApi.create({
+        participationId: participation.id,
+        note: dailyRating,
+        commentaires: finalComment,
+        jour: selectedEtape?.ordre || 1,
+        isFinal: false,
+      });
+      setDailyCommentSent(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur lors de l'envoi du commentaire.");
+    } finally {
+      setSendingDailyComment(false);
+    }
+  }
+
   async function handleSendFeedback(e: React.FormEvent) {
     e.preventDefault();
     if (!participation) return;
@@ -271,6 +321,7 @@ export default function MissionDetailPage() {
         difficultes: difficultes.trim() || undefined,
         ameliorations: ameliorations.trim() || undefined,
         commentaires: commentaires.trim() || undefined,
+        isFinal: true,
       });
       setFeedbackSent(true);
     } catch (err) {
@@ -310,21 +361,28 @@ export default function MissionDetailPage() {
   return (
     <div className="min-h-screen bg-[#F8F9FB] pb-20">
       {/* En-tête de navigation */}
-      <header className="sticky top-0 z-30 flex items-center gap-3 border-b border-slate-100 bg-white/95 px-4 py-3 backdrop-blur-md">
-        <button
-          onClick={() => router.push("/dashboard/missions")}
-          aria-label="Retour"
-          className="rounded-lg p-1 text-slate-500 hover:bg-slate-50"
-        >
-          <ArrowLeft size={18} />
-        </button>
-        <div className="min-w-0 flex-1">
-          <p className="truncate font-display text-sm font-bold text-navy-900">
-            {mission.titre}
-          </p>
-          <p className="text-[11px] text-slate-400">
-            Application : {mission.application}
-          </p>
+      <header className="sticky top-0 z-30 border-b border-slate-200/70 bg-white/95 backdrop-blur-xl px-4 py-2.5">
+        <div className="max-w-md sm:max-w-2xl lg:max-w-3xl mx-auto flex items-center gap-3">
+          <button
+            onClick={() => router.push("/dashboard/missions")}
+            aria-label="Retour"
+            className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200/80 bg-white text-slate-600 shadow-2xs hover:bg-slate-50 transition active:scale-95"
+          >
+            <ArrowLeft size={18} />
+          </button>
+          <div className="min-w-0 flex-1">
+            <p className="truncate font-display text-sm font-bold text-navy-900 leading-tight">
+              {mission.titre}
+            </p>
+            <p className="text-[11px] text-slate-400">
+              Application : {mission.application}
+            </p>
+          </div>
+          {participation && (
+            <span className="shrink-0 rounded-full bg-orange-50 border border-orange-200/60 px-2.5 py-0.5 text-[10px] font-bold text-brand-orange">
+              Jour {selectedEtape?.ordre || (participation.etapesCompletees || 0) + 1}/12
+            </span>
+          )}
         </div>
       </header>
 
@@ -335,7 +393,7 @@ export default function MissionDetailPage() {
         </div>
       )}
 
-      <div className="max-w-3xl mx-auto px-4 pt-4 space-y-4">
+      <div className="max-w-md sm:max-w-2xl lg:max-w-3xl mx-auto px-3.5 sm:px-6 pt-3.5 space-y-4">
         {/* Présentation de la mission */}
         <section className="rounded-2xl border border-slate-100 bg-white p-5 shadow-xs">
           <div className="flex items-start gap-4">
@@ -598,79 +656,115 @@ export default function MissionDetailPage() {
               </div>
             </section>
 
-            {/* Barre d'avancement globale */}
-            <section className="rounded-2xl border border-slate-100 bg-white p-4 shadow-xs">
+            {/* 12 Jours - Suivi Quotidien Interactif (Habit Tracker Carousel) */}
+            <section className="rounded-3xl border border-slate-200/80 bg-white p-4 sm:p-5 shadow-xs">
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                    Progression du test
-                  </p>
-                  <p className="font-display text-base font-bold text-navy-900">
-                    Étape {participation.etapesCompletees} / {participation.etapesTotal || etapes.length}
-                  </p>
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-orange-50 px-2.5 py-1 text-[11px] font-bold text-brand-orange border border-orange-200/60">
+                    <Flame size={13} className="text-brand-orange fill-brand-orange" />
+                    <span>Série : {participation.etapesCompletees || 0} jours validés</span>
+                  </span>
                 </div>
-                <span className="font-display text-lg font-bold text-brand-orange">
-                  {participation.progression ?? 0} %
+                <span className="font-display text-xs font-bold text-navy-900">
+                  {participation.etapesCompletees} / {participation.etapesTotal || etapes.length || 12} étapes ({participation.progression ?? 0}%)
                 </span>
               </div>
 
+              {/* Jauge fine avec gradient */}
               <div className="mt-2.5 h-2 w-full overflow-hidden rounded-full bg-slate-100">
                 <div
-                  className="h-full rounded-full bg-brand-orange transition-all duration-500"
+                  className="h-full rounded-full bg-gradient-to-r from-brand-orange to-amber-400 transition-all duration-500"
                   style={{ width: `${participation.progression ?? 0}%` }}
                 />
               </div>
 
-              {/* Liste des statuts des étapes demandée */}
-              <div className="mt-4 divide-y divide-slate-100 border-t border-slate-100 pt-2">
+              {/* Carrousel horizontal fluide des 12 Jours */}
+              <div className="mt-3.5 flex items-center gap-2 overflow-x-auto pb-1.5 scrollbar-none">
                 {etapes.map((etape, index) => {
                   const isCompletedForUser = index < (participation.etapesCompletees || 0) || etape.statut === "validee";
                   const isCurrent = selectedEtape?.id === etape.id;
                   const isPast = isCompletedForUser;
 
                   return (
-                    <div
+                    <button
                       key={etape.id}
+                      type="button"
                       onClick={() => handleSelectEtape(etape)}
-                      className={`flex items-center justify-between py-2.5 px-2 rounded-xl cursor-pointer transition ${
+                      className={`flex h-12 min-w-12 flex-col items-center justify-center rounded-2xl text-[11px] font-bold transition active:scale-95 ${
                         isCurrent
-                          ? "bg-orange-50/70 border border-orange-100"
-                          : "hover:bg-slate-50"
+                          ? "border-2 border-brand-orange bg-white text-brand-orange shadow-md scale-105"
+                          : isPast
+                          ? "bg-emerald-500 text-white shadow-xs"
+                          : "bg-slate-100/90 text-slate-400 hover:bg-slate-200/80"
                       }`}
                     >
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        {isPast ? (
-                          <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
-                        ) : isCurrent ? (
-                          <span className="flex h-4 w-4 items-center justify-center rounded-full bg-brand-orange text-[9px] font-bold text-white shrink-0">
-                            ●
-                          </span>
-                        ) : (
-                          <Circle size={16} className="text-slate-300 shrink-0" />
-                        )}
+                      <span className="text-[9px] uppercase opacity-80">J{etape.ordre}</span>
+                      {isPast ? (
+                        <Check size={14} strokeWidth={3} />
+                      ) : isCurrent ? (
+                        <span className="h-2 w-2 rounded-full bg-brand-orange animate-pulse" />
+                      ) : (
+                        <Lock size={12} className="opacity-60" />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
 
-                        <div className="min-w-0">
+              {/* Bouton pour afficher/masquer la liste détaillée de tous les jours */}
+              <div className="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={() => setShowAllStepsList(!showAllStepsList)}
+                  className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-500 hover:text-navy-900 transition"
+                >
+                  <span>{showAllStepsList ? "Masquer la liste complète" : "Afficher l'intitulé de toutes les étapes"}</span>
+                  <ChevronRight size={13} className={`transform transition-transform ${showAllStepsList ? "rotate-90" : ""}`} />
+                </button>
+                <span className="text-[10px] text-slate-400">12 jours au total</span>
+              </div>
+
+              {showAllStepsList && (
+                <div className="mt-2 divide-y divide-slate-100 border-t border-slate-100 pt-1">
+                  {etapes.map((etape, index) => {
+                    const isCompletedForUser = index < (participation.etapesCompletees || 0) || etape.statut === "validee";
+                    const isCurrent = selectedEtape?.id === etape.id;
+                    const isPast = isCompletedForUser;
+
+                    return (
+                      <div
+                        key={etape.id}
+                        onClick={() => handleSelectEtape(etape)}
+                        className={`flex items-center justify-between py-2 px-2 rounded-xl cursor-pointer transition ${
+                          isCurrent ? "bg-orange-50/70 border border-orange-100" : "hover:bg-slate-50"
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          {isPast ? (
+                            <CheckCircle2 size={15} className="text-emerald-500 shrink-0" />
+                          ) : isCurrent ? (
+                            <span className="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-brand-orange text-[8px] font-bold text-white shrink-0">
+                              ●
+                            </span>
+                          ) : (
+                            <Circle size={15} className="text-slate-300 shrink-0" />
+                          )}
                           <p className={`text-xs font-semibold truncate ${
                             isCurrent ? "text-navy-900" : isPast ? "text-slate-700" : "text-slate-400"
                           }`}>
                             Jour {etape.ordre} — {etape.titre}
                           </p>
                         </div>
+                        <span className={`text-[10px] font-bold shrink-0 ml-2 ${
+                          isPast ? "text-emerald-600" : isCurrent ? "text-brand-orange" : "text-slate-400"
+                        }`}>
+                          {isPast ? "✓ Validé" : isCurrent ? "● En cours" : "○ À venir"}
+                        </span>
                       </div>
-
-                      <span className={`text-[10px] font-bold shrink-0 ml-2 ${
-                        isPast
-                          ? "text-emerald-600"
-                          : isCurrent
-                          ? "text-brand-orange"
-                          : "text-slate-400"
-                      }`}>
-                        {isPast ? "✓ Validé" : isCurrent ? "● En cours" : "○ À venir"}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                </div>
+              )}
             </section>
 
             {/* 3. Bloc de validation de l'étape sélectionnée : Étape 4 du protocole */}
@@ -702,7 +796,7 @@ export default function MissionDetailPage() {
                         onClick={() => loadAll(true)}
                         disabled={refreshing}
                         className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-semibold text-slate-600 hover:bg-slate-50 transition"
-                        title="Actualiser le statut depuis le serveur central"
+                        title="Actualiser le statut de validation"
                       >
                         <RefreshCw size={13} className={refreshing ? "animate-spin text-brand-orange" : ""} />
                         <span>{refreshing ? "Vérification..." : "Actualiser"}</span>
@@ -730,7 +824,7 @@ export default function MissionDetailPage() {
                     </p>
                   </div>
 
-                  {/* CARTE CODE UNIQUE DU JOUR (Généré par le serveur central - Étape 6 du schéma) */}
+                  {/* CARTE CODE UNIQUE DU JOUR */}
                   <div className="rounded-2xl border border-slate-900/10 bg-gradient-to-br from-slate-900 via-navy-950 to-slate-900 p-5 text-white shadow-md">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
@@ -738,16 +832,16 @@ export default function MissionDetailPage() {
                           <KeyRound size={16} />
                         </span>
                         <span className="text-[11px] font-bold uppercase tracking-wider text-amber-400">
-                          Code Unique du Jour (Généré par le serveur central)
+                          Votre Code de Test du Jour
                         </span>
                       </div>
                       <span className="text-[10px] text-white/60 bg-white/10 px-2 py-0.5 rounded-full">
-                        Jour {selectedEtape.ordre} / 12
+                        Jour {selectedEtape.ordre} / {participation.etapesTotal || etapes.length || 12}
                       </span>
                     </div>
 
                     <p className="mt-2 text-xs text-white/80 leading-relaxed">
-                      Chaque jour, le serveur central génère un code unique pour votre compte. Vous devez lire ce code ici sur Samré, puis le saisir dans le formulaire de l&apos;application testée.
+                      Copiez ce code unique et saisissez-le dans l&apos;application testée pour valider votre session d&apos;aujourd&apos;hui.
                     </p>
 
                     <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-xl bg-white/10 p-3.5 border border-white/15">
@@ -788,58 +882,54 @@ export default function MissionDetailPage() {
                     </div>
 
                     <div className="mt-3 flex items-center justify-between text-[11px] text-white/70 border-t border-white/10 pt-2.5">
-                      <span>Identifiant Panéliste associé :</span>
+                      <span>Votre Identifiant Testeur :</span>
                       <span className="font-mono font-bold text-white bg-white/10 px-2 py-0.5 rounded">
                         {participation.panelisteUid || "TST-ATTRIBUÉ"}
                       </span>
                     </div>
                   </div>
 
-                  {/* Les 4 étapes du flux quotidien (Reproduction fidèle du diagramme Image 4) */}
-                  <div className="rounded-2xl border border-indigo-100 bg-indigo-50/40 p-4">
-                    <p className="text-xs font-bold text-indigo-950 flex items-center gap-1.5">
-                      <Sparkles size={14} className="text-indigo-600" />
-                      Comment fonctionne la validation quotidienne :
+                  {/* Étapes simples de validation pour le testeur */}
+                  <div className="rounded-2xl border border-slate-100 bg-gradient-to-r from-blue-50/50 via-indigo-50/30 to-purple-50/30 p-4">
+                    <p className="text-xs font-bold text-navy-900 flex items-center gap-1.5">
+                      <Sparkles size={14} className="text-brand-orange" />
+                      Comment valider votre journée en 3 étapes :
                     </p>
-                    <div className="mt-3 grid grid-cols-1 sm:grid-cols-4 gap-2.5 text-left">
-                      <div className="rounded-xl bg-white p-2.5 border border-indigo-100 shadow-2xs">
-                        <div className="flex items-center gap-1.5 text-indigo-600 font-bold text-[11px]">
-                          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-indigo-100 text-[10px]">1</span>
-                          <span>Serveur</span>
+                    <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-3 text-left">
+                      <div className="rounded-xl bg-white p-3 border border-slate-200/70 shadow-2xs flex items-start gap-2.5">
+                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-orange/10 font-bold text-brand-orange text-xs">
+                          1
+                        </span>
+                        <div>
+                          <p className="text-xs font-bold text-navy-900">Copier le code</p>
+                          <p className="mt-0.5 text-[11px] text-slate-500 leading-tight">
+                            Cliquez sur &laquo; Copier le code &raquo; ci-dessus pour récupérer votre code du jour.
+                          </p>
                         </div>
-                        <p className="mt-1 text-[10px] text-slate-600 leading-tight">
-                          Génère un code unique par jour pour votre compte.
-                        </p>
                       </div>
 
-                      <div className="rounded-xl bg-white p-2.5 border border-indigo-100 shadow-2xs">
-                        <div className="flex items-center gap-1.5 text-indigo-600 font-bold text-[11px]">
-                          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-indigo-100 text-[10px]">2</span>
-                          <span>Panéliste</span>
+                      <div className="rounded-xl bg-white p-3 border border-slate-200/70 shadow-2xs flex items-start gap-2.5">
+                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-100 font-bold text-emerald-700 text-xs">
+                          2
+                        </span>
+                        <div>
+                          <p className="text-xs font-bold text-navy-900">Ouvrir l&apos;application</p>
+                          <p className="mt-0.5 text-[11px] text-slate-500 leading-tight">
+                            Lancez {mission.application} sur votre smartphone et effectuez le test demandé.
+                          </p>
                         </div>
-                        <p className="mt-1 text-[10px] text-slate-600 leading-tight">
-                          Lit le code ici sur Samré et copie son ID Panéliste.
-                        </p>
                       </div>
 
-                      <div className="rounded-xl bg-white p-2.5 border border-indigo-100 shadow-2xs">
-                        <div className="flex items-center gap-1.5 text-indigo-600 font-bold text-[11px]">
-                          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-indigo-100 text-[10px]">3</span>
-                          <span>App testée</span>
+                      <div className="rounded-xl bg-white p-3 border border-slate-200/70 shadow-2xs flex items-start gap-2.5">
+                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-100 font-bold text-blue-700 text-xs">
+                          3
+                        </span>
+                        <div>
+                          <p className="text-xs font-bold text-navy-900">Valider la journée</p>
+                          <p className="mt-0.5 text-[11px] text-slate-500 leading-tight">
+                            Saisissez votre code dans l&apos;application ou confirmez-le ci-dessous pour valider.
+                          </p>
                         </div>
-                        <p className="mt-1 text-[10px] text-slate-600 leading-tight">
-                          Saisit son ID et le Code dans le formulaire de l&apos;app.
-                        </p>
-                      </div>
-
-                      <div className="rounded-xl bg-white p-2.5 border border-indigo-100 shadow-2xs">
-                        <div className="flex items-center gap-1.5 text-emerald-600 font-bold text-[11px]">
-                          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-100 text-[10px]">4</span>
-                          <span>Jour validé ✓</span>
-                        </div>
-                        <p className="mt-1 text-[10px] text-slate-600 leading-tight">
-                          Le serveur vérifie le code et valide automatiquement le jour.
-                        </p>
                       </div>
                     </div>
                   </div>
@@ -858,82 +948,244 @@ export default function MissionDetailPage() {
                     </a>
                   </div>
 
-                  {/* Simulateur de Formulaire Intégré (Permet de tester en direct ou de valider) */}
-                  <div className="rounded-2xl border border-slate-200 bg-white p-4.5 shadow-xs">
-                    <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                  {/* Formulaire de validation de la journée */}
+                  <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-slate-100 pb-3.5 gap-2">
                       <div>
-                        <div className="flex items-center gap-1.5">
-                          <Smartphone size={15} className="text-brand-orange" />
-                          <h4 className="font-display text-xs font-bold text-navy-900">
-                            Simulateur de validation : Formulaire de l&apos;application testée
+                        <div className="flex items-center gap-2">
+                          <ShieldCheck size={18} className="text-emerald-600" />
+                          <h4 className="font-display text-xs sm:text-sm font-bold text-navy-900">
+                            Validation de votre journée de test
                           </h4>
                         </div>
                         <p className="mt-0.5 text-[11px] text-slate-500">
-                          Ce formulaire reproduit fidèlement celui intégré par le développeur dans {mission.application}. Vous pouvez tester la validation en direct :
+                          Confirmez votre code pour valider votre journée de test (Jour {selectedEtape.ordre}) :
                         </p>
                       </div>
-                      <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-mono font-bold text-slate-600">
-                        POST /api/sdk/verify-day
-                      </span>
+                      {isDayValidated && (
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200 px-3 py-1 text-xs font-bold text-emerald-700 shrink-0 self-start sm:self-auto">
+                          <CheckCircle2 size={14} className="text-emerald-600" />
+                          <span>Jour {selectedEtape.ordre} Validé</span>
+                        </span>
+                      )}
                     </div>
 
-                    <form onSubmit={handleValidateViaSdk} className="mt-4 space-y-3">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div>
-                          <label className="block text-[11px] font-semibold text-slate-600 mb-1">
-                            Identifiant Unique Panéliste
-                          </label>
-                          <input
-                            type="text"
-                            value={simPanelisteId}
-                            onChange={(e) => setSimPanelisteId(e.target.value.toUpperCase())}
-                            placeholder="Ex: TST-849201"
-                            disabled={isDayValidated}
-                            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-mono font-bold text-navy-900 placeholder:text-slate-400 focus:border-brand-orange focus:outline-none focus:ring-1 focus:ring-brand-orange disabled:bg-slate-50"
-                          />
+                    {isDayValidated ? (
+                      <>
+                        <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50/70 p-4 text-emerald-900">
+                          <div className="flex items-start gap-3">
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700">
+                              <CheckCircle2 size={20} />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <h5 className="font-bold text-sm text-emerald-950">
+                                Jour {selectedEtape.ordre} validé avec succès !
+                              </h5>
+                              <p className="mt-0.5 text-xs text-emerald-800 leading-relaxed">
+                                Votre session de test pour aujourd&apos;hui a été bien validée et enregistrée. Votre progression est mise à jour. Rendez-vous demain pour le jour suivant.
+                              </p>
+                              <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-emerald-900 pt-2 border-t border-emerald-200/60">
+                                <span className="font-medium">
+                                  Code validé : <strong className="font-mono bg-white px-2 py-0.5 rounded border border-emerald-200 text-emerald-950">{currentReference?.reference || simCode}</strong>
+                                </span>
+                                <span className="font-medium">
+                                  Identifiant : <strong className="font-mono bg-white px-2 py-0.5 rounded border border-emerald-200 text-emerald-950">{simPanelisteId}</strong>
+                                </span>
+                              </div>
+                            </div>
+                          </div>
                         </div>
 
-                        <div>
-                          <label className="block text-[11px] font-semibold text-slate-600 mb-1">
-                            Code Unique du Jour
-                          </label>
-                          <input
-                            type="text"
-                            value={simCode}
-                            onChange={(e) => setSimCode(e.target.value.toUpperCase())}
-                            placeholder="Ex: WARI-J01-9F3B"
-                            disabled={isDayValidated}
-                            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-mono font-bold text-navy-900 placeholder:text-slate-400 focus:border-brand-orange focus:outline-none focus:ring-1 focus:ring-brand-orange disabled:bg-slate-50"
-                          />
+                        {/* Bloc Commentaire du Jour (Optionnel - Inspiration ALMA) */}
+                        <div className="mt-4 rounded-2xl border border-slate-200/90 bg-slate-50/90 p-4 shadow-2xs">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <MessageSquare size={16} className="text-brand-orange" />
+                              <h5 className="text-xs font-bold text-navy-900">
+                                Comment s&apos;est passée votre session ?
+                              </h5>
+                            </div>
+                            <span className="rounded-full bg-slate-200/80 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
+                              Optionnel
+                            </span>
+                          </div>
+                          <p className="mt-1 text-[11px] text-slate-500">
+                            Votre avis pour ce Jour {selectedEtape.ordre} permet au développeur d&apos;améliorer son application.
+                          </p>
+
+                          {dailyCommentSent ? (
+                            <div className="mt-3 flex items-center gap-2 rounded-xl bg-emerald-50 border border-emerald-200 p-3 text-xs text-emerald-800">
+                              <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
+                              <span>Merci ! Votre avis sur le Jour {selectedEtape.ordre} a été transmis à l&apos;administrateur.</span>
+                            </div>
+                          ) : (
+                            <form onSubmit={handleSendDailyComment} className="mt-3 space-y-3">
+                              {/* Étoiles du jour */}
+                              <div className="flex items-center gap-2">
+                                <span className="text-[11px] font-medium text-slate-600">Votre note :</span>
+                                <div className="flex items-center gap-1">
+                                  {[1, 2, 3, 4, 5].map((s) => (
+                                    <button
+                                      key={s}
+                                      type="button"
+                                      onClick={() => setDailyRating(s)}
+                                      className="p-1 text-amber-400 hover:scale-110 transition active:scale-95"
+                                      title={`${s}/5`}
+                                    >
+                                      <Star
+                                        size={18}
+                                        fill={s <= dailyRating ? "currentColor" : "none"}
+                                        stroke="currentColor"
+                                      />
+                                    </button>
+                                  ))}
+                                  <span className="text-xs font-bold text-slate-700 ml-1">{dailyRating}/5</span>
+                                </div>
+                              </div>
+
+                              {/* Tags rapides de ressenti (Inspiration ALMA) */}
+                              <div>
+                                <span className="text-[11px] font-medium text-slate-600 block mb-1.5">
+                                  Ressenti rapide (1 clic) :
+                                </span>
+                                <div className="flex flex-wrap items-center gap-1.5">
+                                  {quickTagsList.map((tag) => {
+                                    const isSelected = selectedTags.includes(tag.value);
+                                    return (
+                                      <button
+                                        key={tag.value}
+                                        type="button"
+                                        onClick={() => {
+                                          setSelectedTags((prev) =>
+                                            isSelected
+                                              ? prev.filter((t) => t !== tag.value)
+                                              : [...prev, tag.value]
+                                          );
+                                        }}
+                                        className={`rounded-xl px-2.5 py-1 text-[11px] font-semibold transition active:scale-95 ${
+                                          isSelected
+                                            ? "bg-brand-orange text-white shadow-xs scale-102"
+                                            : "bg-white text-slate-600 border border-slate-200/80 hover:border-slate-300"
+                                        }`}
+                                      >
+                                        {tag.label}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+
+                              <textarea
+                                rows={2}
+                                value={dailyComment}
+                                onChange={(e) => setDailyComment(e.target.value)}
+                                placeholder="Racontez brièvement comment s'est passé votre test, signalez un bug ou une remarque... (facultatif)"
+                                className="w-full rounded-xl border border-slate-200 bg-white p-2.5 text-xs text-navy-900 placeholder:text-slate-400 focus:border-brand-orange focus:outline-none focus:ring-1 focus:ring-brand-orange resize-none shadow-2xs"
+                              />
+
+                              <div className="flex justify-end">
+                                <button
+                                  type="submit"
+                                  disabled={sendingDailyComment || (!dailyComment.trim() && selectedTags.length === 0)}
+                                  className="inline-flex items-center gap-1.5 rounded-xl bg-navy-900 px-4 py-2 text-xs font-bold text-white hover:bg-navy-800 transition active:scale-95 disabled:opacity-40 shadow-xs"
+                                >
+                                  {sendingDailyComment ? (
+                                    <>
+                                      <Loader2 size={13} className="animate-spin" />
+                                      <span>Envoi...</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Send size={12} />
+                                      <span>Transmettre mon avis (optionnel)</span>
+                                    </>
+                                  )}
+                                </button>
+                              </div>
+                            </form>
+                          )}
                         </div>
-                      </div>
+                      </>
+                    ) : (
+                      <form onSubmit={handleValidateViaSdk} className="mt-4 space-y-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                          {/* Champ 1 : Identifiant Unique Panéliste */}
+                          <div className="rounded-2xl border border-slate-200 bg-slate-50/60 p-3.5 focus-within:border-brand-orange focus-within:bg-white focus-within:ring-1 focus-within:ring-brand-orange transition shadow-2xs">
+                            <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                              Identifiant Testeur
+                            </label>
+                            <div className="flex items-center gap-2">
+                              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-200/70 text-slate-600 shrink-0">
+                                <Users size={15} />
+                              </span>
+                              <input
+                                type="text"
+                                value={simPanelisteId}
+                                onChange={(e) => setSimPanelisteId(e.target.value.toUpperCase())}
+                                placeholder="Ex: TST-353451"
+                                className="w-full bg-transparent font-mono text-sm font-bold text-navy-900 placeholder:text-slate-400 focus:outline-none"
+                              />
+                            </div>
+                            <span className="mt-1 block text-[10px] text-slate-400">
+                              Votre identifiant personnel de panéliste Samré
+                            </span>
+                          </div>
 
-                      <button
-                        type="submit"
-                        disabled={simLoading || !simCode.trim() || !simPanelisteId.trim() || isDayValidated}
-                        className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-orange py-2.5 text-xs font-bold text-white shadow-xs transition hover:bg-orange-600 disabled:opacity-50"
-                      >
-                        {simLoading ? (
-                          <>
-                            <Loader2 size={15} className="animate-spin" />
-                            <span>Vérification par le serveur central en cours...</span>
-                          </>
-                        ) : isDayValidated ? (
-                          <>
-                            <CheckCircle2 size={15} className="text-white" />
-                            <span>Journée déjà validée avec succès par le serveur central ✓</span>
-                          </>
-                        ) : (
-                          <>
-                            <Send size={14} />
-                            <span>Valider dans l&apos;application testée (Vérification Serveur Central)</span>
-                          </>
-                        )}
-                      </button>
-                    </form>
+                          {/* Champ 2 : Code Unique du Jour (OTP Style) */}
+                          <div className="rounded-2xl border border-slate-200 bg-slate-50/60 p-3.5 focus-within:border-brand-orange focus-within:bg-white focus-within:ring-1 focus-within:ring-brand-orange transition shadow-2xs">
+                            <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                              Code Unique du Jour
+                            </label>
+                            <div className="flex items-center gap-2">
+                              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-100 text-amber-800 shrink-0">
+                                <KeyRound size={15} />
+                              </span>
+                              <input
+                                type="text"
+                                value={simCode}
+                                onChange={(e) => setSimCode(e.target.value.toUpperCase())}
+                                placeholder="Ex: FLYP-J01-E02B05"
+                                className="w-full bg-transparent font-mono text-sm font-bold tracking-wider text-navy-900 placeholder:text-slate-400 focus:outline-none uppercase"
+                              />
+                              {currentReference?.reference && simCode !== currentReference.reference && (
+                                <button
+                                  type="button"
+                                  onClick={() => setSimCode(currentReference.reference)}
+                                  className="shrink-0 rounded-xl bg-amber-200/80 px-2.5 py-1 text-[10px] font-bold text-amber-950 hover:bg-amber-300 transition active:scale-95"
+                                  title="Insérer le code du jour"
+                                >
+                                  Coller
+                                </button>
+                              )}
+                            </div>
+                            <span className="mt-1 block text-[10px] text-slate-400">
+                              Le code unique associé à votre journée de test
+                            </span>
+                          </div>
+                        </div>
 
-                    {/* Résultat du serveur central */}
-                    {simResult && (
+                        <button
+                          type="submit"
+                          disabled={simLoading || !simCode.trim() || !simPanelisteId.trim()}
+                          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-brand-orange py-3.5 sm:py-4 text-sm font-bold text-white shadow-md shadow-brand-orange/25 transition active:scale-95 hover:bg-orange-600 disabled:opacity-50"
+                        >
+                          {simLoading ? (
+                            <>
+                              <Loader2 size={16} className="animate-spin" />
+                              <span>Validation de votre journée en cours...</span>
+                            </>
+                          ) : (
+                            <>
+                              <CheckCircle2 size={17} />
+                              <span>Valider ma journée de test (Jour {selectedEtape.ordre})</span>
+                            </>
+                          )}
+                        </button>
+                      </form>
+                    )}
+
+                    {/* Résultat de la validation */}
+                    {simResult && !isDayValidated && (
                       <div
                         className={`mt-3 flex items-start gap-2.5 rounded-xl p-3 text-xs ${
                           simResult.success

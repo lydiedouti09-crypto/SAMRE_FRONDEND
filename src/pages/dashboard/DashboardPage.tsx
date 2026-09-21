@@ -13,6 +13,10 @@ import {
   Sparkles,
   Play,
   ExternalLink,
+  Flame,
+  Lock,
+  Check,
+  Zap,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import {
@@ -42,6 +46,7 @@ export default function DashboardPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>("Toutes");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedDay, setSelectedDay] = useState<number>(15);
+  const [missionTab, setMissionTab] = useState<"toutes" | "en_cours" | "disponibles">("toutes");
 
   useEffect(() => {
     Promise.all([
@@ -120,6 +125,21 @@ export default function DashboardPage() {
     return matchSearch && matchCat;
   });
 
+  // Filtrage combiné par onglet & recherche pour le mobile (Inspiration Image 4)
+  const displayMissions = missions.filter((m) => {
+    const isJoined = joinedIds.has(m.id);
+    if (missionTab === "en_cours" && !isJoined) return false;
+    if (missionTab === "disponibles" && isJoined) return false;
+    const matchSearch =
+      m.titre.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      m.application.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchCat =
+      selectedCategory === "Toutes" ||
+      m.titre.toLowerCase().includes(selectedCategory.toLowerCase()) ||
+      (m.description || "").toLowerCase().includes(selectedCategory.toLowerCase());
+    return matchSearch && matchCat;
+  });
+
   if (loading) {
     return (
       <div className="flex min-h-[70vh] flex-col items-center justify-center gap-3">
@@ -136,320 +156,303 @@ export default function DashboardPage() {
       {/* ======================================================== */}
       {/* =================== VERSION MOBILE ==================== */}
       {/* ======================================================== */}
-      <div className="block lg:hidden min-h-screen bg-[#F8F9FB] px-4 pt-6 pb-28">
-        {/* Top App Bar (Inspirée de la maquette Mobile Image 2) */}
-        <div className="flex items-center justify-between pb-4">
-          <div className="flex items-center gap-3">
-            <Link href="/dashboard/profil" className="relative block group">
-              {user?.photo ? (
-                <img
-                  src={user.photo}
-                  alt={user.prenom || "Profil"}
-                  className="h-12 w-12 rounded-2xl object-cover border-2 border-white shadow-md shadow-navy-950/10"
-                />
-              ) : (
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-tr from-navy-900 to-navy-800 font-display text-base font-bold text-white shadow-md shadow-navy-950/10">
-                  {(user?.prenom?.[0] || "T").toUpperCase()}
-                </div>
-              )}
-              <span className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-white bg-emerald-500" />
-            </Link>
+      <div className="block lg:hidden min-h-screen bg-[#F8F9FB] px-4 pt-5 pb-28">
+        <div className="max-w-md mx-auto space-y-4">
+          {/* Top Bar (Inspiration Image 4 : Hello Mickel, Dashboard) */}
+          <div className="flex items-center justify-between pb-0.5">
             <div>
               <p className="text-xs text-slate-400 font-medium">Bonjour 👋</p>
-              <h2 className="font-display text-base font-bold text-navy-900 leading-tight">
+              <h1 className="font-display text-lg font-extrabold text-navy-900 leading-tight">
                 {user?.prenom} {user?.nom}
-              </h2>
-            </div>
-          </div>
-
-          <Link
-            href="/dashboard/notifications"
-            aria-label="Notifications"
-            className="relative flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200/80 bg-white text-slate-600 shadow-xs transition hover:text-navy-900"
-          >
-            <Bell size={18} />
-            {unreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-brand-orange text-[9px] font-bold text-white">
-                {unreadCount}
-              </span>
-            )}
-          </Link>
-        </div>
-
-        {/* Barre de Recherche */}
-        <div className="relative mt-2">
-          <Search
-            size={17}
-            className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-          />
-          <input
-            type="text"
-            placeholder="Rechercher une mission, application..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full rounded-2xl border border-slate-200/80 bg-white py-3 pl-11 pr-4 text-xs font-medium text-navy-900 placeholder:text-slate-400 shadow-xs focus:border-brand-orange focus:outline-none focus:ring-1 focus:ring-brand-orange"
-          />
-        </div>
-
-        {/* Calendrier Hebdomadaire en Pilules (Inspiré de l'Image 2) */}
-        <div className="mt-4 flex items-center justify-between gap-1 overflow-x-auto py-1 scrollbar-none">
-          {daysList.map((d) => {
-            const isSelected = selectedDay === d.date;
-            return (
-              <button
-                key={d.date}
-                onClick={() => setSelectedDay(d.date)}
-                className={`flex flex-col items-center justify-center rounded-2xl px-3 py-2.5 transition-all ${
-                  isSelected
-                    ? "bg-brand-orange text-white shadow-md shadow-brand-orange/25 scale-105"
-                    : "bg-white text-slate-600 border border-slate-100 shadow-xs"
-                }`}
-              >
-                <span className="text-[10px] font-medium opacity-80">{d.day}</span>
-                <span className="mt-0.5 font-display text-sm font-bold">
-                  {d.date}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Pilules de Catégories */}
-        <div className="mt-4 flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-          {categories.map((cat) => {
-            const isCat = selectedCategory === cat;
-            return (
-              <button
-                key={cat}
-                onClick={() => setSelectedCategory(cat)}
-                className={`rounded-full px-4 py-1.5 text-xs font-semibold whitespace-nowrap transition ${
-                  isCat
-                    ? "bg-navy-900 text-white shadow-xs"
-                    : "bg-white text-slate-500 border border-slate-100 hover:text-navy-900"
-                }`}
-              >
-                {cat}
-              </button>
-            );
-          })}
-        </div>
-
-        {error && (
-          <div className="mt-4 rounded-2xl border border-red-100 bg-red-50 p-3.5 text-xs text-red-700">
-            {error}
-          </div>
-        )}
-
-        {/* Mission active (Upcoming Schedule / Hero Card) */}
-        {active && (
-          <div className="mt-5 rounded-3xl bg-gradient-to-br from-navy-900 via-navy-950 to-slate-900 p-5 text-white shadow-lg shadow-navy-950/20">
-            <div className="flex items-center justify-between">
-              <span className="flex items-center gap-1.5 rounded-full bg-brand-orange/20 px-3 py-1 text-[11px] font-bold text-brand-orange">
-                <span className="h-1.5 w-1.5 rounded-full bg-brand-orange animate-pulse" />
-                Mission active
-              </span>
-              <span className="text-xs text-white/70 font-medium">
-                {active.etapesCompletees}/{active.etapesTotal} étapes
-              </span>
+              </h1>
             </div>
 
-            <div className="mt-3 flex items-center gap-3">
-              <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/10 p-1.5 backdrop-blur-sm border border-white/20 overflow-hidden">
-                {active.mission?.image ? (
-                  <img
-                    src={getImageUrl(active.mission.image)}
-                    alt={active.mission.application}
-                    className="h-full w-full object-contain rounded-xl"
-                  />
-                ) : (
-                  <span className="font-bold text-white text-base">
-                    {active.mission?.application?.charAt(0).toUpperCase() || "A"}
+            <div className="flex items-center gap-2">
+              <Link
+                href="/dashboard/notifications"
+                aria-label="Notifications"
+                className="relative flex h-10 w-10 items-center justify-center rounded-full border border-slate-200/80 bg-white text-slate-700 shadow-2xs transition active:scale-95 hover:bg-slate-50"
+              >
+                <Bell size={18} />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-brand-orange text-[9px] font-bold text-white shadow-xs">
+                    {unreadCount > 9 ? "9+" : unreadCount}
                   </span>
                 )}
+              </Link>
+
+              <Link href="/dashboard/profil" className="relative block">
+                {user?.photo ? (
+                  <img
+                    src={user.photo}
+                    alt={user.prenom || "Profil"}
+                    className="h-10 w-10 rounded-full object-cover border-2 border-white shadow-sm"
+                  />
+                ) : (
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-navy-900 text-xs font-bold text-white shadow-sm">
+                    {(user?.prenom?.[0] || "T").toUpperCase()}
+                  </div>
+                )}
+                <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border border-white bg-emerald-500" />
+              </Link>
+            </div>
+          </div>
+
+          {/* Carte Rémunération & Performances (Inspiration Dribbble Image 4 : Earnings Card) */}
+          <div className="rounded-3xl border border-blue-200/70 bg-gradient-to-b from-[#DCEAFE] via-[#EFF6FF] to-white p-4.5 shadow-sm space-y-3.5">
+            <div className="flex items-center justify-between">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-blue-900/70">
+                  Tableau de Bord
+                </span>
+                <h2 className="font-display text-xl font-extrabold text-navy-900 leading-none mt-0.5">
+                  Rémunération
+                </h2>
               </div>
-              <div className="min-w-0 flex-1">
-                <h3 className="font-display text-base font-bold leading-snug truncate">
-                  {active.mission?.titre}
-                </h3>
-                <p className="text-xs text-white/70 truncate">
-                  <span className="font-semibold text-white">{active.mission?.application}</span> · <span className="text-white/60">{active.mission?.dureEstime || "3 jours"}</span>
+              <span className="rounded-full bg-white/80 border border-blue-200/80 px-2.5 py-1 text-[11px] font-bold text-blue-900 shadow-2xs">
+                {participations.length} test{participations.length > 1 ? "s" : ""}
+              </span>
+            </div>
+
+            {/* Grille 2x2 façon Image 4 */}
+            <div className="grid grid-cols-2 gap-2.5">
+              {/* 1. Gains validés (Available) */}
+              <div className="rounded-2xl border border-slate-100 bg-white p-3 shadow-2xs">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-medium text-slate-400">Validé</span>
+                  <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+                    <Wallet size={13} />
+                  </span>
+                </div>
+                <p className="mt-1.5 font-display text-base font-extrabold text-navy-900">
+                  {totalRemunerationGagnee.toLocaleString("fr-FR")} <span className="text-[10px] font-normal text-slate-500">FCFA</span>
+                </p>
+              </div>
+
+              {/* 2. Gains en attente (Pending) */}
+              <div className="rounded-2xl border border-slate-100 bg-white p-3 shadow-2xs">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-medium text-slate-400">À débloquer</span>
+                  <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
+                    <Lock size={13} />
+                  </span>
+                </div>
+                <p className="mt-1.5 font-display text-base font-extrabold text-navy-900">
+                  {totalRemunerationEstimee.toLocaleString("fr-FR")} <span className="text-[10px] font-normal text-slate-500">FCFA</span>
+                </p>
+              </div>
+
+              {/* 3. Étapes validées */}
+              <div className="rounded-2xl border border-slate-100 bg-white p-3 shadow-2xs">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-medium text-slate-400">Étapes</span>
+                  <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                    <CheckCircle2 size={13} />
+                  </span>
+                </div>
+                <p className="mt-1.5 font-display text-base font-extrabold text-navy-900">
+                  {active ? `${active.etapesCompletees || 0}/${active.etapesTotal || 12}` : `${joursValides}`} <span className="text-[10px] font-normal text-slate-500">jours</span>
+                </p>
+              </div>
+
+              {/* 4. Série active */}
+              <div className="rounded-2xl border border-slate-100 bg-white p-3 shadow-2xs">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-medium text-slate-400">Série</span>
+                  <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-orange-50 text-brand-orange">
+                    <Flame size={13} className="fill-brand-orange" />
+                  </span>
+                </div>
+                <p className="mt-1.5 font-display text-base font-extrabold text-brand-orange">
+                  {Math.max(1, joursValides)} <span className="text-[10px] font-normal text-slate-500">jours</span>
                 </p>
               </div>
             </div>
 
-            {/* Jauge de progression */}
-            <div className="mt-4">
-              <div className="flex justify-between text-[10px] text-white/70 font-medium mb-1">
-                <span>Progression</span>
-                <span>{active.progression ?? 0}%</span>
-              </div>
-              <div className="h-2 w-full overflow-hidden rounded-full bg-white/15">
-                <div
-                  className="h-full rounded-full bg-brand-orange transition-all duration-500"
-                  style={{ width: `${active.progression ?? 0}%` }}
-                />
-              </div>
-            </div>
+            {/* Test actif (Intégration épurée sans bloc sombre massif) */}
+            {active ? (
+              <div className="rounded-2xl border border-blue-100 bg-white/95 p-3.5 shadow-2xs space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold text-blue-900 uppercase">
+                    Test actif · Jour {(active.etapesCompletees ?? 0) + 1} sur {active.etapesTotal || 12}
+                  </span>
+                  <span className="text-[11px] font-bold text-navy-900">
+                    {active.progression ?? 0}%
+                  </span>
+                </div>
 
-            <div className="mt-4 flex flex-col gap-2">
-              <a
-                href={getApplicationPlayStoreUrl(active.mission)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-500 py-3 text-xs font-bold text-white shadow-sm transition active:scale-98 hover:bg-emerald-600"
-              >
-                <Play size={13} fill="currentColor" />
-                <span>Installer sur Google Play</span>
-                <ExternalLink size={12} />
-              </a>
-              <Link
-                href={`/dashboard/missions/${active.mission?.id}`}
-                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-white py-3 text-xs font-bold text-navy-900 shadow-sm transition active:scale-98"
-              >
-                <span>Continuer la mission</span>
-                <ChevronRight size={14} />
-              </Link>
-            </div>
-          </div>
-        )}
-
-        {/* Carte Rémunération estimée Mobile */}
-        <div className="mt-4 rounded-2xl border border-emerald-100/80 bg-gradient-to-br from-white via-emerald-50/20 to-white p-4 shadow-xs">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
-                <Wallet size={15} />
-              </span>
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-                Rémunération estimée
-              </span>
-            </div>
-            <span className="flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              {totalRemunerationGagnee > 0
-                ? `${totalRemunerationGagnee.toLocaleString("fr-FR")} FCFA validés`
-                : totalRemunerationEstimee > 0
-                ? "À débloquer"
-                : "Disponible"}
-            </span>
-          </div>
-
-          <div className="mt-2.5 flex items-center justify-between gap-2">
-            <div>
-              <span className="font-display text-lg font-extrabold text-navy-900">
-                {totalRemunerationEstimee.toLocaleString("fr-FR")} FCFA
-              </span>
-              <p className="text-[10px] text-slate-400">
-                {participations.length} mission{participations.length > 1 ? "s" : ""} au total · {completedCount} validée{completedCount > 1 ? "s" : ""}
-              </p>
-            </div>
-            <Link
-              href="/dashboard/historique"
-              className="flex items-center gap-1 text-xs font-bold text-brand-orange hover:underline shrink-0"
-            >
-              <span>Détails</span>
-              <ChevronRight size={13} />
-            </Link>
-          </div>
-        </div>
-
-        {/* 2 Cartes de Métriques de test */}
-        <div className="mt-3 grid grid-cols-2 gap-3">
-          <div className="rounded-2xl border border-slate-100 bg-white p-3.5 shadow-xs">
-            <div className="flex items-center gap-1.5 text-slate-400">
-              <Sparkles size={14} className="text-brand-orange" />
-              <span className="text-[11px] font-semibold">Missions rejointes</span>
-            </div>
-            <p className="mt-1 font-display text-base font-bold text-navy-900">
-              {participations.length}
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-slate-100 bg-white p-3.5 shadow-xs">
-            <div className="flex items-center gap-1.5 text-slate-400">
-              <CheckCircle2 size={14} className="text-emerald-500" />
-              <span className="text-[11px] font-semibold">Étapes validées</span>
-            </div>
-            <p className="mt-1 font-display text-base font-bold text-navy-900">
-              {joursValides}
-            </p>
-          </div>
-        </div>
-
-        {/* Section Missions disponibles (Grille façon Image 2) */}
-        <div className="mt-5">
-          <div className="flex items-center justify-between pb-2.5">
-            <h3 className="font-display text-xs font-bold text-navy-900">
-              Missions disponibles ({filteredAvailable.length})
-            </h3>
-            <Link
-              href="/dashboard/missions"
-              className="text-[11px] font-semibold text-brand-orange"
-            >
-              Tout voir
-            </Link>
-          </div>
-
-          {filteredAvailable.length === 0 ? (
-            <div className="rounded-2xl border border-slate-100 bg-white p-6 text-center shadow-xs">
-              <p className="text-xs text-slate-400 font-medium">
-                Aucune mission ne correspond à votre recherche.
-              </p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              {filteredAvailable.map((m) => (
-                <div
-                  key={m.id}
-                  className="flex flex-col justify-between rounded-2xl border border-slate-100 bg-white p-3.5 shadow-xs"
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white border border-slate-200/80 p-1 shadow-xs overflow-hidden">
-                      {m.image ? (
-                        <img
-                          src={getImageUrl(m.image)}
-                          alt={m.application}
-                          className="h-full w-full object-contain rounded-lg"
-                        />
-                      ) : (
-                        <span className="font-bold text-navy-900 text-xs">
-                          {m.application?.charAt(0).toUpperCase() || "A"}
-                        </span>
-                      )}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-1 text-[10px] font-bold text-slate-500">
-                        <span className="rounded bg-emerald-50 border border-emerald-200/60 px-1.5 py-0.5 font-bold text-emerald-700">
-                          Android
-                        </span>
-                        <span className="text-slate-300">·</span>
-                        <span>{m.dureEstime || `${m.duree || 3}j`}</span>
-                      </div>
-                      <h4 className="mt-0.5 truncate font-display text-xs font-bold text-navy-900">
-                        {m.titre}
-                      </h4>
-                      <p className="text-[11px] text-slate-400 truncate">
-                        {m.application}
-                      </p>
-                    </div>
+                <div className="flex items-center gap-3">
+                  <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-50 border border-slate-200/80 p-1 overflow-hidden">
+                    {active.mission?.image ? (
+                      <img
+                        src={getImageUrl(active.mission.image)}
+                        alt={active.mission.application}
+                        className="h-full w-full object-contain rounded-lg"
+                      />
+                    ) : (
+                      <span className="font-bold text-navy-900 text-xs">
+                        {active.mission?.application?.charAt(0).toUpperCase() || "A"}
+                      </span>
+                    )}
                   </div>
-
-                  <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-2.5">
-                    <span className="text-[11px] text-slate-400">
-                      Scénarios guidés
-                    </span>
-                    <Link
-                      href={`/dashboard/missions/${m.id}`}
-                      className="inline-flex items-center gap-1 rounded-lg bg-slate-100 px-3 py-1 text-[11px] font-bold text-navy-900 transition hover:bg-navy-900 hover:text-white"
-                    >
-                      <span>Participer</span>
-                      <ArrowRight size={11} />
-                    </Link>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-display text-xs font-bold text-navy-900 truncate">
+                      {active.mission?.titre}
+                    </h3>
+                    <p className="text-[11px] text-slate-500 truncate">
+                      {active.mission?.application} · <span className="text-emerald-600 font-semibold">Android</span>
+                    </p>
                   </div>
                 </div>
-              ))}
+
+                <div className="grid grid-cols-2 gap-2 pt-1">
+                  <a
+                    href={getApplicationPlayStoreUrl(active.mission)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 py-2.5 text-[11px] font-bold text-white transition active:scale-95 hover:bg-emerald-700 shadow-2xs"
+                  >
+                    <Play size={12} fill="currentColor" />
+                    <span>Google Play</span>
+                  </a>
+
+                  <Link
+                    href={`/dashboard/missions/${active.mission?.id}`}
+                    className="flex items-center justify-center gap-1.5 rounded-xl bg-blue-600 py-2.5 text-[11px] font-bold text-white transition active:scale-95 hover:bg-blue-700 shadow-2xs"
+                  >
+                    <span>Tester Jour {(active.etapesCompletees ?? 0) + 1}</span>
+                    <ChevronRight size={13} />
+                  </Link>
+                </div>
+              </div>
+            ) : (
+              <Link
+                href="/dashboard/missions"
+                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 py-3 text-xs font-bold text-white shadow-md shadow-blue-500/20 transition active:scale-95 hover:bg-blue-700"
+              >
+                <span>Rejoindre une mission de test</span>
+                <ChevronRight size={14} />
+              </Link>
+            )}
+          </div>
+
+          {/* Section Missions & Activités (Inspiration Dribbble Image 4 : Transactions & Tabs) */}
+          <div className="space-y-3 pt-2">
+            <div className="flex items-center justify-between">
+              <h3 className="font-display text-sm font-bold text-navy-900">
+                Missions
+              </h3>
+              <Link
+                href="/dashboard/missions"
+                className="text-xs font-semibold text-blue-600 hover:underline"
+              >
+                Tout voir
+              </Link>
             </div>
-          )}
+
+            {/* Onglets segmentés façon Image 4 ("All", "Earnings", "Withdrawals") */}
+            <div className="grid grid-cols-3 rounded-2xl bg-slate-200/70 p-1 text-xs font-bold text-slate-600">
+              <button
+                type="button"
+                onClick={() => setMissionTab("toutes")}
+                className={`py-1.5 rounded-xl transition ${
+                  missionTab === "toutes" ? "bg-white text-navy-900 shadow-2xs" : "hover:text-navy-900"
+                }`}
+              >
+                Toutes
+              </button>
+              <button
+                type="button"
+                onClick={() => setMissionTab("en_cours")}
+                className={`py-1.5 rounded-xl transition ${
+                  missionTab === "en_cours" ? "bg-white text-navy-900 shadow-2xs" : "hover:text-navy-900"
+                }`}
+              >
+                Mes tests ({participations.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setMissionTab("disponibles")}
+                className={`py-1.5 rounded-xl transition ${
+                  missionTab === "disponibles" ? "bg-white text-navy-900 shadow-2xs" : "hover:text-navy-900"
+                }`}
+              >
+                Disponibles ({available.length})
+              </button>
+            </div>
+
+            {/* Barre de recherche discrète */}
+            <div className="relative">
+              <Search
+                size={15}
+                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
+              />
+              <input
+                type="text"
+                placeholder="Rechercher une mission, application..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full rounded-2xl border border-slate-200/80 bg-white py-2.5 pl-10 pr-4 text-xs font-medium text-navy-900 placeholder:text-slate-400 shadow-2xs focus:border-blue-500 focus:outline-none"
+              />
+            </div>
+
+            {/* Liste des cartes façon transactions */}
+            <div className="space-y-2.5">
+              {displayMissions.length === 0 ? (
+                <div className="rounded-2xl border border-slate-100 bg-white p-6 text-center text-xs text-slate-400">
+                  Aucune mission ne correspond à vos critères.
+                </div>
+              ) : (
+                displayMissions.map((m) => {
+                  const isJoined = joinedIds.has(m.id);
+                  const part = participations.find((p) => p.mission?.id === m.id);
+
+                  return (
+                    <Link
+                      key={m.id}
+                      href={`/dashboard/missions/${m.id}`}
+                      className="flex items-center justify-between rounded-2xl border border-slate-100 bg-white p-3.5 shadow-2xs transition active:scale-98 hover:shadow-xs"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-slate-50 border border-slate-200/70 p-1 overflow-hidden">
+                          {m.image ? (
+                            <img
+                              src={getImageUrl(m.image)}
+                              alt={m.application}
+                              className="h-full w-full object-contain rounded-xl"
+                            />
+                          ) : (
+                            <span className="font-bold text-navy-900 text-xs">
+                              {m.application?.charAt(0).toUpperCase() || "A"}
+                            </span>
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <h4 className="font-display text-xs font-bold text-navy-900 truncate">
+                            {m.titre}
+                          </h4>
+                          <p className="text-[11px] text-slate-400 truncate">
+                            {m.application} · <span className="text-slate-500 font-medium">{m.dureEstime || "12j"}</span>
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="shrink-0 text-right ml-2">
+                        <span className="font-display text-xs font-bold text-emerald-600 block">
+                          +{parseFloat(String(m.remuneration || 0)).toLocaleString("fr-FR")} FCFA
+                        </span>
+                        <span className={`text-[10px] font-bold ${
+                          isJoined ? "text-blue-600" : "text-slate-400"
+                        }`}>
+                          {isJoined ? (part?.progression ? `${part.progression}%` : "En cours") : "Participer >"}
+                        </span>
+                      </div>
+                    </Link>
+                  );
+                })
+              )}
+            </div>
+          </div>
         </div>
       </div>
 

@@ -362,13 +362,15 @@ export type NotificationItem = {
 
 export type FeedbackPayload = {
   participationId: number;
-  note: number;
-  faciliteUtilisation: string;
+  note?: number;
+  faciliteUtilisation?: string;
   pointsPositifs?: string;
   problemes?: string;
   difficultes?: string;
   ameliorations?: string;
   commentaires?: string;
+  jour?: number;
+  isFinal?: boolean;
 };
 
 // ── Endpoints ────────────────────────────────────────────────────────
