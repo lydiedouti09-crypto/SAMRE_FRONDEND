@@ -20,6 +20,7 @@ import {
   MessageSquare,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
+import { useAdminAuth } from "@/lib/admin-auth-context";
 import { authApi } from "@/lib/api";
 
 type Mode = "login" | "signup" | "forgot-password";
@@ -92,6 +93,7 @@ function AvatarTester3({ className = "h-12 w-12" }: { className?: string }) {
 export default function AuthForm({ mode = "login" }: { mode?: Mode }) {
   const router = useRouter();
   const { login, register, logout } = useAuth();
+  const { adminLogin } = useAdminAuth();
   const [activeMode, setActiveMode] = useState<Mode>(mode);
   const isSignup = activeMode === "signup";
   const isForgotPassword = activeMode === "forgot-password";
@@ -169,12 +171,18 @@ export default function AuthForm({ mode = "login" }: { mode?: Mode }) {
         await register(form);
         router.push("/dashboard");
       } else {
+        try {
+          await adminLogin(form.email, form.password);
+          router.replace("/admin");
+          return;
+        } catch {
+          // Si ce ne sont pas des identifiants admin, le même formulaire sert au membre.
+        }
+
         const loggedUser = await login(form.email, form.password);
         if (loggedUser?.role === "admin") {
           logout("/connexion");
-          setError(
-            "Ce compte est un compte administrateur. Veuillez utiliser le portail d'administration (/admin/login)."
-          );
+          setError("Impossible d'ouvrir la session administrateur.");
           setLoading(false);
           return;
         }
@@ -187,7 +195,7 @@ export default function AuthForm({ mode = "login" }: { mode?: Mode }) {
   }
 
   return (
-    <div className="relative min-h-screen w-full overflow-hidden bg-[#071933] font-sans antialiased text-slate-100 flex items-center justify-center p-4 sm:p-6 lg:p-10">
+    <div className="relative min-h-screen w-full overflow-x-hidden bg-[#e9eef3] font-sans antialiased text-slate-100 flex items-start justify-center px-0 py-0 sm:items-center sm:bg-[#071933] sm:p-6 lg:p-10">
       {/* Halos lumineux d'ambiance inspirés de la maquette */}
       <div className="pointer-events-none absolute -top-28 -right-28 h-[550px] w-[550px] rounded-full bg-gradient-to-br from-brand-orange/20 to-blue-600/10 blur-[130px]" />
       <div className="pointer-events-none absolute -bottom-32 -left-32 h-[550px] w-[550px] rounded-full bg-gradient-to-tr from-brand-orange/25 via-blue-700/20 to-transparent blur-[140px]" />
@@ -206,15 +214,15 @@ export default function AuthForm({ mode = "login" }: { mode?: Mode }) {
       />
 
       {/* Conteneur principal plein écran façon split-screen moderne */}
-      <div className="relative z-10 mx-auto w-full max-w-7xl grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+      <div className="relative z-10 mx-auto w-full max-w-7xl grid grid-cols-1 gap-0 sm:gap-8 lg:grid-cols-12 lg:gap-12 lg:items-center">
         
         {/* ========================================================================= */}
         {/* SECTION GAUCHE : HERO & VISUEL SMARTPHONE AVEC PANÉLISTES (55%) */}
         {/* ========================================================================= */}
-        <div className="lg:col-span-7 flex flex-col justify-between space-y-8 py-4 lg:py-6">
+        <div className="order-1 lg:order-none lg:col-span-7 flex flex-col justify-between space-y-4 bg-[#071933] px-4 pb-8 pt-5 sm:bg-transparent sm:px-0 sm:py-0 lg:-translate-y-4">
           
           {/* Logo SAMRE + Tagline en haut à gauche */}
-          <div>
+          <div className="hidden sm:block">
             <Link href="/" className="inline-flex items-center gap-3.5 group">
               <div className="relative flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 p-2 backdrop-blur-md ring-1 ring-white/20 transition-transform duration-300 group-hover:scale-105 shadow-lg">
                 <img
@@ -235,8 +243,8 @@ export default function AuthForm({ mode = "login" }: { mode?: Mode }) {
           </div>
 
           {/* Titre Principal & Description */}
-          <div className="space-y-3.5 max-w-2xl">
-            <h1 className="font-display text-3xl sm:text-4xl xl:text-5xl font-extrabold text-white leading-[1.18] tracking-tight">
+          <div className="hidden sm:block max-w-2xl space-y-3.5">
+            <h1 className="font-display text-3xl font-extrabold leading-[1.18] tracking-tight text-white sm:text-4xl xl:text-5xl">
               Des tests r&eacute;els pour de{" "}
               <span className="text-brand-orange drop-shadow-sm">
                 meilleures applications
@@ -249,7 +257,7 @@ export default function AuthForm({ mode = "login" }: { mode?: Mode }) {
           </div>
 
           {/* Composition Visuelle Centrale : Smartphone 3D & Panélistes Flottants */}
-          <div className="relative w-full max-w-xl py-6 flex items-center justify-center">
+          <div className="relative mx-auto flex h-[205px] w-full max-w-xl items-center justify-center overflow-hidden py-2 sm:h-auto sm:overflow-visible sm:py-6">
             
             {/* Anneaux lumineux au sol (Socle circulaire sous le téléphone) */}
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -261,7 +269,7 @@ export default function AuthForm({ mode = "login" }: { mode?: Mode }) {
             {/* Téléphone central flottant avec l'interface */}
             <div className="relative z-10 w-[200px] sm:w-[220px] rounded-[36px] border-[6px] border-[#132C52] bg-[#0A1A33] p-2 shadow-2xl shadow-black/80 ring-1 ring-blue-400/30 transition-transform duration-500 hover:scale-[1.02]">
               {/* Écran du smartphone */}
-              <div className="rounded-[28px] bg-gradient-to-b from-[#1C4E8C] to-[#123668] p-3 text-white overflow-hidden flex flex-col justify-between h-[360px] sm:h-[400px]">
+              <div className="flex h-[205px] flex-col justify-between overflow-hidden rounded-[28px] bg-gradient-to-b from-[#1C4E8C] to-[#123668] p-3 text-white sm:h-[400px]">
                 {/* Barre de statut supérieure */}
                 <div className="flex items-center justify-between text-[9px] text-blue-200 px-1 pt-1 font-semibold">
                   <span>09:41</span>
@@ -357,81 +365,16 @@ export default function AuthForm({ mode = "login" }: { mode?: Mode }) {
           </div>
 
           {/* 3 Cartouches caractéristiques avec icônes rondes */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-            <div className="flex items-center gap-3 rounded-2xl bg-white/[0.06] p-3 border border-white/10 backdrop-blur-sm transition hover:bg-white/[0.1]">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-600/30 text-blue-300 border border-blue-400/30">
-                <Smartphone size={18} />
-              </div>
-              <div>
-                <h4 className="text-xs font-bold text-white leading-tight">
-                  Testez des applications
-                </h4>
-                <p className="text-[11px] text-blue-200/80 mt-0.5">
-                  Mobile ou ordinateur
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3 rounded-2xl bg-white/[0.06] p-3 border border-white/10 backdrop-blur-sm transition hover:bg-white/[0.1]">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-600/30 text-blue-300 border border-blue-400/30">
-                <Users size={18} />
-              </div>
-              <div>
-                <h4 className="text-xs font-bold text-white leading-tight">
-                  Participez aux missions
-                </h4>
-                <p className="text-[11px] text-blue-200/80 mt-0.5">
-                  Selon vos centres d&apos;int&eacute;r&ecirc;t
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3 rounded-2xl bg-white/[0.06] p-3 border border-white/10 backdrop-blur-sm transition hover:bg-white/[0.1]">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-600/30 text-blue-300 border border-blue-400/30">
-                <ShieldCheck size={18} />
-              </div>
-              <div>
-                <h4 className="text-xs font-bold text-white leading-tight">
-                  Donnez votre avis
-                </h4>
-                <p className="text-[11px] text-blue-200/80 mt-0.5">
-                  Des retours qui comptent
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Slogan manuscrit avec soulignement orange décoratif */}
-          <div className="pt-2">
-            <div className="inline-block relative">
-              <span className="font-display italic text-sm sm:text-base font-medium text-blue-100/90 tracking-wide">
-                Ensemble pour des applications plus performantes
-              </span>
-              <svg
-                className="absolute -bottom-2.5 left-0 w-full h-3 text-brand-orange"
-                viewBox="0 0 280 12"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M2 9C70 3 180 1 278 8"
-                  stroke="currentColor"
-                  strokeWidth="2.8"
-                  strokeLinecap="round"
-                />
-              </svg>
-            </div>
-          </div>
         </div>
 
         {/* ========================================================================= */}
         {/* SECTION DROITE : CARTE BLANCHE FLOTTANTE AVEC FORMULAIRE (45%) */}
         {/* ========================================================================= */}
-        <div className="lg:col-span-5 flex items-center justify-center">
-          <div className="w-full max-w-[440px] rounded-[32px] bg-white p-7 sm:p-9 shadow-2xl shadow-black/40 border border-slate-100 text-slate-800 transition-all duration-300">
+        <div className="relative z-20 order-2 -mt-10 flex items-start justify-center px-3 pb-5 lg:order-none lg:col-span-5 lg:mt-0 lg:px-0 lg:pb-0 lg:items-center">
+          <div className="w-full max-w-[440px] rounded-[28px] border border-white/80 bg-white p-5 text-slate-800 shadow-[0_18px_45px_rgba(15,23,42,0.16)] transition-all duration-300 sm:rounded-[32px] sm:p-9 sm:shadow-2xl sm:shadow-black/40">
             
             {/* Logo SAMRE en haut de la carte blanche */}
-            <div className="mb-6 flex items-center justify-center">
+            <div className="mb-4 flex items-center justify-center sm:mb-6">
               <Link href="/" className="inline-flex items-center gap-2.5 group">
                 <img
                   src="/logo.png"
@@ -457,7 +400,7 @@ export default function AuthForm({ mode = "login" }: { mode?: Mode }) {
                 </div>
 
                 {error && (
-                  <div className="mb-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-xs font-semibold text-rose-700">
+                  <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs font-semibold text-amber-800">
                     {error}
                   </div>
                 )}
@@ -562,7 +505,7 @@ export default function AuthForm({ mode = "login" }: { mode?: Mode }) {
                 </div>
 
                 {error && (
-                  <div className="mb-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-xs font-semibold text-rose-700">
+                  <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs font-semibold text-amber-800">
                     {error}
                   </div>
                 )}
@@ -734,7 +677,9 @@ export default function AuthForm({ mode = "login" }: { mode?: Mode }) {
                       </>
                     ) : (
                       <>
-                        <span>{isSignup ? "S'inscrire" : "Se connecter"}</span>
+                        <span>
+                          {isSignup ? "S'inscrire" : "Se connecter"}
+                        </span>
                         <ArrowRight size={17} className="transition-transform group-hover:translate-x-1" />
                       </>
                     )}

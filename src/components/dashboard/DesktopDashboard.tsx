@@ -50,6 +50,14 @@ export default function DesktopDashboard({
   dailyCode,
 }: Props) {
   const today = new Date();
+  const heure = today.getHours();
+
+const salutation =
+  heure >= 5 && heure < 12
+    ? "Bonjour"
+    : heure >= 12 && heure < 18
+    ? "Bon après-midi"
+    : "Bonsoir";
   const dateFormatted = today.toLocaleDateString("fr-FR", {
     day: "numeric",
     month: "long",
@@ -90,7 +98,7 @@ export default function DesktopDashboard({
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="font-display text-xl font-bold tracking-tight text-navy-900 xl:text-2xl">
-              Bonjour, {prenom || "Testeur"} 👋
+                {salutation}, {prenom || "Testeur"}
             </h1>
             <p className="text-xs text-slate-500">
               Votre espace de test applicatif. Suivez vos scénarios et validez chaque étape.

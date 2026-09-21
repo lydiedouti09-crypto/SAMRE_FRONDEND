@@ -22,7 +22,6 @@ import ProfilPage from "@/pages/dashboard/ProfilPage";
 
 // Admin Pages
 import AdminLayout from "@/pages/admin/AdminLayout";
-import AdminLoginPage from "@/pages/admin/AdminLoginPage";
 import AdminOverviewPage from "@/pages/admin/AdminOverviewPage";
 import AdminApplicationsPage from "@/pages/admin/AdminApplicationsPage";
 import AdminFeedbacksPage from "@/pages/admin/AdminFeedbacksPage";
@@ -57,7 +56,7 @@ export default function App() {
 
           {/* Admin Dedicated Routes */}
           <Route path="/admin" element={<AdminLayout />}>
-            <Route path="login" element={<AdminLoginPage />} />
+            <Route path="login" element={<Navigate to="/connexion" replace />} />
             <Route index element={<AdminOverviewPage />} />
             <Route path="applications" element={<AdminApplicationsPage />} />
             <Route path="feedbacks" element={<AdminFeedbacksPage />} />

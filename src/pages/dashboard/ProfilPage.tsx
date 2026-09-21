@@ -55,7 +55,9 @@ export default function ProfilPage() {
 
   // Modals
   const [editing, setEditing] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showSecurityModal, setShowSecurityModal] = useState(false);
+  const [showStatusModal, setShowStatusModal] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   // Formulaire d'édition

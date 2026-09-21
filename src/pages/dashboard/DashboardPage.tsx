@@ -156,13 +156,13 @@ export default function DashboardPage() {
       {/* ======================================================== */}
       {/* =================== VERSION MOBILE ==================== */}
       {/* ======================================================== */}
-      <div className="block lg:hidden min-h-screen bg-[#F8F9FB] px-4 pt-5 pb-28">
-        <div className="max-w-md mx-auto space-y-4">
+      <div className="block lg:hidden min-h-screen bg-[#F6F7F9] px-4 pt-4 pb-28">
+        <div className="max-w-md mx-auto space-y-5">
           {/* Top Bar (Inspiration Image 4 : Hello Mickel, Dashboard) */}
-          <div className="flex items-center justify-between pb-0.5">
+          <div className="flex items-center justify-between pb-1">
             <div>
-              <p className="text-xs text-slate-400 font-medium">Bonjour 👋</p>
-              <h1 className="font-display text-lg font-extrabold text-navy-900 leading-tight">
+              <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">Bonjour 👋</p>
+              <h1 className="mt-1 font-display text-xl font-extrabold tracking-tight text-navy-900 leading-tight">
                 {user?.prenom} {user?.nom}
               </h1>
             </div>
@@ -171,7 +171,7 @@ export default function DashboardPage() {
               <Link
                 href="/dashboard/notifications"
                 aria-label="Notifications"
-                className="relative flex h-10 w-10 items-center justify-center rounded-full border border-slate-200/80 bg-white text-slate-700 shadow-2xs transition active:scale-95 hover:bg-slate-50"
+                className="relative flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200/80 bg-white text-slate-700 shadow-sm transition active:scale-95 hover:bg-slate-50"
               >
                 <Bell size={18} />
                 {unreadCount > 0 && (
@@ -199,25 +199,26 @@ export default function DashboardPage() {
           </div>
 
           {/* Carte Rémunération & Performances (Inspiration Dribbble Image 4 : Earnings Card) */}
-          <div className="rounded-3xl border border-blue-200/70 bg-gradient-to-b from-[#DCEAFE] via-[#EFF6FF] to-white p-4.5 shadow-sm space-y-3.5">
+          <div className="relative overflow-hidden rounded-[28px] border border-slate-200/80 bg-white p-4 shadow-[0_14px_40px_rgba(15,23,42,0.08)] space-y-4">
+            <div className="pointer-events-none absolute -right-12 -top-12 h-32 w-32 rounded-full bg-orange-100/80" />
             <div className="flex items-center justify-between">
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-blue-900/70">
-                  Tableau de Bord
+                <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-brand-orange">
+                  Vue d'ensemble
                 </span>
-                <h2 className="font-display text-xl font-extrabold text-navy-900 leading-none mt-0.5">
-                  Rémunération
+                <h2 className="mt-1 font-display text-2xl font-extrabold tracking-tight text-navy-900 leading-none">
+                  Tes performances
                 </h2>
               </div>
-              <span className="rounded-full bg-white/80 border border-blue-200/80 px-2.5 py-1 text-[11px] font-bold text-blue-900 shadow-2xs">
+              <span className="relative rounded-full bg-navy-900 px-2.5 py-1.5 text-[10px] font-bold text-white shadow-sm">
                 {participations.length} test{participations.length > 1 ? "s" : ""}
               </span>
             </div>
 
             {/* Grille 2x2 façon Image 4 */}
-            <div className="grid grid-cols-2 gap-2.5">
+            <div className="grid grid-cols-2 gap-2">
               {/* 1. Gains validés (Available) */}
-              <div className="rounded-2xl border border-slate-100 bg-white p-3 shadow-2xs">
+              <div className="rounded-2xl border border-slate-100 bg-[#F8FAFC] p-3 shadow-sm">
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] font-medium text-slate-400">Validé</span>
                   <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
@@ -230,7 +231,7 @@ export default function DashboardPage() {
               </div>
 
               {/* 2. Gains en attente (Pending) */}
-              <div className="rounded-2xl border border-slate-100 bg-white p-3 shadow-2xs">
+              <div className="rounded-2xl border border-slate-100 bg-[#F8FAFC] p-3 shadow-sm">
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] font-medium text-slate-400">À débloquer</span>
                   <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
@@ -243,7 +244,7 @@ export default function DashboardPage() {
               </div>
 
               {/* 3. Étapes validées */}
-              <div className="rounded-2xl border border-slate-100 bg-white p-3 shadow-2xs">
+              <div className="rounded-2xl border border-slate-100 bg-[#F8FAFC] p-3 shadow-sm">
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] font-medium text-slate-400">Étapes</span>
                   <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
@@ -256,7 +257,7 @@ export default function DashboardPage() {
               </div>
 
               {/* 4. Série active */}
-              <div className="rounded-2xl border border-slate-100 bg-white p-3 shadow-2xs">
+              <div className="rounded-2xl border border-slate-100 bg-[#F8FAFC] p-3 shadow-sm">
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] font-medium text-slate-400">Série</span>
                   <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-orange-50 text-brand-orange">
