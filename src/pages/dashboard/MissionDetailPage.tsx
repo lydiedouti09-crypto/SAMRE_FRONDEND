@@ -848,7 +848,7 @@ export default function MissionDetailPage() {
                       <div>
                         <span className="text-[10px] text-white/60 uppercase block font-medium">Votre Code du Jour :</span>
                         <span className="font-mono text-xl font-extrabold tracking-widest text-amber-400 select-all">
-                          {loadingRef ? "Génération en cours..." : (currentReference?.reference || "SAMRE-J01-XXXX")}
+                          {loadingRef ? "Génération en cours..." : (currentReference?.reference || "7K9P-4MX2")}
                         </span>
                       </div>
 

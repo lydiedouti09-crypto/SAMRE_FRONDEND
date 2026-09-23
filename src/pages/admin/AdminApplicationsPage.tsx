@@ -9,8 +9,6 @@ import {
   Copy,
   Check,
   ExternalLink,
-  Code2,
-  Key,
   ShieldCheck,
   Users,
   Calendar,
@@ -21,16 +19,12 @@ import {
   CheckCircle2,
   Play,
   Clock,
-  Terminal,
-  Send,
   Loader2,
   Eye,
   EyeOff,
   Sparkles,
   Link as LinkIcon,
   X,
-  FileCode,
-  Laptop,
   Upload,
   Image as ImageIcon,
   Table as TableIcon,
@@ -40,12 +34,10 @@ import {
 } from "lucide-react";
 import {
   applicationsApi,
-  sdkApi,
   adminApi,
   getImageUrl,
   type ApplicationItem,
   type ApplicationPayload,
-  type ApplicationDetail,
 } from "@/lib/api";
 import ConfirmModal, { type ConfirmVariant } from "@/components/ui/ConfirmModal";
 
@@ -112,24 +104,7 @@ export default function AdminApplicationsPage() {
     }
   };
 
-  // Drawer / Modal SDK Details & Simulator
-  const [selectedApp, setSelectedApp] = useState<ApplicationDetail | null>(null);
-  const [loadingDetails, setLoadingDetails] = useState(false);
-  const [copiedKey, setCopiedKey] = useState<number | null>(null);
   const [copiedLink, setCopiedLink] = useState<number | null>(null);
-  const [visibleKeyId, setVisibleKeyId] = useState<number | null>(null);
-  const [sdkSnippetTab, setSdkSnippetTab] = useState<"flutter" | "kotlin" | "curl">("flutter");
-
-  // Simulator state
-  const [simTesterId, setSimTesterId] = useState("");
-  const [simCode, setSimCode] = useState("");
-  const [simLoading, setSimLoading] = useState(false);
-  const [simResult, setSimResult] = useState<{
-    success: boolean;
-    message: string;
-    jour?: number;
-    progression?: number;
-  } | null>(null);
 
   // Confirm Modal
   const [confirmConfig, setConfirmConfig] = useState<{
@@ -242,33 +217,10 @@ export default function AdminApplicationsPage() {
     }
   };
 
-  const handleOpenSdkDrawer = async (app: ApplicationItem) => {
-    try {
-      setLoadingDetails(true);
-      setSimResult(null);
-      setSimTesterId("");
-      setSimCode("");
-      const details = await applicationsApi.show(app.id);
-      setSelectedApp(details);
-      if (details.panelistes && details.panelistes.length > 0) {
-        setSimTesterId(details.panelistes[0].panelisteUid);
-      }
-    } catch (err: any) {
-      setErrorMsg(err.message || "Erreur de chargement des détails.");
-    } finally {
-      setLoadingDetails(false);
-    }
-  };
-
-  const handleCopy = (text: string, id: number, type: "key" | "link") => {
+  const handleCopy = (text: string, id: number) => {
     navigator.clipboard.writeText(text);
-    if (type === "key") {
-      setCopiedKey(id);
-      setTimeout(() => setCopiedKey(null), 2500);
-    } else {
-      setCopiedLink(id);
-      setTimeout(() => setCopiedLink(null), 2500);
-    }
+    setCopiedLink(id);
+    setTimeout(() => setCopiedLink(null), 2500);
   };
 
   const handleRegenerateKey = (app: ApplicationItem) => {
@@ -282,9 +234,6 @@ export default function AdminApplicationsPage() {
         try {
           const res = await applicationsApi.regenerateKey(app.id);
           setSuccessMsg(`Nouvelle clé SDK générée pour ${app.nom}`);
-          if (selectedApp && selectedApp.id === app.id) {
-            setSelectedApp({ ...selectedApp, apiKey: res.apiKey });
-          }
           await loadApplications();
         } catch (err: any) {
           setErrorMsg(err.message || "Erreur lors de la régénération.");
@@ -304,51 +253,12 @@ export default function AdminApplicationsPage() {
         try {
           await applicationsApi.delete(app.id);
           setSuccessMsg(`Application « ${app.nom} » supprimée.`);
-          if (selectedApp?.id === app.id) setSelectedApp(null);
           await loadApplications();
         } catch (err: any) {
           setErrorMsg(err.message || "Erreur lors de la suppression.");
         }
       },
     });
-  };
-
-  const handleSimulateSdkValidation = async () => {
-    if (!selectedApp) return;
-    if (!simTesterId.trim() || !simCode.trim()) {
-      setSimResult({
-        success: false,
-        message: "Veuillez renseigner l'identifiant panéliste et le code du jour.",
-      });
-      return;
-    }
-
-    setSimLoading(true);
-    setSimResult(null);
-
-    try {
-      const res = await sdkApi.verifyDay({
-        apiKey: selectedApp.apiKey,
-        panelisteId: simTesterId.trim(),
-        code: simCode.trim(),
-      });
-      setSimResult({
-        success: res.success,
-        message: res.message || "Validation réussie !",
-        jour: res.jour,
-        progression: res.progression,
-      });
-      // Recharger les détails pour voir l'impact
-      const updated = await applicationsApi.show(selectedApp.id);
-      setSelectedApp(updated);
-    } catch (err: any) {
-      setSimResult({
-        success: false,
-        message: err.message || "Échec de la validation du code.",
-      });
-    } finally {
-      setSimLoading(false);
-    }
   };
 
   // Filtrage
@@ -812,14 +722,6 @@ export default function AdminApplicationsPage() {
                         <td className="px-5 py-3.5 text-right whitespace-nowrap">
                           <div className="inline-flex items-center gap-1">
                             <button
-                              onClick={() => handleOpenSdkDrawer(app)}
-                              className="inline-flex items-center gap-1 rounded-lg bg-blue-50 px-2.5 py-1.5 text-xs font-semibold text-blue-700 hover:bg-blue-100 transition shadow-2xs mr-1"
-                              title="Consulter le code d'intégration SDK et la simulation"
-                            >
-                              <Code2 className="h-3.5 w-3.5" />
-                              <span>SDK & Code</span>
-                            </button>
-                            <button
                               onClick={() => router.push(`/admin/missions?action=new&appId=${app.id}`)}
                               title="Créer une mission pour cette application"
                               className="rounded-lg border border-slate-200 p-1.5 text-slate-600 hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-200 transition"
@@ -1010,13 +912,6 @@ export default function AdminApplicationsPage() {
                     </button>
 
                     <div className="flex items-center gap-1">
-                      <button
-                        onClick={() => handleOpenSdkDrawer(app)}
-                        title="SDK & Intégration"
-                        className="rounded-lg bg-slate-100 hover:bg-slate-200 p-1.5 text-slate-700 transition"
-                      >
-                        <Code2 className="h-3.5 w-3.5" />
-                      </button>
                       <button
                         onClick={() => router.push(`/admin/missions?action=new&appId=${app.id}`)}
                         title="Créer une mission"
@@ -1417,451 +1312,6 @@ export default function AdminApplicationsPage() {
                 type="button"
                 onClick={() => setCreatedProjectLink(null)}
                 className="rounded-xl bg-slate-900 px-6 py-2.5 text-xs font-semibold text-white hover:bg-slate-800 transition"
-              >
-                Fermer
-              </button>
-            </div>
-          </div>
-        </div>,
-        document.body
-      )}
-
-      {/* Drawer / Modal Détails & Intégration SDK */}
-      {selectedApp && mounted && createPortal(
-        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-navy-950/80 p-3 sm:p-6 backdrop-blur-md overflow-y-auto">
-          <div className="relative w-full max-w-4xl my-auto rounded-3xl bg-white shadow-2xl border border-slate-100 flex flex-col max-h-[90vh] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-            {/* Header Drawer */}
-            <div className="flex items-center justify-between border-b border-slate-200 bg-slate-900 px-6 py-4 text-white shrink-0">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500/20 text-blue-400 border border-blue-500/30 font-bold">
-                  <Code2 className="h-5 w-5" />
-                </div>
-                <div>
-                  <h2 className="text-lg font-bold font-display">
-                    Centre d'Intégration SDK : {selectedApp.nom}
-                  </h2>
-                  <p className="text-xs text-slate-400">
-                    Clés d'accès, snippets d'intégration et simulateur de test en direct
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setSelectedApp(null)}
-                className="rounded-full p-2 text-slate-400 hover:bg-slate-800 hover:text-white transition"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            <div className="p-6 sm:p-8 space-y-6 flex-1 overflow-y-auto">
-              {/* Étape 1 & 2 Rappel schéma */}
-              <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-4 text-xs text-blue-900">
-                <div className="flex items-start gap-3">
-                  <Sparkles className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
-                  <div>
-                    <span className="font-bold block text-sm">
-                      Cycle de Test Automatisé Samré ({selectedApp.dureeJoursDefaut || 12} jours / {selectedApp.nbMaxPanelistes || 12} testeurs)
-                    </span>
-                    <p className="mt-1 text-slate-600 leading-relaxed">
-                      1. Transmettez la <strong>clé SDK</strong> ou le <strong>lien développeur</strong> à l'équipe technique de l'application à tester.
-                      <br />
-                      2. Le développeur intègre le formulaire de test dans son application.
-                      <br />
-                      3. Chaque jour, le serveur Samré génère un code unique pour chaque panéliste. Le testeur le saisit dans l'app testée qui valide automatiquement la journée auprès de Samré.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* 1. Clé SDK et Lien unique Développeur */}
-              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
-                      <Key className="h-4 w-4 text-amber-500" />
-                      Clé d'Intégration SDK (X-App-Key)
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => handleCopy(selectedApp.apiKey, selectedApp.id, "key")}
-                      className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700"
-                    >
-                      {copiedKey === selectedApp.id ? (
-                        <>
-                          <Check className="h-3.5 w-3.5 text-emerald-600" />
-                          <span className="text-emerald-600">Copiée</span>
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="h-3.5 w-3.5" />
-                          <span>Copier la clé</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-                  <div className="rounded-lg bg-slate-900 p-2.5 font-mono text-xs text-amber-400 select-all break-all">
-                    {selectedApp.apiKey}
-                  </div>
-                </div>
-
-                <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
-                      <LinkIcon className="h-4 w-4 text-blue-500" />
-                      Lien Unique pour le Développeur
-                    </span>
-                    <div className="flex items-center gap-2">
-                      <a
-                        href={getIntegrationUrl(selectedApp.tokenIntegration)}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center gap-1 text-xs font-semibold text-slate-600 hover:text-slate-900"
-                      >
-                        <ExternalLink className="h-3.5 w-3.5" />
-                        Ouvrir
-                      </a>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          handleCopy(
-                            getIntegrationUrl(selectedApp.tokenIntegration),
-                            selectedApp.id,
-                            "link"
-                          )
-                        }
-                        className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700"
-                      >
-                        {copiedLink === selectedApp.id ? (
-                          <>
-                            <Check className="h-3.5 w-3.5 text-emerald-600" />
-                            <span className="text-emerald-600">Copié</span>
-                          </>
-                        ) : (
-                          <>
-                            <Copy className="h-3.5 w-3.5" />
-                            <span>Copier le lien</span>
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                  <div className="rounded-lg bg-slate-900 p-2.5 font-mono text-xs text-blue-300 select-all truncate">
-                    {getIntegrationUrl(selectedApp.tokenIntegration)}
-                  </div>
-                </div>
-              </div>
-
-              {/* 2. Snippets de Code Intégration */}
-              <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
-                <div className="flex items-center justify-between border-b border-slate-200 bg-slate-100 px-4 py-2.5">
-                  <div className="flex items-center gap-2">
-                    <FileCode className="h-4 w-4 text-slate-600" />
-                    <span className="text-xs font-bold text-slate-700">
-                      Snippet d'Intégration du Formulaire de Test
-                    </span>
-                  </div>
-
-                  <div className="flex items-center gap-1 bg-slate-200/80 rounded-lg p-1 text-xs">
-                    <button
-                      onClick={() => setSdkSnippetTab("flutter")}
-                      className={`px-3 py-1 rounded-md font-medium transition ${
-                        sdkSnippetTab === "flutter"
-                          ? "bg-white text-slate-900 shadow-sm"
-                          : "text-slate-600 hover:text-slate-900"
-                      }`}
-                    >
-                      Flutter / Dart
-                    </button>
-                    <button
-                      onClick={() => setSdkSnippetTab("kotlin")}
-                      className={`px-3 py-1 rounded-md font-medium transition ${
-                        sdkSnippetTab === "kotlin"
-                          ? "bg-white text-slate-900 shadow-sm"
-                          : "text-slate-600 hover:text-slate-900"
-                      }`}
-                    >
-                      Android (Kotlin)
-                    </button>
-                    <button
-                      onClick={() => setSdkSnippetTab("curl")}
-                      className={`px-3 py-1 rounded-md font-medium transition ${
-                        sdkSnippetTab === "curl"
-                          ? "bg-white text-slate-900 shadow-sm"
-                          : "text-slate-600 hover:text-slate-900"
-                      }`}
-                    >
-                      cURL / CLI
-                    </button>
-                  </div>
-                </div>
-
-                <div className="bg-slate-950 p-4 font-mono text-xs text-slate-200 overflow-x-auto">
-                  {sdkSnippetTab === "flutter" && (
-                    <pre className="text-cyan-300">
-{`// 1. Dépendance dans pubspec.yaml :
-// dependencies:
-//   http: ^1.2.0
-
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-
-class SamreSdk {
-  static const String _endpoint =
-      "${import.meta.env.VITE_API_URL ?? "http://localhost:8000"}/api/sdk/verify-day";
-  static const String _apiKey = "${selectedApp.apiKey}";
-
-  /// Valide la journée de test pour un panéliste Samré
-  static Future<Map<String, dynamic>> verifyDay({
-    required String panelisteId,
-    required String codeDuJour,
-  }) async {
-    final response = await http.post(
-      Uri.parse(_endpoint),
-      headers: {
-        'Content-Type': 'application/json',
-        'X-App-Key': _apiKey,
-      },
-      body: jsonEncode({
-        'panelisteId': panelisteId.trim(),
-        'code': codeDuJour.trim(),
-      }),
-    );
-
-    final data = jsonDecode(response.body) as Map<String, dynamic>;
-    if (response.statusCode == 200 && data['success'] == true) {
-      // Journée validée avec succès !
-      return data;
-    } else {
-      throw Exception(data['error'] ?? 'Échec de validation Samré');
-    }
-  }
-}`}
-                    </pre>
-                  )}
-
-                  {sdkSnippetTab === "kotlin" && (
-                    <pre className="text-emerald-300">
-{`// 1. Dépendances dans build.gradle.kts (Module: app) :
-// implementation("com.squareup.okhttp3:okhttp:4.12.0")
-// implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
-
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.RequestBody.Companion.toRequestBody
-import org.json.JSONObject
-
-object SamreSdk {
-    private const val API_URL =
-        "${import.meta.env.VITE_API_URL ?? "http://localhost:8000"}/api/sdk/verify-day"
-    private const val API_KEY = "${selectedApp.apiKey}"
-    private val client = OkHttpClient()
-
-    /**
-     * Valide la journée de test auprès du serveur central Samré
-     */
-    suspend fun verifyDay(panelisteId: String, codeDuJour: String): Result<String> =
-        withContext(Dispatchers.IO) {
-            try {
-                val payload = JSONObject().apply {
-                    put("panelisteId", panelisteId.trim())
-                    put("code", codeDuJour.trim())
-                }.toString()
-
-                val body = payload.toRequestBody("application/json; charset=utf-8".toMediaType())
-                val request = Request.Builder()
-                    .url(API_URL)
-                    .addHeader("X-App-Key", API_KEY)
-                    .post(body)
-                    .build()
-
-                client.newCall(request).execute().use { response ->
-                    val resStr = response.body?.string().orEmpty()
-                    val json = JSONObject(resStr)
-
-                    if (response.isSuccessful && json.optBoolean("success", false)) {
-                        Result.success(json.optString("message", "Journée validée avec succès !"))
-                    } else {
-                        Result.failure(Exception(json.optString("error", "Code ou panéliste invalide")))
-                    }
-                }
-            } catch (e: Exception) {
-                Result.failure(e)
-            }
-        }
-}`}
-                    </pre>
-                  )}
-
-                  {sdkSnippetTab === "curl" && (
-                    <pre className="text-amber-300">
-{`# Appel cURL direct de vérification quotidienne
-curl -X POST "${import.meta.env.VITE_API_URL ?? "http://localhost:8000"}/api/sdk/verify-day" \\
-  -H "Content-Type: application/json" \\
-  -H "X-App-Key: ${selectedApp.apiKey}" \\
-  -d '{
-    "panelisteId": "TST-XXXXXX",
-    "code": "SAMRE-J01-9F3B"
-  }'`}
-                    </pre>
-                  )}
-                </div>
-              </div>
-
-              {/* 3. Simulateur Interactif en Direct */}
-              <div className="rounded-2xl border border-indigo-100 bg-indigo-50/40 p-5">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <Terminal className="h-4 w-4 text-indigo-600" />
-                    <span className="text-sm font-bold text-indigo-950">
-                      Simulateur de Test en Direct (Testez comme l'App)
-                    </span>
-                  </div>
-                  <span className="text-xs text-indigo-600 font-medium">
-                    Simule la requête envoyée par l'application testée
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">
-                      Identifiant Unique Panéliste
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Ex: TST-123456"
-                      value={simTesterId}
-                      onChange={(e) => setSimTesterId(e.target.value)}
-                      className="w-full rounded-xl border border-indigo-200 bg-white px-3 py-2 text-xs font-mono text-slate-800 focus:border-indigo-500 focus:outline-none"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">
-                      Code du Jour à Saisir
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Ex: SAMRE-J01-ABCD"
-                      value={simCode}
-                      onChange={(e) => setSimCode(e.target.value)}
-                      className="w-full rounded-xl border border-indigo-200 bg-white px-3 py-2 text-xs font-mono text-slate-800 uppercase focus:border-indigo-500 focus:outline-none"
-                    />
-                  </div>
-
-                  <div className="flex items-end">
-                    <button
-                      type="button"
-                      onClick={handleSimulateSdkValidation}
-                      disabled={simLoading}
-                      className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-bold text-white shadow hover:bg-indigo-700 transition disabled:opacity-60"
-                    >
-                      {simLoading ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Send className="h-4 w-4" />
-                      )}
-                      Valider le code
-                    </button>
-                  </div>
-                </div>
-
-                {/* Résultat de simulation */}
-                {simResult && (
-                  <div
-                    className={`mt-4 rounded-xl border p-3 text-xs flex items-start gap-2.5 transition ${
-                      simResult.success
-                        ? "border-emerald-200 bg-emerald-50 text-emerald-900"
-                        : "border-rose-200 bg-rose-50 text-rose-900"
-                    }`}
-                  >
-                    {simResult.success ? (
-                      <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
-                    ) : (
-                      <AlertCircle className="h-4 w-4 text-rose-600 shrink-0 mt-0.5" />
-                    )}
-                    <div>
-                      <span className="font-bold">{simResult.message}</span>
-                      {simResult.jour && (
-                        <div className="text-[11px] mt-0.5 text-emerald-700 font-medium">
-                          Jour {simResult.jour} validé • Progression testeur : {simResult.progression}%
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Panélistes assignés à cette application */}
-              <div>
-                <h4 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
-                  <Users className="h-4 w-4 text-slate-600" />
-                  Panélistes Assignés & Progression ({selectedApp.panelistes?.length || 0})
-                </h4>
-
-                {selectedApp.panelistes && selectedApp.panelistes.length > 0 ? (
-                  <div className="rounded-xl border border-slate-200 overflow-hidden text-xs">
-                    <table className="min-w-full divide-y divide-slate-200">
-                      <thead className="bg-slate-50 text-slate-500 font-semibold">
-                        <tr>
-                          <th className="px-4 py-2.5 text-left">Panéliste</th>
-                          <th className="px-4 py-2.5 text-left">Identifiant Unique</th>
-                          <th className="px-4 py-2.5 text-left">Mission</th>
-                          <th className="px-4 py-2.5 text-center">Progression</th>
-                          <th className="px-4 py-2.5 text-right">Action</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100 bg-white text-slate-700">
-                        {selectedApp.panelistes.map((p) => (
-                          <tr key={p.id} className="hover:bg-slate-50/60 transition">
-                            <td className="px-4 py-2.5 font-medium text-slate-900">
-                              {p.nom}
-                            </td>
-                            <td className="px-4 py-2.5 font-mono text-indigo-600 font-bold">
-                              {p.panelisteUid}
-                            </td>
-                            <td className="px-4 py-2.5 text-slate-500 truncate max-w-[180px]">
-                              {p.missionTitre}
-                            </td>
-                            <td className="px-4 py-2.5 text-center">
-                              <span className="font-semibold text-slate-900">
-                                {p.progression}%
-                              </span>
-                            </td>
-                            <td className="px-4 py-2.5 text-right">
-                              <button
-                                onClick={() => {
-                                  setSimTesterId(p.panelisteUid);
-                                }}
-                                className="text-blue-600 hover:text-blue-800 font-medium text-[11px]"
-                              >
-                                Tester avec cet ID
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                ) : (
-                  <p className="text-xs text-slate-400 italic">
-                    Aucun panéliste inscrit pour le moment. Lancez une mission liée à cette application.
-                  </p>
-                )}
-              </div>
-            </div>
-
-            <div className="border-t border-slate-200 bg-slate-50 px-6 py-4 flex items-center justify-between shrink-0">
-              <span className="text-xs text-slate-500">
-                Serveur Central Samré • Intégration SDK v1.0
-              </span>
-              <button
-                type="button"
-                onClick={() => setSelectedApp(null)}
-                className="rounded-xl bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800 transition"
               >
                 Fermer
               </button>
