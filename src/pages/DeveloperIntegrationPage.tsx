@@ -157,6 +157,7 @@ export default function DeveloperIntegrationPage() {
 // =================================================================
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
@@ -164,6 +165,7 @@ class SamreConfig {
   static const String apiUrl = "${apiUrl}";
   static const String apiKey = "${info.apiKey}";
   static const String appId = "${app.id}";
+  static const int requiredDurationSeconds = 25;
 }
 
 /// Overlay automatique avec compteur anti-triche de 25 secondes
@@ -176,8 +178,9 @@ class SamreOverlay extends StatefulWidget {
 }
 
 class _SamreOverlayState extends State<SamreOverlay> {
-  int _secondsRemaining = 25;
+  int _secondsRemaining = SamreConfig.requiredDurationSeconds;
   bool _canSubmit = false;
+  bool _showValidationDialog = false;
   Timer? _timer;
 
   @override
@@ -207,78 +210,117 @@ class _SamreOverlayState extends State<SamreOverlay> {
     super.dispose();
   }
 
-  void _openValidationDialog() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => const SamreValidationDialog(),
-    );
+  void _openDialog() {
+    setState(() => _showValidationDialog = true);
+  }
+
+  void _closeDialog() {
+    setState(() => _showValidationDialog = false);
   }
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        widget.child,
-        Positioned(
-          bottom: 24,
-          right: 20,
-          child: Material(
-            elevation: 8,
-            borderRadius: BorderRadius.circular(24),
-            color: _canSubmit ? const Color(0xFF2563EB) : Colors.black.withOpacity(0.7),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(24),
-              onTap: _canSubmit ? _openValidationDialog : null,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      _canSubmit ? Icons.verified_user : Icons.timer_outlined,
-                      color: Colors.white,
-                      size: 18,
+    return Directionality(
+      textDirection: TextDirection.ltr,
+      child: Stack(
+        children: [
+          widget.child,
+
+          // ── Bouton Flottant Rehaussé avec SafeArea ─────────────────────────
+          Positioned(
+            bottom: 56,
+            right: 18,
+            child: SafeArea(
+              child: Material(
+                elevation: 10,
+                borderRadius: BorderRadius.circular(30),
+                color: _canSubmit ? const Color(0xFF2563EB) : Colors.black.withOpacity(0.85),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(30),
+                  onTap: _canSubmit ? _openDialog : null,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          _canSubmit ? Icons.verified_user_rounded : Icons.timer_outlined,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          _canSubmit ? 'Valider Journée' : 'Test en cours (\${_secondsRemaining}s)',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                            decoration: TextDecoration.none,
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 8),
-                    Text(
-                      _canSubmit ? 'Valider Journée' : 'Test en cours (\${_secondsRemaining}s)',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),
           ),
-        ),
-      ],
+
+          // ── Fenêtre Modale de Validation (100% Indépendante du Navigator) ──
+          if (_showValidationDialog)
+            Positioned.fill(
+              child: Container(
+                color: Colors.black.withOpacity(0.75),
+                alignment: Alignment.center,
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Material(
+                  color: Colors.transparent,
+                  child: SamreValidationCard(
+                    onClose: _closeDialog,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }
 
-/// Dialogue de saisie du code du jour
-class SamreValidationDialog extends StatefulWidget {
-  const SamreValidationDialog({Key? key}) : super(key: key);
+/// Carte de dialogue de validation du code quotidien
+class SamreValidationCard extends StatefulWidget {
+  final VoidCallback onClose;
+  const SamreValidationCard({Key? key, required this.onClose}) : super(key: key);
 
   @override
-  State<SamreValidationDialog> createState() => _SamreValidationDialogState();
+  State<SamreValidationCard> createState() => _SamreValidationCardState();
 }
 
-class _SamreValidationDialogState extends State<SamreValidationDialog> {
-  final _uidCtrl = TextEditingController();
+class _SamreValidationCardState extends State<SamreValidationCard> {
+  final _panelisteCtrl = TextEditingController();
   final _codeCtrl = TextEditingController();
   bool _loading = false;
   String? _message;
   bool _success = false;
 
+  @override
+  void dispose() {
+    _panelisteCtrl.dispose();
+    _codeCtrl.dispose();
+    super.dispose();
+  }
+
   Future<void> _verify() async {
-    final uid = _uidCtrl.text.trim();
-    final code = _codeCtrl.text.trim().toUpperCase();
-    if (uid.isEmpty || code.isEmpty) return;
+    final paneliste = _panelisteCtrl.text.trim();
+    final code = _codeCtrl.text.trim();
+
+    if (paneliste.isEmpty || code.isEmpty) {
+      setState(() {
+        _message = 'Veuillez renseigner votre ID panéliste et le code du jour.';
+        _success = false;
+      });
+      return;
+    }
 
     setState(() {
       _loading = true;
@@ -286,126 +328,179 @@ class _SamreValidationDialogState extends State<SamreValidationDialog> {
     });
 
     try {
-      final res = await http.post(
-        Uri.parse('\${SamreConfig.apiUrl}/api/v1/sdk/verify-code'),
+      final uri = Uri.parse('\${SamreConfig.apiUrl}/api/sdk/verify-day');
+      final response = await http.post(
+        uri,
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
           'X-App-Key': SamreConfig.apiKey,
+          'ngrok-skip-browser-warning': '1',
         },
         body: jsonEncode({
           'apiKey': SamreConfig.apiKey,
-          'panelisteUid': uid,
+          'app_id': SamreConfig.appId,
+          'panelisteId': paneliste,
+          'panelisteUid': paneliste,
           'code': code,
-          'deviceId': 'flutter_device',
+          'deviceId': Platform.isAndroid ? 'android-\${paneliste}' : 'ios-\${paneliste}',
         }),
-      );
+      ).timeout(const Duration(seconds: 15));
 
-      final data = jsonDecode(res.body) as Map<String, dynamic>;
-      if (res.statusCode == 200 && data['success'] == true) {
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode >= 200 && response.statusCode < 300 && data['success'] == true) {
         setState(() {
           _success = true;
-          _message = data['message'] ?? 'Journée validée avec succès !';
+          _message = data['message'] ?? 'Félicitations ! Votre journée de test a été validée avec succès.';
         });
       } else {
         setState(() {
           _success = false;
-          _message = data['message'] ?? (data['error'] ?? 'Code ou panéliste invalide.');
+          _message = data['message'] ?? data['error'] ?? 'Code invalide ou expiré.';
         });
       }
     } catch (e) {
       setState(() {
         _success = false;
-        _message = 'Erreur de connexion au serveur Samré.';
+        _message = 'Erreur de connexion au serveur Samré. Vérifiez votre connexion internet.';
       });
     } finally {
-      if (mounted) setState(() => _loading = false);
+      setState(() => _loading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      backgroundColor: const Color(0xFF0F172A),
-      title: const Row(
-        children: [
-          Icon(Icons.stars_rounded, color: Color(0xFF38BDF8), size: 24),
-          SizedBox(width: 8),
-          Text('Validation Samré', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+    return Container(
+      constraints: const BoxConstraints(maxWidth: 420),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0F172A),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFF334155), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.6),
+            blurRadius: 30,
+            spreadRadius: 5,
+          ),
         ],
       ),
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Text(
-              'Saisissez votre Identifiant Panéliste et votre Code du Jour :',
-              style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _uidCtrl,
-              style: const TextStyle(color: Colors.white),
-              decoration: InputDecoration(
-                labelText: 'Identifiant Panéliste',
-                labelStyle: const TextStyle(color: Color(0xFF94A3B8)),
-                hintText: 'Ex: TST-7A8B9C',
-                hintStyle: const TextStyle(color: Color(0xFF64748B)),
-                filled: true,
-                fillColor: const Color(0xFF1E293B),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _codeCtrl,
-              textCapitalization: TextCapitalization.characters,
-              style: const TextStyle(color: Colors.white, letterSpacing: 2, fontWeight: FontWeight.bold),
-              decoration: InputDecoration(
-                labelText: 'Code Unique du Jour',
-                labelStyle: const TextStyle(color: Color(0xFF94A3B8)),
-                hintText: 'Ex: 7K9P-4MX2',
-                hintStyle: const TextStyle(color: Color(0xFF64748B), letterSpacing: 0),
-                filled: true,
-                fillColor: const Color(0xFF1E293B),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-            ),
-            if (_message != null) ...[
-              const SizedBox(height: 14),
+      padding: const EdgeInsets.all(22),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: _success ? const Color(0xFF065F46).withOpacity(0.3) : const Color(0xFF991B1B).withOpacity(0.3),
+                  color: const Color(0xFF2563EB).withOpacity(0.2),
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: _success ? const Color(0xFF10B981) : const Color(0xFFEF4444)),
                 ),
+                child: const Icon(Icons.verified, color: Color(0xFF60A5FA), size: 22),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
                 child: Text(
-                  _message!,
-                  style: TextStyle(color: _success ? const Color(0xFF34D399) : const Color(0xFFF87171), fontSize: 12, fontWeight: FontWeight.w600),
+                  'Validation Samré',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.close, color: Color(0xFF94A3B8), size: 20),
+                onPressed: widget.onClose,
               ),
             ],
-          ],
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Fermer', style: TextStyle(color: Color(0xFF94A3B8))),
-        ),
-        ElevatedButton(
-          onPressed: _loading ? null : _verify,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF2563EB),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ),
-          child: _loading
-              ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-              : const Text('Valider', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-        ),
-      ],
+          const SizedBox(height: 12),
+          const Text(
+            'Saisissez vos identifiants pour enregistrer votre journée de test.',
+            style: TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _panelisteCtrl,
+            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+            decoration: InputDecoration(
+              labelText: 'Identifiant Panéliste',
+              labelStyle: const TextStyle(color: Color(0xFF94A3B8)),
+              hintText: 'Ex: TST-7A8B9C',
+              hintStyle: const TextStyle(color: Color(0xFF475569)),
+              filled: true,
+              fillColor: const Color(0xFF1E293B),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Color(0xFF334155)),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _codeCtrl,
+            textCapitalization: TextCapitalization.characters,
+            style: const TextStyle(color: Colors.white, letterSpacing: 2, fontWeight: FontWeight.bold),
+            decoration: InputDecoration(
+              labelText: 'Code Unique du Jour',
+              labelStyle: const TextStyle(color: Color(0xFF94A3B8)),
+              hintText: 'Ex: 7K9P-4MX2',
+              hintStyle: const TextStyle(color: Color(0xFF475569), letterSpacing: 0),
+              filled: true,
+              fillColor: const Color(0xFF1E293B),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Color(0xFF334155)),
+              ),
+            ),
+          ),
+          if (_message != null) ...[
+            const SizedBox(height: 14),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: _success ? const Color(0xFF065F46).withOpacity(0.3) : const Color(0xFF991B1B).withOpacity(0.3),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: _success ? const Color(0xFF10B981) : const Color(0xFFEF4444)),
+              ),
+              child: Text(
+                _message!,
+                style: TextStyle(
+                  color: _success ? const Color(0xFF34D399) : const Color(0xFFF87171),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+          const SizedBox(height: 18),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              TextButton(
+                onPressed: widget.onClose,
+                child: const Text('Fermer', style: TextStyle(color: Color(0xFF94A3B8))),
+              ),
+              const SizedBox(width: 8),
+              ElevatedButton(
+                onPressed: _loading ? null : _verify,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF2563EB),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: _loading
+                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                    : const Text('Valider', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }`;
