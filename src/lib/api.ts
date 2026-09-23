@@ -70,6 +70,75 @@ export class ApiError extends Error {
   }
 }
 
+function extractErrorMessage(
+  data: any,
+  status: number,
+  default404: string
+): string {
+  if (typeof data === "string" && data.trim()) return data;
+  if (!data) return status === 404 ? default404 : `Erreur HTTP ${status}`;
+
+  if (typeof data.message === "string" && data.message.trim()) return data.message;
+  if (typeof data.error === "string" && data.error.trim()) return data.error;
+
+  if (data.errors) {
+    if (typeof data.errors === "string") return data.errors;
+    if (Array.isArray(data.errors)) {
+      return data.errors
+        .map((e: any) => (typeof e === "string" ? e : JSON.stringify(e)))
+        .join(", ");
+    }
+    if (typeof data.errors === "object") {
+      const messages: string[] = [];
+      for (const key of Object.keys(data.errors)) {
+        const val = data.errors[key];
+        if (Array.isArray(val)) {
+          messages.push(...val);
+        } else if (typeof val === "string") {
+          messages.push(val);
+        }
+      }
+      if (messages.length > 0) return messages.join(" | ");
+    }
+  }
+
+  if (status === 404) return default404;
+  return `Erreur ${status} : Réponse serveur non reconnue.`;
+}
+
+function parseResponseBody(trimmed: string, status: number): any {
+  if (!trimmed) return null;
+  const isJsonLike = trimmed.startsWith("{") || trimmed.startsWith("[");
+
+  if (isJsonLike) {
+    try {
+      return JSON.parse(trimmed);
+    } catch {
+      throw new ApiError(
+        "Le serveur a répondu avec un format de données invalide.",
+        status
+      );
+    }
+  }
+
+  const plainText = trimmed
+    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  const sanitized = plainText.slice(0, 220) || "Réponse serveur non valide.";
+
+  if (/SQLSTATE\[HY000\]\s*\[2002\]|Access denied for user/i.test(sanitized)) {
+    return {
+      message: "La base de données n'est pas accessible. Vérifiez que MySQL est démarré sur le port 3306.",
+    };
+  }
+
+  return { message: sanitized };
+}
+
 // Client HTTP générique pour le testeur
 async function request<T>(
   path: string,
@@ -94,55 +163,15 @@ async function request<T>(
   }
 
   const text = await res.text();
-  let data: any = null;
-
-  if (text) {
-    const trimmed = text.trim();
-    const isJsonLike = trimmed.startsWith("{") || trimmed.startsWith("[");
-
-    if (isJsonLike) {
-      try {
-        data = JSON.parse(trimmed);
-      } catch {
-        throw new ApiError(
-          "Le serveur a répondu avec une erreur de format JSON.",
-          res.status
-        );
-      }
-    } else {
-      const plainText = trimmed
-        .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, " ")
-        .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, " ")
-        .replace(/<[^>]+>/g, " ")
-        .replace(/\s+/g, " ")
-        .trim();
-
-      const sanitized = plainText.slice(0, 220) || "Réponse serveur non valide.";
-
-      if (/SQLSTATE|No connection could be made|actively refused|Internal Server Error/i.test(sanitized)) {
-        data = {
-          message:
-            "La base de données n'est pas disponible. Démarrez MySQL/WAMP puis réessayez.",
-        };
-      } else {
-        data = { message: sanitized };
-      }
-    }
-  }
+  const data = parseResponseBody(text ? text.trim() : "", res.status);
 
   if (!res.ok) {
-    const message =
-      data?.error ??
-      data?.message ??
-      data?.errors ??
-      (res.status === 404
-        ? "Le serveur d'authentification est introuvable. Vérifiez que l'API est démarrée."
-        : "Une erreur est survenue.");
-
-    throw new ApiError(
-      typeof message === "string" ? message : "Une erreur est survenue.",
-      res.status
+    const message = extractErrorMessage(
+      data,
+      res.status,
+      "Le serveur d'authentification ou la ressource est introuvable."
     );
+    throw new ApiError(message, res.status);
   }
 
   return data as T;
@@ -172,55 +201,15 @@ async function adminRequest<T>(
   }
 
   const text = await res.text();
-  let data: any = null;
-
-  if (text) {
-    const trimmed = text.trim();
-    const isJsonLike = trimmed.startsWith("{") || trimmed.startsWith("[");
-
-    if (isJsonLike) {
-      try {
-        data = JSON.parse(trimmed);
-      } catch {
-        throw new ApiError(
-          "Le serveur a répondu avec une erreur de format JSON.",
-          res.status
-        );
-      }
-    } else {
-      const plainText = trimmed
-        .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, " ")
-        .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, " ")
-        .replace(/<[^>]+>/g, " ")
-        .replace(/\s+/g, " ")
-        .trim();
-
-      const sanitized = plainText.slice(0, 220) || "Réponse serveur non valide.";
-
-      if (/SQLSTATE|No connection could be made|actively refused|Internal Server Error/i.test(sanitized)) {
-        data = {
-          message:
-            "La base de données n'est pas disponible. Démarrez MySQL/WAMP puis réessayez.",
-        };
-      } else {
-        data = { message: sanitized };
-      }
-    }
-  }
+  const data = parseResponseBody(text ? text.trim() : "", res.status);
 
   if (!res.ok) {
-    const message =
-      data?.error ??
-      data?.message ??
-      data?.errors ??
-      (res.status === 404
-        ? "Le serveur d'administration est introuvable. Vérifiez que l'API est démarrée."
-        : "Une erreur est survenue.");
-
-    throw new ApiError(
-      typeof message === "string" ? message : "Une erreur est survenue.",
-      res.status
+    const message = extractErrorMessage(
+      data,
+      res.status,
+      "Le serveur d'administration ou la ressource est introuvable."
     );
+    throw new ApiError(message, res.status);
   }
 
   return data as T;

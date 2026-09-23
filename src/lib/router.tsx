@@ -1,6 +1,5 @@
 import {
   Link as RouterLink,
-  type LinkProps as RouterLinkProps,
   useNavigate,
   useLocation,
   useParams,
@@ -8,16 +7,18 @@ import {
 } from "react-router-dom";
 import React from "react";
 
-export interface LinkProps extends Omit<RouterLinkProps, "to"> {
+export interface LinkProps
+  extends React.AnchorHTMLAttributes<HTMLAnchorElement> {
   to?: string;
   href?: string;
   prefetch?: boolean;
   replace?: boolean;
   children?: React.ReactNode;
+  className?: string;
   [key: string]: any;
 }
 
-export function Link({ to, href, ...props }: LinkProps) {
+export function Link({ to, href, prefetch, replace, ...props }: LinkProps) {
   const target = to || href || "";
   if (
     target.startsWith("http://") ||
@@ -28,11 +29,11 @@ export function Link({ to, href, ...props }: LinkProps) {
     return (
       <a
         href={target}
-        {...(props as React.AnchorHTMLAttributes<HTMLAnchorElement>)}
+        {...props}
       />
     );
   }
-  return <RouterLink to={target} {...props} />;
+  return <RouterLink to={target} replace={replace} {...props} />;
 }
 
 export function useRouter() {
