@@ -203,6 +203,11 @@ export default function MissionDetailPage() {
   useEffect(() => {
     if (!Number.isNaN(missionId)) {
       loadAll();
+      // Auto-rafraîchissement toutes les 4s pour détecter la validation mobile en direct
+      const interval = setInterval(() => {
+        loadAll(true);
+      }, 4000);
+      return () => clearInterval(interval);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [missionId]);
@@ -1107,81 +1112,123 @@ export default function MissionDetailPage() {
                         </div>
                       </>
                     ) : (
-                      <form onSubmit={handleValidateViaSdk} className="mt-4 space-y-4">
+                      <div className="mt-4 space-y-4">
+                        {/* Cartes d'Identifiants à copier pour l'application mobile */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                          {/* Champ 1 : Identifiant Unique Panéliste */}
-                          <div className="rounded-2xl border border-slate-200 bg-slate-50/60 p-3.5 focus-within:border-brand-orange focus-within:bg-white focus-within:ring-1 focus-within:ring-brand-orange transition shadow-2xs">
-                            <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
-                              Identifiant Testeur
-                            </label>
-                            <div className="flex items-center gap-2">
-                              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-200/70 text-slate-600 shrink-0">
-                                <Users size={15} />
+                          {/* Identifiant Testeur */}
+                          <div className="rounded-2xl border border-slate-200/90 bg-slate-50/70 p-4 shadow-2xs">
+                            <div className="flex items-center justify-between mb-1.5">
+                              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                                1. Votre Identifiant Testeur
                               </span>
-                              <input
-                                type="text"
-                                value={simPanelisteId}
-                                onChange={(e) => setSimPanelisteId(e.target.value.toUpperCase())}
-                                placeholder="Ex: TST-353451"
-                                className="w-full bg-transparent font-mono text-sm font-bold text-navy-900 placeholder:text-slate-400 focus:outline-none"
-                              />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const idToCopy = simPanelisteId || participation.panelisteUid || "TST-ATTRIBUÉ";
+                                  navigator.clipboard.writeText(idToCopy);
+                                  setCopiedTesterId(true);
+                                  setTimeout(() => setCopiedTesterId(false), 2000);
+                                }}
+                                className="inline-flex items-center gap-1 rounded-lg bg-white border border-slate-200 px-2 py-1 text-[11px] font-bold text-navy-900 shadow-2xs transition active:scale-95 hover:bg-slate-50"
+                              >
+                                {copiedTesterId ? (
+                                  <>
+                                    <Check size={12} className="text-emerald-600" />
+                                    <span className="text-emerald-700">Copié !</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Copy size={12} />
+                                    <span>Copier</span>
+                                  </>
+                                )}
+                              </button>
                             </div>
-                            <span className="mt-1 block text-[10px] text-slate-400">
-                              Votre identifiant personnel de panéliste Samré
-                            </span>
+                            <div className="flex items-center gap-2">
+                              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-100 text-blue-800 shrink-0 font-bold">
+                                <Users size={16} />
+                              </span>
+                              <span className="font-mono text-base font-black text-navy-900 tracking-wider">
+                                {simPanelisteId || participation.panelisteUid || "TST-ATTRIBUÉ"}
+                              </span>
+                            </div>
+                            <p className="mt-2 text-[10px] text-slate-400">
+                              À renseigner dans le bouton Samré de votre application mobile.
+                            </p>
                           </div>
 
-                          {/* Champ 2 : Code Unique du Jour (OTP Style) */}
-                          <div className="rounded-2xl border border-slate-200 bg-slate-50/60 p-3.5 focus-within:border-brand-orange focus-within:bg-white focus-within:ring-1 focus-within:ring-brand-orange transition shadow-2xs">
-                            <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
-                              Code Unique du Jour
-                            </label>
-                            <div className="flex items-center gap-2">
-                              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-100 text-amber-800 shrink-0">
-                                <KeyRound size={15} />
+                          {/* Code Unique du Jour */}
+                          <div className="rounded-2xl border border-amber-200/80 bg-amber-50/40 p-4 shadow-2xs">
+                            <div className="flex items-center justify-between mb-1.5">
+                              <span className="text-[11px] font-bold uppercase tracking-wider text-amber-800">
+                                2. Votre Code du Jour (Jour {selectedEtape.ordre})
                               </span>
-                              <input
-                                type="text"
-                                value={simCode}
-                                onChange={(e) => setSimCode(e.target.value.toUpperCase())}
-                                placeholder="Ex: FLYP-J01-E02B05"
-                                className="w-full bg-transparent font-mono text-sm font-bold tracking-wider text-navy-900 placeholder:text-slate-400 focus:outline-none uppercase"
-                              />
-                              {currentReference?.reference && simCode !== currentReference.reference && (
-                                <button
-                                  type="button"
-                                  onClick={() => setSimCode(currentReference.reference)}
-                                  className="shrink-0 rounded-xl bg-amber-200/80 px-2.5 py-1 text-[10px] font-bold text-amber-950 hover:bg-amber-300 transition active:scale-95"
-                                  title="Insérer le code du jour"
-                                >
-                                  Coller
-                                </button>
-                              )}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const codeToCopy = currentReference?.reference || simCode;
+                                  if (codeToCopy) {
+                                    navigator.clipboard.writeText(codeToCopy);
+                                    setCopiedDailyCode(true);
+                                    setTimeout(() => setCopiedDailyCode(false), 2000);
+                                  }
+                                }}
+                                className="inline-flex items-center gap-1 rounded-lg bg-amber-500 px-2.5 py-1 text-[11px] font-bold text-white shadow-xs transition active:scale-95 hover:bg-amber-600"
+                              >
+                                {copiedDailyCode ? (
+                                  <>
+                                    <Check size={12} />
+                                    <span>Copié !</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Copy size={12} />
+                                    <span>Copier</span>
+                                  </>
+                                )}
+                              </button>
                             </div>
-                            <span className="mt-1 block text-[10px] text-slate-400">
-                              Le code unique associé à votre journée de test
-                            </span>
+                            <div className="flex items-center gap-2">
+                              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-200 text-amber-900 shrink-0 font-bold">
+                                <KeyRound size={16} />
+                              </span>
+                              <span className="font-mono text-base font-black text-amber-950 tracking-widest">
+                                {currentReference?.reference || simCode || "GÉNÉRATION..."}
+                              </span>
+                            </div>
+                            <p className="mt-2 text-[10px] text-amber-700/80">
+                              Valable uniquement aujourd&apos;hui pour votre session de test.
+                            </p>
                           </div>
                         </div>
 
-                        <button
-                          type="submit"
-                          disabled={simLoading || !simCode.trim() || !simPanelisteId.trim()}
-                          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-brand-orange py-3.5 sm:py-4 text-sm font-bold text-white shadow-md shadow-brand-orange/25 transition active:scale-95 hover:bg-orange-600 disabled:opacity-50"
-                        >
-                          {simLoading ? (
-                            <>
-                              <Loader2 size={16} className="animate-spin" />
-                              <span>Validation de votre journée en cours...</span>
-                            </>
-                          ) : (
-                            <>
-                              <CheckCircle2 size={17} />
-                              <span>Valider ma journée de test (Jour {selectedEtape.ordre})</span>
-                            </>
-                          )}
-                        </button>
-                      </form>
+                        {/* Carte de Statut En Direct (Live Polling) */}
+                        <div className="rounded-2xl border border-blue-200/80 bg-gradient-to-r from-blue-50/70 via-indigo-50/40 to-blue-50/70 p-4 sm:p-5 shadow-2xs">
+                          <div className="flex items-start gap-3.5">
+                            <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-md shadow-blue-500/20">
+                              <Smartphone size={22} />
+                              <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-blue-500"></span>
+                              </span>
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <h5 className="font-bold text-sm text-navy-900">
+                                  En attente de votre validation sur l&apos;application mobile...
+                                </h5>
+                                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-blue-700 bg-blue-100/90 px-2.5 py-0.5 rounded-full">
+                                  <span className="h-1.5 w-1.5 rounded-full bg-blue-600 animate-pulse"></span>
+                                  Synchronisation automatique active
+                                </span>
+                              </div>
+                              <p className="mt-1.5 text-xs text-slate-600 leading-relaxed">
+                                Lancez <strong>{mission.application}</strong> sur votre téléphone, naviguez pendant <strong>au moins 25 secondes</strong>, puis tapez votre identifiant et votre code du jour dans le bouton Samré. Cette page se validera et se cochera <strong>automatiquement</strong> en temps réel !
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     )}
 
                     {/* Résultat de la validation */}

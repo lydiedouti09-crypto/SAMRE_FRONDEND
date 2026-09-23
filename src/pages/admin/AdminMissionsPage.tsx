@@ -566,12 +566,15 @@ function AdminMissionsContent() {
                     {/* Bloc Info */}
                     <div className="flex items-start gap-4">
                       {/* Vignette Logo App */}
-                      <div className="relative flex h-13 w-13 shrink-0 items-center justify-center rounded-2xl bg-slate-50 border border-slate-100 overflow-hidden shadow-xs">
+                      <div className="relative flex h-14 w-14 min-w-[56px] min-h-[56px] max-w-[56px] max-h-[56px] shrink-0 items-center justify-center rounded-2xl bg-slate-50 border border-slate-100 overflow-hidden shadow-xs">
                         {logoUrl ? (
                           <img
                             src={logoUrl}
                             alt={m.application}
-                            className="h-full w-full object-cover"
+                            className="h-full w-full object-contain p-1"
+                            onError={(e) => {
+                              (e.currentTarget as HTMLElement).style.display = "none";
+                            }}
                           />
                         ) : (
                           <Smartphone size={24} className="text-brand-orange" />
@@ -873,7 +876,7 @@ function AdminMissionsContent() {
                         Logo / Image de l&apos;application
                       </label>
                       <div className="flex flex-col sm:flex-row items-center justify-center gap-5 w-full max-w-lg">
-                        <div className="relative flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl border-2 border-dashed border-slate-300 bg-white overflow-hidden shadow-sm">
+                        <div className="relative flex h-20 w-20 min-w-[80px] min-h-[80px] max-w-[80px] max-h-[80px] shrink-0 items-center justify-center rounded-2xl border-2 border-dashed border-slate-300 bg-white overflow-hidden shadow-sm">
                           {image ? (
                             <img
                               src={
@@ -882,7 +885,10 @@ function AdminMissionsContent() {
                                   : `${import.meta.env.VITE_API_URL ?? "http://localhost:8000"}${image}`
                               }
                               alt="Logo preview"
-                              className="h-full w-full object-cover"
+                              className="h-full w-full object-contain p-1"
+                              onError={(e) => {
+                                (e.currentTarget as HTMLElement).style.display = "none";
+                              }}
                             />
                           ) : (
                             <Smartphone size={28} className="text-slate-400" />
