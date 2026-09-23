@@ -3,24 +3,19 @@ import { useParams } from "react-router-dom";
 import {
   Smartphone,
   Code2,
-  Key,
   Copy,
   Check,
   CheckCircle2,
   AlertCircle,
   Loader2,
-  Terminal,
-  Send,
-  ExternalLink,
   FileCode,
-  Sparkles,
   Download,
-  Layers,
   CheckSquare,
-  ArrowRight,
   Wifi,
   Battery,
   Signal,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { sdkApi, type IntegrationInfo } from "@/lib/api";
 
@@ -31,13 +26,13 @@ export default function DeveloperIntegrationPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [info, setInfo] = useState<IntegrationInfo | null>(null);
-  const [copiedKey, setCopiedKey] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
-  const [activeTab, setActiveTab] = useState<"flutter" | "kotlin" | "react-native" | "curl">("flutter");
+  const [copiedCommand, setCopiedCommand] = useState(false);
+  const [showManualCode, setShowManualCode] = useState(false);
 
   // Simulateur dans le smartphone virtuel
-  const [phoneTesterId, setPhoneTesterId] = useState("TST-849201");
-  const [phoneCode, setPhoneCode] = useState("SAMRE-J01-ABCD");
+  const [phoneTesterId, setPhoneTesterId] = useState("TST-7A8B9C");
+  const [phoneCode, setPhoneCode] = useState("7K9P-4MX2");
   const [phoneLoading, setPhoneLoading] = useState(false);
   const [phoneResult, setPhoneResult] = useState<{
     success: boolean;
@@ -63,12 +58,6 @@ export default function DeveloperIntegrationPage() {
     fetchInfo();
   }, [token]);
 
-  const handleCopyKey = () => {
-    if (!info) return;
-    navigator.clipboard.writeText(info.apiKey);
-    setCopiedKey(true);
-    setTimeout(() => setCopiedKey(false), 2500);
-  };
 
   const handleCopyCode = (codeText: string) => {
     navigator.clipboard.writeText(codeText);
@@ -153,334 +142,273 @@ export default function DeveloperIntegrationPage() {
 
   const app = info.application;
   const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
+  const cliCommand = apiUrl.includes("localhost")
+    ? `npx samre-cli inject --token=${info.tokenIntegration}`
+    : `npx samre-cli inject --token=${info.tokenIntegration} --api-url=${apiUrl}`;
+  const cliRemoveCommand = `npx samre-cli remove`;
 
-  // Code snippets
+  // Code Flutter autonome prêt à l'emploi si le développeur préfère l'ajouter manuellement
   const flutterCode = `// =================================================================
-// 1. Ajouter dans pubspec.yaml :
-// dependencies:
-//   http: ^1.2.0
-//
-// 2. Créer le fichier lib/samre_test_screen.dart :
+// SDK Samré Mobile pour Flutter (Version Autonome)
+// Fichier : lib/samre_sdk.dart
+// Dépendance dans pubspec.yaml :
+//   dependencies:
+//     http: ^1.2.0
 // =================================================================
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
-class SamreTestScreen extends StatefulWidget {
-  final String apiKey;
-  const SamreTestScreen({
-    Key? key,
-    this.apiKey = "${info.apiKey}",
-  }) : super(key: key);
-
-  @override
-  State<SamreTestScreen> createState() => _SamreTestScreenState();
+class SamreConfig {
+  static const String apiUrl = "${apiUrl}";
+  static const String apiKey = "${info.apiKey}";
+  static const String appId = "${app.id}";
 }
 
-class _SamreTestScreenState extends State<SamreTestScreen> {
-  final _panelisteIdController = TextEditingController();
-  final _codeController = TextEditingController();
-  bool _isLoading = false;
-  String? _statusMessage;
-  bool _isSuccess = false;
+/// Overlay automatique avec compteur anti-triche de 25 secondes
+class SamreOverlay extends StatefulWidget {
+  final Widget child;
+  const SamreOverlay({Key? key, required this.child}) : super(key: key);
 
-  Future<void> _validateDay() async {
-    final panelisteId = _panelisteIdController.text.trim();
-    final code = _codeController.text.trim();
+  @override
+  State<SamreOverlay> createState() => _SamreOverlayState();
+}
 
-    if (panelisteId.isEmpty || code.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Veuillez remplir tous les champs')),
-      );
-      return;
-    }
+class _SamreOverlayState extends State<SamreOverlay> {
+  int _secondsRemaining = 25;
+  bool _canSubmit = false;
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _startTimer();
+  }
+
+  void _startTimer() {
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) return;
+      if (_secondsRemaining > 1) {
+        setState(() => _secondsRemaining--);
+      } else {
+        setState(() {
+          _secondsRemaining = 0;
+          _canSubmit = true;
+        });
+        timer.cancel();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  void _openValidationDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => const SamreValidationDialog(),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        widget.child,
+        Positioned(
+          bottom: 24,
+          right: 20,
+          child: Material(
+            elevation: 8,
+            borderRadius: BorderRadius.circular(24),
+            color: _canSubmit ? const Color(0xFF2563EB) : Colors.black.withOpacity(0.7),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(24),
+              onTap: _canSubmit ? _openValidationDialog : null,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      _canSubmit ? Icons.verified_user : Icons.timer_outlined,
+                      color: Colors.white,
+                      size: 18,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      _canSubmit ? 'Valider Journée' : 'Test en cours (\${_secondsRemaining}s)',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Dialogue de saisie du code du jour
+class SamreValidationDialog extends StatefulWidget {
+  const SamreValidationDialog({Key? key}) : super(key: key);
+
+  @override
+  State<SamreValidationDialog> createState() => _SamreValidationDialogState();
+}
+
+class _SamreValidationDialogState extends State<SamreValidationDialog> {
+  final _uidCtrl = TextEditingController();
+  final _codeCtrl = TextEditingController();
+  bool _loading = false;
+  String? _message;
+  bool _success = false;
+
+  Future<void> _verify() async {
+    final uid = _uidCtrl.text.trim();
+    final code = _codeCtrl.text.trim().toUpperCase();
+    if (uid.isEmpty || code.isEmpty) return;
 
     setState(() {
-      _isLoading = true;
-      _statusMessage = null;
+      _loading = true;
+      _message = null;
     });
 
     try {
-      final response = await http.post(
-        Uri.parse('${apiUrl}/api/sdk/verify-day'),
+      final res = await http.post(
+        Uri.parse('\${SamreConfig.apiUrl}/api/v1/sdk/verify-code'),
         headers: {
           'Content-Type': 'application/json',
-          'X-App-Key': widget.apiKey,
+          'X-App-Key': SamreConfig.apiKey,
         },
         body: jsonEncode({
-          'panelisteId': panelisteId,
+          'apiKey': SamreConfig.apiKey,
+          'panelisteUid': uid,
           'code': code,
+          'deviceId': 'flutter_device',
         }),
       );
 
-      final data = jsonDecode(response.body) as Map<String, dynamic>;
-
-      if (response.statusCode == 200 && data['success'] == true) {
+      final data = jsonDecode(res.body) as Map<String, dynamic>;
+      if (res.statusCode == 200 && data['success'] == true) {
         setState(() {
-          _isSuccess = true;
-          _statusMessage = data['message'] ?? 'Journée validée avec succès !';
+          _success = true;
+          _message = data['message'] ?? 'Journée validée avec succès !';
         });
       } else {
         setState(() {
-          _isSuccess = false;
-          _statusMessage = data['error'] ?? 'Code ou panéliste invalide.';
+          _success = false;
+          _message = data['message'] ?? (data['error'] ?? 'Code ou panéliste invalide.');
         });
       }
     } catch (e) {
       setState(() {
-        _isSuccess = false;
-        _statusMessage = 'Erreur de connexion au serveur Samré.';
+        _success = false;
+        _message = 'Erreur de connexion au serveur Samré.';
       });
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) setState(() => _loading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Espace Testeur Samré'),
-        backgroundColor: const Color(0xFF0F172A),
-        foregroundColor: Colors.white,
+    return AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      backgroundColor: const Color(0xFF0F172A),
+      title: const Row(
+        children: [
+          Icon(Icons.stars_rounded, color: Color(0xFF38BDF8), size: 24),
+          SizedBox(width: 8),
+          Text('Validation Samré', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+        ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
+      content: SingleChildScrollView(
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const Text(
-              'Validation Quotidienne de Test',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 6),
-            const Text(
-              'Saisissez votre Identifiant Panéliste et le Code du Jour reçu sur Samré.',
-              style: TextStyle(color: Colors.grey, fontSize: 13),
-            ),
-            const SizedBox(height: 24),
-            TextField(
-              controller: _panelisteIdController,
-              decoration: const InputDecoration(
-                labelText: 'Identifiant Unique Panéliste',
-                hintText: 'Ex: TST-123456',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.person_outline),
-              ),
+              'Saisissez votre Identifiant Panéliste et votre Code du Jour :',
+              style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
             ),
             const SizedBox(height: 16),
             TextField(
-              controller: _codeController,
+              controller: _uidCtrl,
+              style: const TextStyle(color: Colors.white),
+              decoration: InputDecoration(
+                labelText: 'Identifiant Panéliste',
+                labelStyle: const TextStyle(color: Color(0xFF94A3B8)),
+                hintText: 'Ex: TST-7A8B9C',
+                hintStyle: const TextStyle(color: Color(0xFF64748B)),
+                filled: true,
+                fillColor: const Color(0xFF1E293B),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _codeCtrl,
               textCapitalization: TextCapitalization.characters,
-              decoration: const InputDecoration(
+              style: const TextStyle(color: Colors.white, letterSpacing: 2, fontWeight: FontWeight.bold),
+              decoration: InputDecoration(
                 labelText: 'Code Unique du Jour',
-                hintText: 'Ex: SAMRE-J01-9F3B',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.lock_outline),
+                labelStyle: const TextStyle(color: Color(0xFF94A3B8)),
+                hintText: 'Ex: 7K9P-4MX2',
+                hintStyle: const TextStyle(color: Color(0xFF64748B), letterSpacing: 0),
+                filled: true,
+                fillColor: const Color(0xFF1E293B),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               ),
             ),
-            const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: _isLoading ? null : _validateDay,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF2563EB),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: _isLoading
-                  ? const CircularProgressIndicator(color: Colors.white)
-                  : const Text('Valider ma journée de test', style: TextStyle(fontSize: 15)),
-            ),
-            if (_statusMessage != null) ...[
-              const SizedBox(height: 20),
+            if (_message != null) ...[
+              const SizedBox(height: 14),
               Container(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: _isSuccess ? const Color(0xFFECFDF5) : const Color(0xFFFEF2F2),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: _isSuccess ? const Color(0xFF10B981) : const Color(0xFFEF4444),
-                  ),
+                  color: _success ? const Color(0xFF065F46).withOpacity(0.3) : const Color(0xFF991B1B).withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: _success ? const Color(0xFF10B981) : const Color(0xFFEF4444)),
                 ),
                 child: Text(
-                  _statusMessage!,
-                  style: TextStyle(
-                    color: _isSuccess ? const Color(0xFF065F46) : const Color(0xFF991B1B),
-                    fontWeight: FontWeight.w600,
-                  ),
+                  _message!,
+                  style: TextStyle(color: _success ? const Color(0xFF34D399) : const Color(0xFFF87171), fontSize: 12, fontWeight: FontWeight.w600),
                 ),
               ),
             ],
           ],
         ),
       ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Fermer', style: TextStyle(color: Color(0xFF94A3B8))),
+        ),
+        ElevatedButton(
+          onPressed: _loading ? null : _verify,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF2563EB),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+          child: _loading
+              ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+              : const Text('Valider', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        ),
+      ],
     );
   }
-}
-
-// 3. Pour ouvrir cette page dans votre application :
-// Navigator.push(
-//   context,
-//   MaterialPageRoute(builder: (context) => const SamreTestScreen()),
-// );`;
-
-  const kotlinCode = `// =================================================================
-// 1. Dans build.gradle.kts (Module: app) :
-// dependencies {
-//     implementation("com.squareup.okhttp3:okhttp:4.12.0")
-//     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
-// }
-// =================================================================
-package com.example.app.samre
-
-import android.os.Bundle
-import android.widget.*
-import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.lifecycleScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import okhttp3.*
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.RequestBody.Companion.toRequestBody
-import org.json.JSONObject
-
-class SamreTestActivity : AppCompatActivity() {
-
-    private val apiKey = "${info.apiKey}"
-    private val endpoint = "${apiUrl}/api/sdk/verify-day"
-    private val client = OkHttpClient()
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        // Créez votre vue XML ou compose contenant les 2 champs et le bouton
-        val btnValidate = findViewById<Button>(R.id.btnValidate)
-        val etTesterId = findViewById<EditText>(R.id.etTesterId)
-        val etCode = findViewById<EditText>(R.id.etCode)
-        val tvResult = findViewById<TextView>(R.id.tvResult)
-
-        btnValidate.setOnClickListener {
-            val testerId = etTesterId.text.toString().trim()
-            val code = etCode.text.toString().trim()
-
-            lifecycleScope.launch {
-                btnValidate.isEnabled = false
-                try {
-                    val result = withContext(Dispatchers.IO) {
-                        val json = JSONObject().apply {
-                            put("panelisteId", testerId)
-                            put("code", code)
-                        }
-                        val body = json.toString().toRequestBody("application/json".toMediaType())
-                        val req = Request.Builder()
-                            .url(endpoint)
-                            .addHeader("X-App-Key", apiKey)
-                            .post(body)
-                            .build()
-                        client.newCall(req).execute().use { it.body?.string() }
-                    }
-                    val jsonRes = JSONObject(result ?: "{}")
-                    if (jsonRes.optBoolean("success", false)) {
-                        tvResult.text = jsonRes.optString("message", "Journée validée !")
-                    } else {
-                        tvResult.text = jsonRes.optString("error", "Échec de validation")
-                    }
-                } catch (e: Exception) {
-                    tvResult.text = "Erreur de connexion au serveur Samré"
-                } finally {
-                    btnValidate.isEnabled = true
-                }
-            }
-        }
-    }
 }`;
-
-  const reactNativeCode = `// =================================================================
-// Formulaire de test Samré pour React Native
-// =================================================================
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, StyleSheet, Alert } from 'react-native';
-
-export function SamreTestModal() {
-  const [testerId, setTesterId] = useState('');
-  const [code, setCode] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [statusMessage, setStatusMessage] = useState<string | null>(null);
-
-  const handleValidate = async () => {
-    if (!testerId || !code) {
-      Alert.alert('Champs requis', 'Veuillez saisir votre ID et le code du jour');
-      return;
-    }
-    setLoading(true);
-    try {
-      const res = await fetch('${apiUrl}/api/sdk/verify-day', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-App-Key': '${info.apiKey}',
-        },
-        body: JSON.stringify({ panelisteId: testerId, code: code }),
-      });
-      const data = await res.json();
-      if (res.ok && data.success) {
-        setStatusMessage(data.message || 'Journée validée avec succès !');
-      } else {
-        setStatusMessage(data.error || 'Code invalide');
-      }
-    } catch (e) {
-      setStatusMessage('Erreur de connexion avec Samré');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Espace Testeur Samré</Text>
-      <TextInput
-        placeholder="Identifiant Panéliste (ex: TST-123456)"
-        value={testerId}
-        onChangeText={setTesterId}
-        style={styles.input}
-      />
-      <TextInput
-        placeholder="Code du Jour (ex: SAMRE-J01-ABCD)"
-        value={code}
-        onChangeText={setCode}
-        autoCapitalize="characters"
-        style={styles.input}
-      />
-      <TouchableOpacity style={styles.btn} onPress={handleValidate} disabled={loading}>
-        {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>Valider la journée</Text>}
-      </TouchableOpacity>
-      {statusMessage && <Text style={styles.status}>{statusMessage}</Text>}
-    </View>
-  );
-}
-
-const styles = StyleSheet.create({
-  container: { padding: 20, backgroundColor: '#fff', borderRadius: 16 },
-  title: { fontSize: 18, fontWeight: 'bold', marginBottom: 16 },
-  input: { borderWidth: 1, borderColor: '#ccc', padding: 12, borderRadius: 8, marginBottom: 12 },
-  btn: { backgroundColor: '#2563EB', padding: 14, borderRadius: 8, alignItems: 'center' },
-  btnText: { color: '#fff', fontWeight: 'bold' },
-  status: { marginTop: 12, fontWeight: '600', textAlign: 'center' },
-});`;
-
-  const curlCode = `# Test direct en ligne de commande (cURL)
-curl -X POST "${apiUrl}/api/sdk/verify-day" \\
-  -H "Content-Type: application/json" \\
-  -H "X-App-Key: ${info.apiKey}" \\
-  -d '{
-    "panelisteId": "TST-849201",
-    "code": "SAMRE-J01-ABCD"
-  }'`;
 
   return (
     <div className="min-h-screen bg-slate-950 font-sans text-slate-200">
@@ -515,240 +443,164 @@ curl -X POST "${apiUrl}/api/sdk/verify-day" \\
 
       {/* Main Content */}
       <main className="mx-auto max-w-7xl px-4 sm:px-6 py-10 space-y-10">
-        {/* Banner Hero App */}
-        <div className="rounded-3xl border border-slate-800 bg-gradient-to-br from-slate-900 via-slate-900 to-indigo-950/40 p-6 sm:p-8 shadow-2xl">
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-            <div className="flex items-start gap-4">
-              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-lg font-bold text-2xl">
+        {/* Banner Application Simplifiée */}
+        <div className="rounded-3xl border border-slate-800 bg-gradient-to-br from-slate-900 via-slate-900 to-indigo-950/40 p-6 shadow-xl">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-lg font-bold text-xl">
                 {app.nom.slice(0, 2).toUpperCase()}
               </div>
               <div>
-                <div className="flex flex-wrap items-center gap-3">
-                  <h1 className="text-2xl font-extrabold text-white font-display">
-                    Projet : {app.nom}
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <h1 className="text-xl font-extrabold text-white font-display">
+                    {app.nom}
                   </h1>
-                  <span className="rounded-full bg-slate-800 px-2.5 py-0.5 text-xs text-slate-300 font-mono">
+                  <span className="rounded-full bg-slate-800 px-2 py-0.5 text-xs text-slate-300 font-mono">
                     v{app.version}
                   </span>
-                  <span className="rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs text-emerald-400 font-medium border border-emerald-500/20">
-                    Android
+                  <span className="rounded-full bg-blue-500/10 px-2.5 py-0.5 text-xs text-blue-400 font-medium border border-blue-500/20">
+                    Flutter
                   </span>
                 </div>
-                <p className="mt-1.5 text-sm text-slate-400 max-w-2xl leading-relaxed">
-                  {app.description ||
-                    "Cette application fait l'objet d'une campagne de test panéliste sur Samré. Intégrez le composant ci-dessous pour créer la page contenant le formulaire de test."}
-                </p>
-                <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-slate-400">
-                  <span className="flex items-center gap-1.5">
-                    <span className="h-2 w-2 rounded-full bg-blue-400" />
-                    Protocole : <strong>{app.dureeJours || 12} jours</strong>
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <span className="h-2 w-2 rounded-full bg-purple-400" />
-                    Panélistes : <strong>{app.nbMaxPanelistes || 12} testeurs</strong>
-                  </span>
+                <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-slate-400">
+                  <span>Campagne Google Play : <strong>{app.dureeJours || 12} jours</strong></span>
+                  <span>•</span>
+                  <span><strong>{app.nbMaxPanelistes || 12} panélistes</strong></span>
                 </div>
               </div>
             </div>
 
-            {/* Clé d'intégration */}
-            <div className="rounded-2xl border border-slate-700/80 bg-slate-950/80 p-4 shrink-0 lg:max-w-xs w-full">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1.5 flex items-center gap-1.5">
-                <Key className="h-3.5 w-3.5 text-amber-400" />
-                Votre Clé d&apos;Intégration (X-App-Key)
-              </span>
-              <div className="flex items-center justify-between gap-2 rounded-xl bg-slate-900 px-3 py-2 border border-slate-800">
-                <code className="font-mono text-xs text-amber-300 select-all truncate">
-                  {info.apiKey}
+            <span className="inline-flex items-center gap-1.5 self-start sm:self-auto rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-400 border border-emerald-500/20">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              Prêt pour injection
+            </span>
+          </div>
+        </div>
+
+        {/* Section Double Colonne : L'essentiel à gauche | Smartphone Mockup à droite */}
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
+          {/* Colonne Gauche : Les 2 seules étapes du développeur (7 cols) */}
+          <div className="lg:col-span-7 space-y-5">
+            
+            {/* Étape 1 : La commande unique */}
+            <div className="rounded-3xl border border-emerald-500/30 bg-gradient-to-br from-emerald-950/30 via-slate-900 to-slate-900 p-6 shadow-xl space-y-4">
+              <div className="flex items-center gap-2 text-emerald-400 font-bold text-sm">
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 text-slate-950 font-black text-xs">
+                  1
+                </span>
+                <span>Exécutez cette commande à la racine de votre projet Flutter :</span>
+              </div>
+
+              <div className="flex items-center justify-between gap-3 bg-slate-950 border border-slate-800 rounded-2xl p-3 pl-4">
+                <code className="text-xs sm:text-sm text-emerald-400 font-mono select-all truncate">
+                  {cliCommand}
                 </code>
                 <button
                   type="button"
-                  onClick={handleCopyKey}
-                  className="shrink-0 text-slate-400 hover:text-white transition"
-                  title="Copier la clé"
+                  onClick={() => {
+                    navigator.clipboard.writeText(cliCommand);
+                    setCopiedCommand(true);
+                    setTimeout(() => setCopiedCommand(false), 2000);
+                  }}
+                  className="shrink-0 flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs transition shadow-sm"
                 >
-                  {copiedKey ? (
-                    <Check className="h-4 w-4 text-emerald-400" />
-                  ) : (
-                    <Copy className="h-4 w-4" />
-                  )}
+                  {copiedCommand ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                  {copiedCommand ? "Copié !" : "Copier la commande"}
                 </button>
               </div>
-              <p className="mt-2 text-[10px] text-slate-500">
-                Déjà pré-configurée dans les snippets de code ci-dessous.
-              </p>
-            </div>
-          </div>
-        </div>
 
-        {/* 3 Étapes du protocole Étape 2 */}
-        <div className="rounded-3xl border border-blue-500/20 bg-blue-950/20 p-6">
-          <div className="flex items-center gap-2.5 mb-4">
-            <Sparkles className="h-5 w-5 text-blue-400" />
-            <h2 className="text-base font-bold text-white font-display">
-              Étape 2 du protocole : Intégration dans votre application
-            </h2>
-          </div>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3 text-xs leading-relaxed text-slate-300">
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-4">
-              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-600 text-white font-bold text-xs mb-2">
-                1
-              </span>
-              <h3 className="font-bold text-white text-sm">Où mettre le package / snippet ?</h3>
-              <p className="mt-1 text-slate-400">
-                Ajoutez la dépendance HTTP dans votre fichier de config (ex: <code>pubspec.yaml</code> pour Flutter, <code>build.gradle</code> pour Android) et collez le composant <code>SamreTestScreen</code> dans votre projet.
-              </p>
+              {/* 3 garanties rapides */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1 text-[11px] text-slate-300">
+                <div className="flex items-center gap-2 bg-slate-900/80 rounded-xl p-2.5 border border-slate-800">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+                  <span>Zéro code manuel</span>
+                </div>
+                <div className="flex items-center gap-2 bg-slate-900/80 rounded-xl p-2.5 border border-slate-800">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+                  <span>Overlay actif après 25s</span>
+                </div>
+                <div className="flex items-center gap-2 bg-slate-900/80 rounded-xl p-2.5 border border-slate-800">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+                  <span>Sauvegarde auto créée</span>
+                </div>
+              </div>
             </div>
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-4">
-              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-600 text-white font-bold text-xs mb-2">
-                2
-              </span>
-              <h3 className="font-bold text-white text-sm">Où mettre la clé d&apos;intégration ?</h3>
-              <p className="mt-1 text-slate-400">
-                Votre clé unique <code>{info.apiKey.slice(0, 14)}...</code> est déjà insérée dans le code fourni. Vous n&apos;avez qu&apos;à l&apos;importer.
-              </p>
-            </div>
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-4">
-              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-600 text-white font-bold text-xs mb-2">
-                3
-              </span>
-              <h3 className="font-bold text-white text-sm">Résultat dans votre app</h3>
-              <p className="mt-1 text-slate-400">
-                <strong>Cela crée une page contenant un formulaire de test.</strong> Les panélistes pourront y saisir leur identifiant et leur code quotidien pour valider chaque jour.
-              </p>
-            </div>
-          </div>
-        </div>
 
-        {/* Section Double Colonne : Code à gauche | Smartphone Mockup à droite */}
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
-          {/* Colonne Gauche : Code et composants (7 cols) */}
-          <div className="lg:col-span-7 space-y-4">
-            <div className="rounded-2xl border border-slate-800 bg-slate-900 overflow-hidden shadow-xl">
-              {/* Tabs de sélection */}
-              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 bg-slate-900/90 px-5 py-3">
+            {/* Étape 2 : Lancer l'app */}
+            <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5 space-y-3">
+              <div className="flex items-center gap-2 text-white font-bold text-sm">
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-white font-black text-xs">
+                  2
+                </span>
+                <span>Lancez votre application pour tester :</span>
+              </div>
+
+              <div className="bg-slate-950 border border-slate-800 rounded-xl p-3 pl-4">
+                <code className="text-xs font-mono text-cyan-300 select-all">
+                  flutter run
+                </code>
+              </div>
+
+              <p className="text-xs text-slate-400 leading-relaxed">
+                👉 Un bouton discret <strong>&quot;Test en cours&quot;</strong> apparaît sur votre écran. Après <strong>25 secondes</strong> d&apos;utilisation, il passera en <strong>&quot;Valider Journée&quot;</strong> pour permettre au testeur de saisir son code du jour.
+              </p>
+            </div>
+
+            {/* Étape 3 : Retrait post-campagne */}
+            <div className="rounded-2xl border border-slate-800/80 bg-slate-900/40 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+              <div>
+                <span className="font-bold text-slate-300 block">Désinstallation propre (après les 12 jours) :</span>
+                <span className="text-slate-500 text-[11px]">Restaure votre application dans son état d&apos;origine sans résidu.</span>
+              </div>
+              <div className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 font-mono text-amber-300 text-xs shrink-0 select-all">
+                <code>{cliRemoveCommand}</code>
+              </div>
+            </div>
+
+            {/* Accordéon repliable : Code Flutter manuel (Optionnel) */}
+            <div className="border border-slate-800 rounded-2xl bg-slate-900/50 overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setShowManualCode(!showManualCode)}
+                className="w-full flex items-center justify-between px-5 py-3.5 text-xs font-semibold text-slate-400 hover:text-white transition"
+              >
                 <div className="flex items-center gap-2">
                   <FileCode className="h-4 w-4 text-blue-400" />
-                  <span className="text-xs font-bold text-white uppercase tracking-wider">
-                    Composant & Formulaire Prêt à l&apos;emploi
-                  </span>
+                  <span>Vous préférez intégrer le code Dart manuellement sans le CLI ? (Optionnel)</span>
                 </div>
+                {showManualCode ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+              </button>
 
-                <div className="flex items-center gap-1 bg-slate-950 rounded-xl p-1 text-xs border border-slate-800">
-                  <button
-                    onClick={() => setActiveTab("flutter")}
-                    className={`px-3 py-1 rounded-lg font-medium transition ${
-                      activeTab === "flutter"
-                        ? "bg-blue-600 text-white shadow-xs"
-                        : "text-slate-400 hover:text-white"
-                    }`}
-                  >
-                    Flutter (Dart)
-                  </button>
-                  <button
-                    onClick={() => setActiveTab("kotlin")}
-                    className={`px-3 py-1 rounded-lg font-medium transition ${
-                      activeTab === "kotlin"
-                        ? "bg-blue-600 text-white shadow-xs"
-                        : "text-slate-400 hover:text-white"
-                    }`}
-                  >
-                    Android (Kotlin)
-                  </button>
-                  <button
-                    onClick={() => setActiveTab("react-native")}
-                    className={`px-3 py-1 rounded-lg font-medium transition ${
-                      activeTab === "react-native"
-                        ? "bg-blue-600 text-white shadow-xs"
-                        : "text-slate-400 hover:text-white"
-                    }`}
-                  >
-                    React Native
-                  </button>
-                  <button
-                    onClick={() => setActiveTab("curl")}
-                    className={`px-3 py-1 rounded-lg font-medium transition ${
-                      activeTab === "curl"
-                        ? "bg-blue-600 text-white shadow-xs"
-                        : "text-slate-400 hover:text-white"
-                    }`}
-                  >
-                    API / cURL
-                  </button>
+              {showManualCode && (
+                <div className="border-t border-slate-800 p-4 space-y-3 bg-slate-950">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-slate-400 text-[11px]">Fichier : lib/samre_sdk.dart</span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleCopyCode(flutterCode)}
+                        className="inline-flex items-center gap-1 text-[11px] text-blue-400 hover:text-blue-300 font-semibold"
+                      >
+                        {copiedCode ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
+                        {copiedCode ? "Copié !" : "Copier le code"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDownloadFile("samre_sdk.dart", flutterCode)}
+                        className="inline-flex items-center gap-1 rounded-lg bg-slate-800 px-2.5 py-1 text-[11px] text-slate-300 hover:bg-slate-700"
+                      >
+                        <Download className="h-3 w-3" />
+                        Télécharger
+                      </button>
+                    </div>
+                  </div>
+                  <pre className="p-3 bg-slate-900/80 rounded-xl font-mono text-[11px] text-cyan-300 overflow-x-auto max-h-[350px]">
+                    {flutterCode}
+                  </pre>
                 </div>
-              </div>
-
-              {/* Barre d'action rapide : Copier / Télécharger */}
-              <div className="flex items-center justify-between border-b border-slate-800/60 bg-slate-950/60 px-5 py-2 text-xs">
-                <span className="text-slate-400 text-[11px]">
-                  {activeTab === "flutter" && "Fichier : lib/samre_test_screen.dart"}
-                  {activeTab === "kotlin" && "Fichier : SamreTestActivity.kt"}
-                  {activeTab === "react-native" && "Fichier : SamreTestModal.tsx"}
-                  {activeTab === "curl" && "Requête HTTP direct"}
-                </span>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const code =
-                        activeTab === "flutter"
-                          ? flutterCode
-                          : activeTab === "kotlin"
-                          ? kotlinCode
-                          : activeTab === "react-native"
-                          ? reactNativeCode
-                          : curlCode;
-                      handleCopyCode(code);
-                    }}
-                    className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-400 hover:text-blue-300 transition"
-                  >
-                    {copiedCode ? (
-                      <>
-                        <Check className="h-3.5 w-3.5 text-emerald-400" />
-                        <span className="text-emerald-400">Code copié !</span>
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="h-3.5 w-3.5" />
-                        <span>Copier tout le code</span>
-                      </>
-                    )}
-                  </button>
-
-                  {activeTab !== "curl" && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (activeTab === "flutter") handleDownloadFile("samre_test_screen.dart", flutterCode);
-                        if (activeTab === "kotlin") handleDownloadFile("SamreTestActivity.kt", kotlinCode);
-                        if (activeTab === "react-native") handleDownloadFile("SamreTestModal.tsx", reactNativeCode);
-                      }}
-                      className="inline-flex items-center gap-1 rounded-lg bg-slate-800 px-2 py-1 text-[11px] font-medium text-slate-300 hover:bg-slate-700 hover:text-white transition"
-                    >
-                      <Download className="h-3 w-3" />
-                      <span>Télécharger</span>
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {/* Code affiché */}
-              <div className="p-5 bg-slate-950 font-mono text-xs overflow-x-auto max-h-[560px] leading-relaxed">
-                {activeTab === "flutter" && (
-                  <pre className="text-cyan-300">{flutterCode}</pre>
-                )}
-                {activeTab === "kotlin" && (
-                  <pre className="text-emerald-300">{kotlinCode}</pre>
-                )}
-                {activeTab === "react-native" && (
-                  <pre className="text-purple-300">{reactNativeCode}</pre>
-                )}
-                {activeTab === "curl" && (
-                  <pre className="text-amber-300">{curlCode}</pre>
-                )}
-              </div>
+              )}
             </div>
+
           </div>
 
           {/* Colonne Droite : Smartphone Virtuel avec formulaire (5 cols) */}
@@ -813,7 +665,7 @@ curl -X POST "${apiUrl}/api/sdk/verify-day" \\
                     </label>
                     <input
                       type="text"
-                      placeholder="Ex: TST-123456"
+                      placeholder="Ex: TST-7A8B9C"
                       value={phoneTesterId}
                       onChange={(e) => setPhoneTesterId(e.target.value)}
                       className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-mono text-slate-900 focus:bg-white focus:border-blue-600 focus:outline-none"
@@ -826,7 +678,7 @@ curl -X POST "${apiUrl}/api/sdk/verify-day" \\
                     </label>
                     <input
                       type="text"
-                      placeholder="Ex: SAMRE-J01-9F3B"
+                      placeholder="Ex: 7K9P-4MX2"
                       value={phoneCode}
                       onChange={(e) => setPhoneCode(e.target.value.toUpperCase())}
                       className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-mono uppercase text-slate-900 focus:bg-white focus:border-blue-600 focus:outline-none"
