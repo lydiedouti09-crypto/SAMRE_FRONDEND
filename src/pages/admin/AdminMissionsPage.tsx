@@ -566,12 +566,16 @@ function AdminMissionsContent() {
                     {/* Bloc Info */}
                     <div className="flex items-start gap-4">
                       {/* Vignette Logo App */}
-                      <div className="relative flex h-14 w-14 min-w-[56px] min-h-[56px] max-w-[56px] max-h-[56px] shrink-0 items-center justify-center rounded-2xl bg-slate-50 border border-slate-100 overflow-hidden shadow-xs">
+                      <div
+                        className="relative flex h-14 w-14 min-w-[56px] min-h-[56px] max-w-[56px] max-h-[56px] shrink-0 items-center justify-center rounded-2xl bg-slate-50 border border-slate-100 overflow-hidden shadow-xs"
+                        style={{ width: "56px", height: "56px", minWidth: "56px", maxWidth: "56px", minHeight: "56px", maxHeight: "56px" }}
+                      >
                         {logoUrl ? (
                           <img
                             src={logoUrl}
                             alt={m.application}
                             className="h-full w-full object-contain p-1"
+                            style={{ width: "100%", height: "100%", maxWidth: "54px", maxHeight: "54px", objectFit: "contain" }}
                             onError={(e) => {
                               (e.currentTarget as HTMLElement).style.display = "none";
                             }}
@@ -876,7 +880,10 @@ function AdminMissionsContent() {
                         Logo / Image de l&apos;application
                       </label>
                       <div className="flex flex-col sm:flex-row items-center justify-center gap-5 w-full max-w-lg">
-                        <div className="relative flex h-20 w-20 min-w-[80px] min-h-[80px] max-w-[80px] max-h-[80px] shrink-0 items-center justify-center rounded-2xl border-2 border-dashed border-slate-300 bg-white overflow-hidden shadow-sm">
+                        <div
+                          className="relative flex h-20 w-20 min-w-[80px] min-h-[80px] max-w-[80px] max-h-[80px] shrink-0 items-center justify-center rounded-2xl border-2 border-dashed border-slate-300 bg-white overflow-hidden shadow-sm"
+                          style={{ width: "80px", height: "80px", minWidth: "80px", maxWidth: "80px" }}
+                        >
                           {image ? (
                             <img
                               src={
@@ -886,6 +893,7 @@ function AdminMissionsContent() {
                               }
                               alt="Logo preview"
                               className="h-full w-full object-contain p-1"
+                              style={{ width: "100%", height: "100%", maxWidth: "76px", maxHeight: "76px", objectFit: "contain" }}
                               onError={(e) => {
                                 (e.currentTarget as HTMLElement).style.display = "none";
                               }}

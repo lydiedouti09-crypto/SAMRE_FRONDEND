@@ -402,12 +402,16 @@ export default function MissionDetailPage() {
         {/* Présentation de la mission */}
         <section className="rounded-2xl border border-slate-100 bg-white p-5 shadow-xs">
           <div className="flex items-start gap-4">
-            <div className="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white border border-slate-200/80 p-1.5 shadow-xs overflow-hidden">
+            <div
+              className="relative flex h-14 w-14 min-w-[56px] max-w-[56px] shrink-0 items-center justify-center rounded-2xl bg-white border border-slate-200/80 p-1.5 shadow-xs overflow-hidden"
+              style={{ width: "56px", height: "56px", minWidth: "56px", maxWidth: "56px" }}
+            >
               {mission.image ? (
                 <img
                   src={getImageUrl(mission.image)}
                   alt={mission.application}
                   className="h-full w-full object-contain rounded-xl"
+                  style={{ width: "100%", height: "100%", maxWidth: "50px", maxHeight: "50px", objectFit: "contain" }}
                 />
               ) : (
                 <div className="flex h-full w-full items-center justify-center rounded-xl bg-brand-orange/10 font-bold text-brand-orange text-lg">
@@ -455,21 +459,6 @@ export default function MissionDetailPage() {
               {mission.objectif}
             </div>
           )}
-
-          {/* Bouton vers l'application externe (Play Store / APK) */}
-          <div className="mt-4 pt-3 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-            <span className="text-[11px] text-slate-500 font-medium">Application à tester sur votre appareil :</span>
-            <a
-              href={getApplicationPlayStoreUrl(mission)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white shadow-xs transition hover:bg-emerald-700 active:scale-98"
-            >
-              <Play size={12} fill="currentColor" />
-              <span>Installer / Ouvrir sur Google Play</span>
-              <ExternalLink size={12} />
-            </a>
-          </div>
         </section>
 
         {/* 1. Écran de Candidature (si pas encore postulé) */}
@@ -662,59 +651,72 @@ export default function MissionDetailPage() {
             </section>
 
             {/* 12 Jours - Suivi Quotidien Interactif (Habit Tracker Carousel) */}
-            <section className="rounded-3xl border border-slate-200/80 bg-white p-4 sm:p-5 shadow-xs">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="inline-flex items-center gap-1 rounded-full bg-orange-50 px-2.5 py-1 text-[11px] font-bold text-brand-orange border border-orange-200/60">
-                    <Flame size={13} className="text-brand-orange fill-brand-orange" />
-                    <span>Série : {participation.etapesCompletees || 0} jours validés</span>
-                  </span>
-                </div>
-                <span className="font-display text-xs font-bold text-navy-900">
-                  {participation.etapesCompletees} / {participation.etapesTotal || etapes.length || 12} étapes ({participation.progression ?? 0}%)
-                </span>
-              </div>
+            {(() => {
+              const validatedStepsCount = Math.max(
+                participation.etapesCompletees || 0,
+                (participation.joursValides || []).length,
+                etapes.filter((e) => e.statut === "validee").length
+              );
+              const totalStepsCount = participation.etapesTotal || etapes.length || 12;
+              const calculatedProgression = Math.min(100, Math.round((validatedStepsCount / Math.max(1, totalStepsCount)) * 100));
 
-              {/* Jauge fine avec gradient */}
-              <div className="mt-2.5 h-2 w-full overflow-hidden rounded-full bg-slate-100">
-                <div
-                  className="h-full rounded-full bg-gradient-to-r from-brand-orange to-amber-400 transition-all duration-500"
-                  style={{ width: `${participation.progression ?? 0}%` }}
-                />
-              </div>
+              return (
+                <section className="rounded-3xl border border-slate-200/80 bg-white p-4 sm:p-5 shadow-xs">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-orange-50 px-2.5 py-1 text-[11px] font-bold text-brand-orange border border-orange-200/60">
+                        <Flame size={13} className="text-brand-orange fill-brand-orange" />
+                        <span>Série : {validatedStepsCount} {validatedStepsCount > 1 ? "jours validés" : "jour validé"}</span>
+                      </span>
+                    </div>
+                    <span className="font-display text-xs font-bold text-navy-900">
+                      {validatedStepsCount} / {totalStepsCount} étapes ({calculatedProgression}%)
+                    </span>
+                  </div>
 
-              {/* Carrousel horizontal fluide des 12 Jours */}
-              <div className="mt-3.5 flex items-center gap-2 overflow-x-auto pb-1.5 scrollbar-none">
-                {etapes.map((etape, index) => {
-                  const isCompletedForUser = index < (participation.etapesCompletees || 0) || etape.statut === "validee";
-                  const isCurrent = selectedEtape?.id === etape.id;
-                  const isPast = isCompletedForUser;
+                  {/* Jauge fine avec gradient */}
+                  <div className="mt-2.5 h-2 w-full overflow-hidden rounded-full bg-slate-100">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-brand-orange to-amber-400 transition-all duration-500"
+                      style={{ width: `${calculatedProgression}%` }}
+                    />
+                  </div>
 
-                  return (
-                    <button
-                      key={etape.id}
-                      type="button"
-                      onClick={() => handleSelectEtape(etape)}
-                      className={`flex h-12 min-w-12 flex-col items-center justify-center rounded-2xl text-[11px] font-bold transition active:scale-95 ${
-                        isCurrent
-                          ? "border-2 border-brand-orange bg-white text-brand-orange shadow-md scale-105"
-                          : isPast
-                          ? "bg-emerald-500 text-white shadow-xs"
-                          : "bg-slate-100/90 text-slate-400 hover:bg-slate-200/80"
-                      }`}
-                    >
-                      <span className="text-[9px] uppercase opacity-80">J{etape.ordre}</span>
-                      {isPast ? (
-                        <Check size={14} strokeWidth={3} />
-                      ) : isCurrent ? (
-                        <span className="h-2 w-2 rounded-full bg-brand-orange animate-pulse" />
-                      ) : (
-                        <Lock size={12} className="opacity-60" />
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
+                  {/* Carrousel horizontal fluide des 12 Jours */}
+                  <div className="mt-3.5 flex items-center gap-2 overflow-x-auto pb-1.5 scrollbar-none">
+                    {etapes.map((etape, index) => {
+                      const isCompletedForUser =
+                        index < validatedStepsCount ||
+                        etape.statut === "validee" ||
+                        (participation.joursValides || []).includes(etape.ordre || etape.jour);
+                      const isCurrent = selectedEtape?.id === etape.id;
+                      const isPast = isCompletedForUser;
+
+                      return (
+                        <button
+                          key={etape.id}
+                          type="button"
+                          onClick={() => handleSelectEtape(etape)}
+                          className={`flex h-12 min-w-12 flex-col items-center justify-center rounded-2xl text-[11px] font-bold transition active:scale-95 ${
+                            isCurrent
+                              ? "border-2 border-brand-orange bg-white text-brand-orange shadow-md scale-105"
+                              : isPast
+                              ? "bg-emerald-500 text-white shadow-xs"
+                              : "bg-slate-100/90 text-slate-400 hover:bg-slate-200/80"
+                          }`}
+                        >
+                          <span className="text-[9px] uppercase opacity-80">J{etape.ordre}</span>
+                          {isPast ? (
+                            <Check size={14} strokeWidth={3} />
+                          ) : isCurrent ? (
+                            <span className="h-2 w-2 rounded-full bg-brand-orange animate-pulse" />
+                          ) : (
+                            <Lock size={12} className="opacity-60" />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
 
               {/* Bouton pour afficher/masquer la liste détaillée de tous les jours */}
               <div className="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between">
@@ -771,6 +773,8 @@ export default function MissionDetailPage() {
                 </div>
               )}
             </section>
+          );
+        })()}
 
             {/* 3. Bloc de validation de l'étape sélectionnée : Étape 4 du protocole */}
             {selectedEtape && !isCompleted && (() => {
@@ -822,346 +826,59 @@ export default function MissionDetailPage() {
                   </div>
 
                   {/* Instructions */}
-                  <div className="rounded-xl bg-slate-50 p-3 text-xs text-slate-700 border border-slate-100">
+                  <div className="rounded-xl bg-slate-50 p-3.5 text-xs text-slate-700 border border-slate-100">
                     <p className="font-semibold text-navy-900 mb-1">Instructions de la journée :</p>
                     <p className="text-slate-600 leading-relaxed">
                       {selectedEtape.instructions || selectedEtape.description || "Lancez l'application à tester, effectuez les parcours utilisateurs prévus et validez avec votre code unique du jour."}
                     </p>
                   </div>
 
-                  {/* CARTE CODE UNIQUE DU JOUR */}
-                  <div className="rounded-2xl border border-slate-900/10 bg-gradient-to-br from-slate-900 via-navy-950 to-slate-900 p-5 text-white shadow-md">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-400/20 text-amber-400">
-                          <KeyRound size={16} />
-                        </span>
-                        <span className="text-[11px] font-bold uppercase tracking-wider text-amber-400">
-                          Votre Code de Test du Jour
-                        </span>
-                      </div>
-                      <span className="text-[10px] text-white/60 bg-white/10 px-2 py-0.5 rounded-full">
-                        Jour {selectedEtape.ordre} / {participation.etapesTotal || etapes.length || 12}
-                      </span>
-                    </div>
-
-                    <p className="mt-2 text-xs text-white/80 leading-relaxed">
-                      Copiez ce code unique et saisissez-le dans l&apos;application testée pour valider votre session d&apos;aujourd&apos;hui.
-                    </p>
-
-                    <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-xl bg-white/10 p-3.5 border border-white/15">
-                      <div>
-                        <span className="text-[10px] text-white/60 uppercase block font-medium">Votre Code du Jour :</span>
-                        <span className="font-mono text-xl font-extrabold tracking-widest text-amber-400 select-all">
-                          {loadingRef ? "Génération en cours..." : (currentReference?.reference || "7K9P-4MX2")}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (currentReference?.reference) {
-                              navigator.clipboard.writeText(currentReference.reference);
-                              setSimCode(currentReference.reference);
-                              setCopiedDailyCode(true);
-                              setTimeout(() => setCopiedDailyCode(false), 2000);
-                            }
-                          }}
-                          disabled={!currentReference?.reference}
-                          className="inline-flex items-center gap-1.5 rounded-xl bg-amber-400 px-3.5 py-2 text-xs font-bold text-slate-950 hover:bg-amber-300 transition shadow-sm active:scale-95 disabled:opacity-50"
-                        >
-                          {copiedDailyCode ? (
-                            <>
-                              <Check size={14} className="text-emerald-950" />
-                              <span>Copié & Rempli !</span>
-                            </>
-                          ) : (
-                            <>
-                              <Copy size={14} />
-                              <span>Copier le code</span>
-                            </>
-                          )}
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="mt-3 flex items-center justify-between text-[11px] text-white/70 border-t border-white/10 pt-2.5">
-                      <span>Votre Identifiant Testeur :</span>
-                      <span className="font-mono font-bold text-white bg-white/10 px-2 py-0.5 rounded">
-                        {participation.panelisteUid || "TST-ATTRIBUÉ"}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Étapes simples de validation pour le testeur */}
-                  <div className="rounded-2xl border border-slate-100 bg-gradient-to-r from-blue-50/50 via-indigo-50/30 to-purple-50/30 p-4">
-                    <p className="text-xs font-bold text-navy-900 flex items-center gap-1.5">
-                      <Sparkles size={14} className="text-brand-orange" />
-                      Comment valider votre journée en 3 étapes :
-                    </p>
-                    <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-3 text-left">
-                      <div className="rounded-xl bg-white p-3 border border-slate-200/70 shadow-2xs flex items-start gap-2.5">
-                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-orange/10 font-bold text-brand-orange text-xs">
-                          1
-                        </span>
-                        <div>
-                          <p className="text-xs font-bold text-navy-900">Copier le code</p>
-                          <p className="mt-0.5 text-[11px] text-slate-500 leading-tight">
-                            Cliquez sur &laquo; Copier le code &raquo; ci-dessus pour récupérer votre code du jour.
+                  {/* État : Journée déjà validée */}
+                  {isDayValidated ? (
+                    <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-5 text-emerald-900">
+                      <div className="flex items-start gap-3.5">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700 shadow-2xs">
+                          <CheckCircle2 size={22} />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <h5 className="font-bold text-sm text-emerald-950">
+                            Jour {selectedEtape.ordre} validé avec succès !
+                          </h5>
+                          <p className="mt-1 text-xs text-emerald-800 leading-relaxed">
+                            Votre session de test pour aujourd&apos;hui a été bien validée et synchronisée. Votre progression est mise à jour. Rendez-vous demain pour le jour suivant.
                           </p>
-                        </div>
-                      </div>
-
-                      <div className="rounded-xl bg-white p-3 border border-slate-200/70 shadow-2xs flex items-start gap-2.5">
-                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-100 font-bold text-emerald-700 text-xs">
-                          2
-                        </span>
-                        <div>
-                          <p className="text-xs font-bold text-navy-900">Ouvrir l&apos;application</p>
-                          <p className="mt-0.5 text-[11px] text-slate-500 leading-tight">
-                            Lancez {mission.application} sur votre smartphone et effectuez le test demandé.
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="rounded-xl bg-white p-3 border border-slate-200/70 shadow-2xs flex items-start gap-2.5">
-                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-100 font-bold text-blue-700 text-xs">
-                          3
-                        </span>
-                        <div>
-                          <p className="text-xs font-bold text-navy-900">Valider la journée</p>
-                          <p className="mt-0.5 text-[11px] text-slate-500 leading-tight">
-                            Saisissez votre code dans l&apos;application ou confirmez-le ci-dessous pour valider.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Bouton de téléchargement / ouverture de l'application externe */}
-                  <div>
-                    <a
-                      href={getApplicationPlayStoreUrl(mission)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 py-3 text-xs font-bold text-white shadow-xs transition hover:bg-emerald-700 active:scale-98"
-                    >
-                      <Play size={14} fill="currentColor" />
-                      <span>Ouvrir l&apos;application testée ({mission.application}) sur Google Play</span>
-                      <ExternalLink size={13} />
-                    </a>
-                  </div>
-
-                  {/* Formulaire de validation de la journée */}
-                  <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-slate-100 pb-3.5 gap-2">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <ShieldCheck size={18} className="text-emerald-600" />
-                          <h4 className="font-display text-xs sm:text-sm font-bold text-navy-900">
-                            Validation de votre journée de test
-                          </h4>
-                        </div>
-                        <p className="mt-0.5 text-[11px] text-slate-500">
-                          Confirmez votre code pour valider votre journée de test (Jour {selectedEtape.ordre}) :
-                        </p>
-                      </div>
-                      {isDayValidated && (
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200 px-3 py-1 text-xs font-bold text-emerald-700 shrink-0 self-start sm:self-auto">
-                          <CheckCircle2 size={14} className="text-emerald-600" />
-                          <span>Jour {selectedEtape.ordre} Validé</span>
-                        </span>
-                      )}
-                    </div>
-
-                    {isDayValidated ? (
-                      <>
-                        <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50/70 p-4 text-emerald-900">
-                          <div className="flex items-start gap-3">
-                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700">
-                              <CheckCircle2 size={20} />
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <h5 className="font-bold text-sm text-emerald-950">
-                                Jour {selectedEtape.ordre} validé avec succès !
-                              </h5>
-                              <p className="mt-0.5 text-xs text-emerald-800 leading-relaxed">
-                                Votre session de test pour aujourd&apos;hui a été bien validée et enregistrée. Votre progression est mise à jour. Rendez-vous demain pour le jour suivant.
-                              </p>
-                              <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-emerald-900 pt-2 border-t border-emerald-200/60">
-                                <span className="font-medium">
-                                  Code validé : <strong className="font-mono bg-white px-2 py-0.5 rounded border border-emerald-200 text-emerald-950">{currentReference?.reference || simCode}</strong>
-                                </span>
-                                <span className="font-medium">
-                                  Identifiant : <strong className="font-mono bg-white px-2 py-0.5 rounded border border-emerald-200 text-emerald-950">{simPanelisteId}</strong>
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Bloc Commentaire du Jour (Optionnel - Inspiration ALMA) */}
-                        <div className="mt-4 rounded-2xl border border-slate-200/90 bg-slate-50/90 p-4 shadow-2xs">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <MessageSquare size={16} className="text-brand-orange" />
-                              <h5 className="text-xs font-bold text-navy-900">
-                                Comment s&apos;est passée votre session ?
-                              </h5>
-                            </div>
-                            <span className="rounded-full bg-slate-200/80 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
-                              Optionnel
+                          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-emerald-200/60">
+                            <span className="text-xs font-medium text-emerald-900">
+                              Code validé : <strong className="font-mono bg-white px-2 py-0.5 rounded border border-emerald-200 text-emerald-950">{currentReference?.reference || simCode}</strong>
                             </span>
+                            <Link
+                              href="/dashboard/missions"
+                              className="inline-flex items-center gap-1.5 rounded-xl bg-navy-900 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-navy-800 transition active:scale-98"
+                            >
+                              <ArrowLeft size={13} />
+                              <span>Retourner à mes missions</span>
+                            </Link>
                           </div>
-                          <p className="mt-1 text-[11px] text-slate-500">
-                            Votre avis pour ce Jour {selectedEtape.ordre} permet au développeur d&apos;améliorer son application.
-                          </p>
-
-                          {dailyCommentSent ? (
-                            <div className="mt-3 flex items-center gap-2 rounded-xl bg-emerald-50 border border-emerald-200 p-3 text-xs text-emerald-800">
-                              <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
-                              <span>Merci ! Votre avis sur le Jour {selectedEtape.ordre} a été transmis à l&apos;administrateur.</span>
-                            </div>
-                          ) : (
-                            <form onSubmit={handleSendDailyComment} className="mt-3 space-y-3">
-                              {/* Étoiles du jour */}
-                              <div className="flex items-center gap-2">
-                                <span className="text-[11px] font-medium text-slate-600">Votre note :</span>
-                                <div className="flex items-center gap-1">
-                                  {[1, 2, 3, 4, 5].map((s) => (
-                                    <button
-                                      key={s}
-                                      type="button"
-                                      onClick={() => setDailyRating(s)}
-                                      className="p-1 text-amber-400 hover:scale-110 transition active:scale-95"
-                                      title={`${s}/5`}
-                                    >
-                                      <Star
-                                        size={18}
-                                        fill={s <= dailyRating ? "currentColor" : "none"}
-                                        stroke="currentColor"
-                                      />
-                                    </button>
-                                  ))}
-                                  <span className="text-xs font-bold text-slate-700 ml-1">{dailyRating}/5</span>
-                                </div>
-                              </div>
-
-                              {/* Tags rapides de ressenti (Inspiration ALMA) */}
-                              <div>
-                                <span className="text-[11px] font-medium text-slate-600 block mb-1.5">
-                                  Ressenti rapide (1 clic) :
-                                </span>
-                                <div className="flex flex-wrap items-center gap-1.5">
-                                  {quickTagsList.map((tag) => {
-                                    const isSelected = selectedTags.includes(tag.value);
-                                    return (
-                                      <button
-                                        key={tag.value}
-                                        type="button"
-                                        onClick={() => {
-                                          setSelectedTags((prev) =>
-                                            isSelected
-                                              ? prev.filter((t) => t !== tag.value)
-                                              : [...prev, tag.value]
-                                          );
-                                        }}
-                                        className={`rounded-xl px-2.5 py-1 text-[11px] font-semibold transition active:scale-95 ${
-                                          isSelected
-                                            ? "bg-brand-orange text-white shadow-xs scale-102"
-                                            : "bg-white text-slate-600 border border-slate-200/80 hover:border-slate-300"
-                                        }`}
-                                      >
-                                        {tag.label}
-                                      </button>
-                                    );
-                                  })}
-                                </div>
-                              </div>
-
-                              <textarea
-                                rows={2}
-                                value={dailyComment}
-                                onChange={(e) => setDailyComment(e.target.value)}
-                                placeholder="Racontez brièvement comment s'est passé votre test, signalez un bug ou une remarque... (facultatif)"
-                                className="w-full rounded-xl border border-slate-200 bg-white p-2.5 text-xs text-navy-900 placeholder:text-slate-400 focus:border-brand-orange focus:outline-none focus:ring-1 focus:ring-brand-orange resize-none shadow-2xs"
-                              />
-
-                              <div className="flex justify-end">
-                                <button
-                                  type="submit"
-                                  disabled={sendingDailyComment || (!dailyComment.trim() && selectedTags.length === 0)}
-                                  className="inline-flex items-center gap-1.5 rounded-xl bg-navy-900 px-4 py-2 text-xs font-bold text-white hover:bg-navy-800 transition active:scale-95 disabled:opacity-40 shadow-xs"
-                                >
-                                  {sendingDailyComment ? (
-                                    <>
-                                      <Loader2 size={13} className="animate-spin" />
-                                      <span>Envoi...</span>
-                                    </>
-                                  ) : (
-                                    <>
-                                      <Send size={12} />
-                                      <span>Transmettre mon avis (optionnel)</span>
-                                    </>
-                                  )}
-                                </button>
-                              </div>
-                            </form>
-                          )}
                         </div>
-                      </>
-                    ) : (
-                      <div className="mt-4 space-y-4">
-                        {/* Cartes d'Identifiants à copier pour l'application mobile */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                          {/* Identifiant Testeur */}
-                          <div className="rounded-2xl border border-slate-200/90 bg-slate-50/70 p-4 shadow-2xs">
-                            <div className="flex items-center justify-between mb-1.5">
-                              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                                1. Votre Identifiant Testeur
-                              </span>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  const idToCopy = simPanelisteId || participation.panelisteUid || "TST-ATTRIBUÉ";
-                                  navigator.clipboard.writeText(idToCopy);
-                                  setCopiedTesterId(true);
-                                  setTimeout(() => setCopiedTesterId(false), 2000);
-                                }}
-                                className="inline-flex items-center gap-1 rounded-lg bg-white border border-slate-200 px-2 py-1 text-[11px] font-bold text-navy-900 shadow-2xs transition active:scale-95 hover:bg-slate-50"
-                              >
-                                {copiedTesterId ? (
-                                  <>
-                                    <Check size={12} className="text-emerald-600" />
-                                    <span className="text-emerald-700">Copié !</span>
-                                  </>
-                                ) : (
-                                  <>
-                                    <Copy size={12} />
-                                    <span>Copier</span>
-                                  </>
-                                )}
-                              </button>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-100 text-blue-800 shrink-0 font-bold">
-                                <Users size={16} />
-                              </span>
-                              <span className="font-mono text-base font-black text-navy-900 tracking-wider">
-                                {simPanelisteId || participation.panelisteUid || "TST-ATTRIBUÉ"}
-                              </span>
-                            </div>
-                            <p className="mt-2 text-[10px] text-slate-400">
-                              À renseigner dans le bouton Samré de votre application mobile.
+                      </div>
+                    </div>
+                  ) : (
+                    /* État : En attente de validation (L'ESSENTIEL UNIQUE) */
+                    <div className="space-y-4">
+                      {/* Carte Unique du Code du Jour */}
+                      <div className="rounded-2xl border border-amber-200 bg-gradient-to-br from-amber-50/80 via-white to-orange-50/40 p-5 shadow-2xs">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                          <div>
+                            <span className="text-[11px] font-bold uppercase tracking-wider text-amber-900 flex items-center gap-1.5">
+                              <KeyRound size={15} className="text-amber-600" />
+                              Votre Code Unique du Jour (Jour {selectedEtape.ordre})
+                            </span>
+                            <p className="mt-1 text-xs text-slate-600">
+                              Saisissez ce code dans le bouton Samré de votre application pour valider la journée :
                             </p>
-                          </div>
-
-                          {/* Code Unique du Jour */}
-                          <div className="rounded-2xl border border-amber-200/80 bg-amber-50/40 p-4 shadow-2xs">
-                            <div className="flex items-center justify-between mb-1.5">
-                              <span className="text-[11px] font-bold uppercase tracking-wider text-amber-800">
-                                2. Votre Code du Jour (Jour {selectedEtape.ordre})
+                            <div className="mt-3 flex items-center gap-3">
+                              <span className="font-mono text-xl sm:text-2xl font-black text-amber-950 tracking-widest bg-white px-4 py-2 rounded-xl border border-amber-300 shadow-inner select-all">
+                                {loadingRef ? "GÉNÉRATION..." : (currentReference?.reference || simCode || "7K9P-4MX2")}
                               </span>
                               <button
                                 type="button"
@@ -1173,89 +890,77 @@ export default function MissionDetailPage() {
                                     setTimeout(() => setCopiedDailyCode(false), 2000);
                                   }
                                 }}
-                                className="inline-flex items-center gap-1 rounded-lg bg-amber-500 px-2.5 py-1 text-[11px] font-bold text-white shadow-xs transition active:scale-95 hover:bg-amber-600"
+                                disabled={loadingRef}
+                                className="inline-flex items-center gap-1.5 rounded-xl bg-amber-500 px-3.5 py-2.5 text-xs font-bold text-white shadow-xs hover:bg-amber-600 transition active:scale-95 disabled:opacity-50"
                               >
                                 {copiedDailyCode ? (
                                   <>
-                                    <Check size={12} />
+                                    <Check size={14} />
                                     <span>Copié !</span>
                                   </>
                                 ) : (
                                   <>
-                                    <Copy size={12} />
-                                    <span>Copier</span>
+                                    <Copy size={14} />
+                                    <span>Copier le code</span>
                                   </>
                                 )}
                               </button>
                             </div>
-                            <div className="flex items-center gap-2">
-                              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-200 text-amber-900 shrink-0 font-bold">
-                                <KeyRound size={16} />
-                              </span>
-                              <span className="font-mono text-base font-black text-amber-950 tracking-widest">
-                                {currentReference?.reference || simCode || "GÉNÉRATION..."}
-                              </span>
-                            </div>
-                            <p className="mt-2 text-[10px] text-amber-700/80">
-                              Valable uniquement aujourd&apos;hui pour votre session de test.
-                            </p>
-                          </div>
-                        </div>
-
-                        {/* Carte de Statut En Direct (Live Polling) */}
-                        <div className="rounded-2xl border border-blue-200/80 bg-gradient-to-r from-blue-50/70 via-indigo-50/40 to-blue-50/70 p-4 sm:p-5 shadow-2xs">
-                          <div className="flex items-start gap-3.5">
-                            <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-md shadow-blue-500/20">
-                              <Smartphone size={22} />
-                              <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-blue-500"></span>
-                              </span>
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <div className="flex flex-wrap items-center gap-2">
-                                <h5 className="font-bold text-sm text-navy-900">
-                                  En attente de votre validation sur l&apos;application mobile...
-                                </h5>
-                                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-blue-700 bg-blue-100/90 px-2.5 py-0.5 rounded-full">
-                                  <span className="h-1.5 w-1.5 rounded-full bg-blue-600 animate-pulse"></span>
-                                  Synchronisation automatique active
-                                </span>
-                              </div>
-                              <p className="mt-1.5 text-xs text-slate-600 leading-relaxed">
-                                Lancez <strong>{mission.application}</strong> sur votre téléphone, naviguez pendant <strong>au moins 25 secondes</strong>, puis tapez votre identifiant et votre code du jour dans le bouton Samré. Cette page se validera et se cochera <strong>automatiquement</strong> en temps réel !
-                              </p>
-                            </div>
                           </div>
                         </div>
                       </div>
-                    )}
 
-                    {/* Résultat de la validation */}
-                    {simResult && !isDayValidated && (
-                      <div
-                        className={`mt-3 flex items-start gap-2.5 rounded-xl p-3 text-xs ${
-                          simResult.success
-                            ? "bg-emerald-50 text-emerald-800 border border-emerald-200/70"
-                            : "bg-red-50 text-red-700 border border-red-200/70"
-                        }`}
-                      >
-                        {simResult.success ? (
-                          <CheckCircle2 size={17} className="shrink-0 text-emerald-600 mt-0.5" />
-                        ) : (
-                          <AlertCircle size={17} className="shrink-0 text-red-600 mt-0.5" />
+                      {/* Indicateur de synchronisation automatique en direct */}
+                      <div className="rounded-2xl border border-blue-200/80 bg-blue-50/50 p-4 shadow-2xs flex items-center gap-3.5">
+                        <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white shadow-sm shadow-blue-500/20">
+                          <Smartphone size={20} />
+                          <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-3 w-3 bg-blue-500"></span>
+                          </span>
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <h5 className="font-bold text-xs text-navy-900">
+                              Synchronisation automatique en direct
+                            </h5>
+                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full">
+                              <span className="h-1.5 w-1.5 rounded-full bg-blue-600 animate-pulse"></span>
+                              Écoute active
+                            </span>
+                          </div>
+                          <p className="mt-0.5 text-[11px] text-slate-600 leading-relaxed">
+                            Ouvrez <strong>{mission.application}</strong> sur votre téléphone, naviguez pendant au moins 25 secondes puis validez avec votre identifiant et votre code. Cette page se validera automatiquement !
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Résultat de la validation */}
+                  {simResult && !isDayValidated && (
+                    <div
+                      className={`mt-3 flex items-start gap-2.5 rounded-xl p-3 text-xs ${
+                        simResult.success
+                          ? "bg-emerald-50 text-emerald-800 border border-emerald-200/70"
+                          : "bg-red-50 text-red-700 border border-red-200/70"
+                      }`}
+                    >
+                      {simResult.success ? (
+                        <CheckCircle2 size={17} className="shrink-0 text-emerald-600 mt-0.5" />
+                      ) : (
+                        <AlertCircle size={17} className="shrink-0 text-red-600 mt-0.5" />
+                      )}
+                      <div className="min-w-0">
+                        <p className="font-bold">{simResult.message}</p>
+                        {simResult.success && (
+                          <p className="mt-0.5 text-[11px] text-emerald-700">
+                            Progression globale mise à jour : <strong>{simResult.progression}%</strong> ({participation.etapesCompletees}/{participation.etapesTotal || 12} jours complétés).
+                          </p>
                         )}
-                        <div className="min-w-0">
-                          <p className="font-bold">{simResult.message}</p>
-                          {simResult.success && (
-                            <p className="mt-0.5 text-[11px] text-emerald-700">
-                              Progression globale mise à jour : <strong>{simResult.progression}%</strong> ({participation.etapesCompletees}/{participation.etapesTotal || 12} jours complétés).
-                            </p>
-                          )}
-                        </div>
                       </div>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </section>
               );
             })()}

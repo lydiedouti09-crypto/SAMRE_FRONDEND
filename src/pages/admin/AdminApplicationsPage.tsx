@@ -625,11 +625,15 @@ export default function AdminApplicationsPage() {
                         <td className="px-5 py-3.5">
                           <div className="flex items-center gap-3">
                             {app.logo ? (
-                              <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-100 bg-white p-1 shadow-2xs overflow-hidden">
+                              <div
+                                className="relative flex h-10 w-10 min-w-[40px] max-w-[40px] shrink-0 items-center justify-center rounded-xl border border-slate-100 bg-white p-1 shadow-2xs overflow-hidden"
+                                style={{ width: "40px", height: "40px", minWidth: "40px", maxWidth: "40px" }}
+                              >
                                 <img
                                   src={getImageUrl(app.logo)}
                                   alt={app.nom}
                                   className="h-full w-full object-contain rounded-lg"
+                                  style={{ width: "100%", height: "100%", maxWidth: "36px", maxHeight: "36px", objectFit: "contain" }}
                                   onError={(e) => {
                                     (e.currentTarget as HTMLElement).style.display = "none";
                                   }}
@@ -837,11 +841,15 @@ export default function AdminApplicationsPage() {
                     <div className="flex items-start justify-between gap-2.5">
                       <div className="flex items-center gap-2.5 min-w-0 flex-1">
                         {app.logo ? (
-                          <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-100 bg-white p-1 shadow-2xs overflow-hidden">
+                          <div
+                            className="relative flex h-10 w-10 min-w-[40px] max-w-[40px] shrink-0 items-center justify-center rounded-xl border border-slate-100 bg-white p-1 shadow-2xs overflow-hidden"
+                            style={{ width: "40px", height: "40px", minWidth: "40px", maxWidth: "40px" }}
+                          >
                             <img
                               src={getImageUrl(app.logo)}
                               alt={app.nom}
                               className="h-full w-full object-contain rounded-lg"
+                              style={{ width: "100%", height: "100%", maxWidth: "36px", maxHeight: "36px", objectFit: "contain" }}
                               onError={(e) => {
                                 (e.currentTarget as HTMLElement).style.display = "none";
                               }}

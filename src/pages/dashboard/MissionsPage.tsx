@@ -265,12 +265,16 @@ export default function MissionsPage() {
                       {/* Ligne du haut : Logo stylé & Badges */}
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex items-center gap-3">
-                          <div className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white border border-slate-200/80 p-1.5 shadow-xs overflow-hidden">
+                          <div
+                            className="relative flex h-12 w-12 min-w-[48px] max-w-[48px] shrink-0 items-center justify-center rounded-2xl bg-white border border-slate-200/80 p-1.5 shadow-xs overflow-hidden"
+                            style={{ width: "48px", height: "48px", minWidth: "48px", maxWidth: "48px" }}
+                          >
                             {m.image ? (
                               <img
                                 src={getImageUrl(m.image)}
                                 alt={m.application}
                                 className="h-full w-full object-contain rounded-xl"
+                                style={{ width: "100%", height: "100%", maxWidth: "44px", maxHeight: "44px", objectFit: "contain" }}
                               />
                             ) : (
                               <div
@@ -376,12 +380,16 @@ export default function MissionsPage() {
                     <div>
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex items-center gap-3">
-                          <div className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white border border-slate-200/80 p-1.5 shadow-xs overflow-hidden">
+                          <div
+                            className="relative flex h-12 w-12 min-w-[48px] max-w-[48px] shrink-0 items-center justify-center rounded-2xl bg-white border border-slate-200/80 p-1.5 shadow-xs overflow-hidden"
+                            style={{ width: "48px", height: "48px", minWidth: "48px", maxWidth: "48px" }}
+                          >
                             {p.mission?.image ? (
                               <img
                                 src={getImageUrl(p.mission.image)}
                                 alt={p.mission.application}
                                 className="h-full w-full object-contain rounded-xl"
+                                style={{ width: "100%", height: "100%", maxWidth: "44px", maxHeight: "44px", objectFit: "contain" }}
                               />
                             ) : (
                               <div
@@ -417,21 +425,29 @@ export default function MissionsPage() {
                       </div>
 
                       {/* Jauge de progression stylée */}
-                      <div className="mt-4 rounded-xl bg-slate-50 p-3 border border-slate-100">
-                        <div className="flex items-center justify-between text-xs font-semibold mb-1.5">
-                          <span className="text-slate-600">Progression du test</span>
-                          <span className="font-bold text-navy-900">{p.progression ?? 0}%</span>
-                        </div>
-                        <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200/70">
-                          <div
-                            className="h-full rounded-full bg-gradient-to-r from-brand-orange to-amber-500 transition-all duration-500"
-                            style={{ width: `${p.progression ?? 0}%` }}
-                          />
-                        </div>
-                        <p className="mt-2 text-[11px] text-slate-500">
-                          {p.etapesCompletees ?? 0} sur {p.etapesTotal ?? 0} étapes validées
-                        </p>
-                      </div>
+                      {(() => {
+                        const completedSteps = Math.max(p.etapesCompletees || 0, (p.joursValides || []).length);
+                        const totalSteps = p.etapesTotal || p.mission?.etapes?.length || 12;
+                        const progressPercent = Math.min(100, Math.max(p.progression || 0, Math.round((completedSteps / Math.max(1, totalSteps)) * 100)));
+
+                        return (
+                          <div className="mt-4 rounded-xl bg-slate-50 p-3 border border-slate-100">
+                            <div className="flex items-center justify-between text-xs font-semibold mb-1.5">
+                              <span className="text-slate-600">Progression du test</span>
+                              <span className="font-bold text-navy-900">{progressPercent}%</span>
+                            </div>
+                            <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200/70">
+                              <div
+                                className="h-full rounded-full bg-gradient-to-r from-brand-orange to-amber-500 transition-all duration-500"
+                                style={{ width: `${progressPercent}%` }}
+                              />
+                            </div>
+                            <p className="mt-2 text-[11px] text-slate-500">
+                              {completedSteps} sur {totalSteps} {completedSteps > 1 ? "étapes validées" : "étape validée"}
+                            </p>
+                          </div>
+                        );
+                      })()}
                     </div>
 
                     <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
