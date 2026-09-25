@@ -96,7 +96,8 @@ export default function MissionsPage() {
   const [missions, setMissions] = useState<Mission[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string>("Toutes");
+  const [platformFilter, setPlatformFilter] = useState<string>("Tous");
+  const [statusFilter, setStatusFilter] = useState<string>("Tous");
 
   useEffect(() => {
     Promise.all([participationsApi.mine(), missionsApi.list()])
@@ -111,30 +112,40 @@ export default function MissionsPage() {
   const joinedIds = new Set(participations.map((p) => p.mission?.id));
   const available = missions.filter((m) => !joinedIds.has(m.id));
 
-  const filterMission = (m?: Mission) => {
+  const filterAvailable = (m?: Mission) => {
     if (!m) return false;
     const matchSearch =
       m.titre.toLowerCase().includes(search.toLowerCase()) ||
       m.application.toLowerCase().includes(search.toLowerCase()) ||
       (m.description || "").toLowerCase().includes(search.toLowerCase());
 
-    const category = getMissionCategory(m);
-    const matchCategory =
-      selectedCategory === "Toutes" || category === selectedCategory;
+    const platform = (m.platforme || "Android").toLowerCase();
+    const matchPlatform =
+      platformFilter === "Tous" ||
+      (platformFilter === "Android" && (platform.includes("android") || !m.platforme)) ||
+      (platformFilter === "iOS" && platform.includes("ios")) ||
+      (platformFilter === "Web" && platform.includes("web"));
 
-    return matchSearch && matchCategory;
+    return matchSearch && matchPlatform;
   };
 
-  const filteredAvailable = available.filter(filterMission);
-  const filteredMine = participations.filter((p) => filterMission(p.mission));
+  const filterMine = (p: Participation) => {
+    if (!p.mission) return false;
+    const matchSearch =
+      p.mission.titre.toLowerCase().includes(search.toLowerCase()) ||
+      p.mission.application.toLowerCase().includes(search.toLowerCase()) ||
+      (p.mission.description || "").toLowerCase().includes(search.toLowerCase());
 
-  const categories = [
-    "Toutes",
-    "Fintech & Banque",
-    "Paiement Mobile",
-    "E-Commerce",
-    "Utilitaires & Services",
-  ];
+    const matchStatus =
+      statusFilter === "Tous" ||
+      (statusFilter === "En cours" && p.statut !== "terminee" && p.statut !== "abandonnee") ||
+      (statusFilter === "Terminées" && (p.statut === "terminee" || p.statut === "remuneration_en_attente"));
+
+    return matchSearch && matchStatus;
+  };
+
+  const filteredAvailable = available.filter(filterAvailable);
+  const filteredMine = participations.filter(filterMine);
 
   return (
     <div className="min-h-screen bg-[#F7F9FC] px-4 pt-5 pb-24 lg:px-8">
@@ -154,19 +165,17 @@ export default function MissionsPage() {
           <div className="inline-flex rounded-xl bg-slate-200/70 p-1 self-start md:self-auto">
             <button
               onClick={() => setTab("available")}
-              className={`flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-bold transition-all ${
-                tab === "available"
+              className={`flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-bold transition-all ${tab === "available"
                   ? "bg-white text-navy-900 shadow-xs"
                   : "text-slate-600 hover:text-navy-900"
-              }`}
+                }`}
             >
               <span>Missions disponibles</span>
               <span
-                className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                  tab === "available"
+                className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${tab === "available"
                     ? "bg-brand-orange text-white"
                     : "bg-slate-300/70 text-slate-700"
-                }`}
+                  }`}
               >
                 {available.length}
               </span>
@@ -174,19 +183,17 @@ export default function MissionsPage() {
 
             <button
               onClick={() => setTab("mine")}
-              className={`flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-bold transition-all ${
-                tab === "mine"
+              className={`flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-bold transition-all ${tab === "mine"
                   ? "bg-white text-navy-900 shadow-xs"
                   : "text-slate-600 hover:text-navy-900"
-              }`}
+                }`}
             >
               <span>Mes missions</span>
               <span
-                className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                  tab === "mine"
+                className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${tab === "mine"
                     ? "bg-brand-orange text-white"
                     : "bg-slate-300/70 text-slate-700"
-                }`}
+                  }`}
               >
                 {participations.length}
               </span>
@@ -210,21 +217,35 @@ export default function MissionsPage() {
             />
           </div>
 
-          {/* Filtres Catégories */}
+          {/* Filtres utiles (Support pour disponibles / Statut pour mes missions) */}
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
-            {categories.map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setSelectedCategory(cat)}
-                className={`rounded-lg px-3 py-1.5 text-xs font-semibold whitespace-nowrap transition ${
-                  selectedCategory === cat
-                    ? "bg-navy-900 text-white shadow-xs"
-                    : "bg-slate-50 text-slate-600 hover:bg-slate-100"
-                }`}
-              >
-                {cat}
-              </button>
-            ))}
+            {tab === "available" ? (
+              ["Tous"].map((plat) => (
+                <button
+                  key={plat}
+                  onClick={() => setPlatformFilter(plat)}
+                  className={`rounded-lg px-3 py-1.5 text-xs font-semibold whitespace-nowrap transition ${platformFilter === plat
+                      ? "bg-navy-900 text-white shadow-xs"
+                      : "bg-slate-50 text-slate-600 hover:bg-slate-100"
+                    }`}
+                >
+                  {plat === "Tous" ? "Tous les supports" : plat}
+                </button>
+              ))
+            ) : (
+              ["Tous", "En cours", "Terminées"].map((st) => (
+                <button
+                  key={st}
+                  onClick={() => setStatusFilter(st)}
+                  className={`rounded-lg px-3 py-1.5 text-xs font-semibold whitespace-nowrap transition ${statusFilter === st
+                      ? "bg-navy-900 text-white shadow-xs"
+                      : "bg-slate-50 text-slate-600 hover:bg-slate-100"
+                    }`}
+                >
+                  {st === "Tous" ? "Toutes mes missions" : st}
+                </button>
+              ))
+            )}
           </div>
         </div>
 
@@ -411,15 +432,14 @@ export default function MissionsPage() {
                           </div>
                         </div>
 
-                        <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold border whitespace-nowrap ${
-                          p.statut === "en_attente"
+                        <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold border whitespace-nowrap ${p.statut === "en_attente"
                             ? "bg-amber-50 text-amber-700 border-amber-200/60"
                             : p.statut === "acceptee"
-                            ? "bg-emerald-50 text-emerald-700 border-emerald-200/60"
-                            : p.statut === "refusee"
-                            ? "bg-rose-50 text-rose-700 border-rose-200/60"
-                            : "bg-blue-50 text-blue-600 border-blue-200/60"
-                        }`}>
+                              ? "bg-emerald-50 text-emerald-700 border-emerald-200/60"
+                              : p.statut === "refusee"
+                                ? "bg-rose-50 text-rose-700 border-rose-200/60"
+                                : "bg-blue-50 text-blue-600 border-blue-200/60"
+                          }`}>
                           {STATUT_LABELS[p.statut] ?? p.statut}
                         </span>
                       </div>
@@ -455,27 +475,26 @@ export default function MissionsPage() {
                         {p.statut === "en_attente"
                           ? "En attente admin"
                           : p.statut === "acceptee"
-                          ? "Accepté"
-                          : p.statut === "terminee"
-                          ? "Test achevé"
-                          : "Session en cours"}
+                            ? "Accepté"
+                            : p.statut === "terminee"
+                              ? "Test achevé"
+                              : "Session en cours"}
                       </span>
                       <Link
                         href={`/dashboard/missions/${p.mission?.id}`}
-                        className={`inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold text-white shadow-xs transition ${
-                          p.statut === "en_attente"
+                        className={`inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold text-white shadow-xs transition ${p.statut === "en_attente"
                             ? "bg-amber-600 hover:bg-amber-700"
                             : p.statut === "acceptee"
-                            ? "bg-emerald-600 hover:bg-emerald-700"
-                            : "bg-brand-orange hover:bg-brand-orange/90"
-                        }`}
+                              ? "bg-emerald-600 hover:bg-emerald-700"
+                              : "bg-brand-orange hover:bg-brand-orange/90"
+                          }`}
                       >
                         <span>
                           {p.statut === "en_attente"
                             ? "Voir candidature"
                             : p.statut === "acceptee"
-                            ? "Commencer le test"
-                            : "Continuer le test"}
+                              ? "Commencer le test"
+                              : "Continuer le test"}
                         </span>
                         <ArrowRight size={13} />
                       </Link>

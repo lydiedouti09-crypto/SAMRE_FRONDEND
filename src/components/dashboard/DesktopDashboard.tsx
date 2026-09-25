@@ -2,27 +2,23 @@ import Link from "@/lib/router";
 import {
   ArrowRight,
   ChevronRight,
-  Calendar,
   CheckCircle2,
   Award,
-  Activity,
-  Layers,
-  Sparkles,
   Smartphone,
   ExternalLink,
   Play,
-  Download,
   Wallet,
+  Calendar,
+  ShieldCheck,
+  Flame,
 } from "lucide-react";
 import {
   getImageUrl,
   getApplicationPlayStoreUrl,
   type Mission,
   type Participation,
-  type NotificationItem,
   type DailyCodeInfo,
 } from "@/lib/api";
-import DesktopActivityPanel from "./DesktopActivityPanel";
 
 type Props = {
   prenom?: string;
@@ -32,7 +28,7 @@ type Props = {
   active?: Participation;
   available: Mission[];
   participations: Participation[];
-  notifications: NotificationItem[];
+  notifications?: unknown[];
   etapesValidees: number;
   dailyCode?: DailyCodeInfo | null;
 };
@@ -40,24 +36,21 @@ type Props = {
 export default function DesktopDashboard({
   prenom,
   nom,
-  email,
-  photo,
   active,
   available,
   participations,
-  notifications,
   etapesValidees,
-  dailyCode,
 }: Props) {
   const today = new Date();
   const heure = today.getHours();
 
-const salutation =
-  heure >= 5 && heure < 12
-    ? "Bonjour"
-    : heure >= 12 && heure < 18
-    ? "Bon après-midi"
-    : "Bonsoir";
+  const salutation =
+    heure >= 5 && heure < 12
+      ? "Bonjour"
+      : heure >= 12 && heure < 18
+      ? "Bon après-midi"
+      : "Bonsoir";
+
   const dateFormatted = today.toLocaleDateString("fr-FR", {
     day: "numeric",
     month: "long",
@@ -65,9 +58,7 @@ const salutation =
   });
 
   const progression = active?.progression ?? 0;
-  const completedCount = participations.filter(
-    (p) => p.statut === "terminee"
-  ).length;
+  const completedCount = participations.filter((p) => p.statut === "terminee").length;
 
   const totalEtapes = participations.reduce(
     (acc, p) => acc + (p.etapesTotal || 0),
@@ -91,250 +82,264 @@ const salutation =
   }, 0);
 
   return (
-    <div className="flex flex-col gap-5 px-5 py-4 lg:flex-row">
-      {/* Colonne Principale */}
-      <div className="flex-1 min-w-0 space-y-4">
-        {/* Header Salutations & Date */}
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+    <div className="w-full space-y-5 px-6 py-6 max-w-7xl mx-auto">
+      {/* 1. Header Salutations & Date (Design Authentique SAMRE) */}
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="font-display text-2xl font-bold tracking-tight text-navy-900 sm:text-3xl">
+            {salutation}, {prenom || nom || "Testeur"}
+          </h1>
+          <p className="text-xs text-slate-500 mt-1">
+            Votre espace de test applicatif. Suivez vos scénarios et validez chaque étape.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-1.5 self-start rounded-xl border border-slate-200/80 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-2xs sm:self-auto">
+          <Calendar size={15} className="text-brand-orange" />
+          <span>{dateFormatted}</span>
+        </div>
+      </div>
+
+      {/* 2. Cartes Métriques Clés SAMRE (Couleurs authentiques : Orange, Bleu, Vert, Violet) */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {/* Carte 1 : Missions de test */}
+        <div className="rounded-2xl border border-slate-100 bg-white p-4 sm:p-5 shadow-xs transition hover:shadow-sm">
+          <div className="flex items-center justify-between">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-50 text-brand-orange">
+              <Award size={20} />
+            </span>
+            <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-bold text-emerald-600">
+              {active ? "1 en cours" : "Disponible"}
+            </span>
+          </div>
+          <p className="mt-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+            Missions de test
+          </p>
+          <div className="mt-0.5 flex items-baseline gap-1.5">
+            <span className="font-display text-2xl font-black text-navy-900">
+              {participations.length}
+            </span>
+            <span className="text-xs font-medium text-slate-500">
+              ({completedCount} terminée{completedCount > 1 ? "s" : ""})
+            </span>
+          </div>
+        </div>
+
+        {/* Carte 2 : Étapes validées */}
+        <div className="rounded-2xl border border-slate-100 bg-white p-4 sm:p-5 shadow-xs transition hover:shadow-sm">
+          <div className="flex items-center justify-between">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+              <CheckCircle2 size={20} />
+            </span>
+            <span className="rounded-full bg-blue-50 px-2.5 py-0.5 text-[11px] font-bold text-blue-600">
+              {active ? `${progression}% validé` : `${completionRate}% global`}
+            </span>
+          </div>
+          <p className="mt-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+            Étapes validées
+          </p>
+          <div className="mt-0.5 flex items-baseline gap-1.5">
+            <span className="font-display text-2xl font-black text-navy-900">
+              {etapesValidees}
+            </span>
+            <span className="text-xs font-medium text-slate-500">
+              sur {totalEtapes || 12} au total
+            </span>
+          </div>
+        </div>
+
+        {/* Carte 3 : Rémunération estimée */}
+        <div className="rounded-2xl border border-slate-100 bg-white p-4 sm:p-5 shadow-xs transition hover:shadow-sm">
+          <div className="flex items-center justify-between">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+              <Wallet size={20} />
+            </span>
+            <span className="flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-bold text-emerald-700">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              {totalRemunerationGagnee > 0 ? "Validé" : "À débloquer"}
+            </span>
+          </div>
+          <p className="mt-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+            Rémunération estimée
+          </p>
+          <div className="mt-0.5 flex items-baseline gap-1.5">
+            <span className="font-display text-2xl font-black text-navy-900">
+              {totalRemunerationEstimee.toLocaleString("fr-FR")}
+            </span>
+            <span className="text-xs font-bold text-slate-600">
+              FCFA
+            </span>
+          </div>
+        </div>
+
+        {/* Carte 4 : Série active / Progression */}
+        <div className="rounded-2xl border border-slate-100 bg-white p-4 sm:p-5 shadow-xs transition hover:shadow-sm">
+          <div className="flex items-center justify-between">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-50 text-purple-600">
+              <Flame size={20} className="fill-purple-600" />
+            </span>
+            <span className="rounded-full bg-purple-50 px-2.5 py-0.5 text-[11px] font-bold text-purple-700">
+              Test actif
+            </span>
+          </div>
+          <p className="mt-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+            Rythme de test
+          </p>
+          <div className="mt-0.5 flex items-baseline gap-1.5">
+            <span className="font-display text-2xl font-black text-navy-900">
+              {active ? `Jour ${active.etapesCompletees + 1}` : "À jour"}
+            </span>
+            <span className="text-xs font-medium text-slate-500">
+              {active ? "sur 12 jours" : "Profil vérifié ✓"}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* 3. Graphique d'Activité et de Rythme Hebdomadaire (Plein Largeur) */}
+      <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-xs">
+        <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between pb-3">
           <div>
-            <h1 className="font-display text-xl font-bold tracking-tight text-navy-900 xl:text-2xl">
-                {salutation}, {prenom || "Testeur"}
-            </h1>
+            <h3 className="font-display text-sm font-bold text-navy-900">
+              Activité & rythme des tests
+            </h3>
             <p className="text-xs text-slate-500">
-              Votre espace de test applicatif. Suivez vos scénarios et validez chaque étape.
+              Suivi hebdomadaire des étapes validées par vos tests applicatifs
             </p>
           </div>
-
-          <div className="flex items-center gap-1.5 self-start rounded-xl border border-slate-200/80 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 shadow-xs sm:self-auto">
-            <Calendar size={14} className="text-brand-orange" />
-            <span>{dateFormatted}</span>
+          <div className="flex items-center gap-1 rounded-xl bg-slate-50 p-1 text-xs">
+            <span className="rounded-lg bg-white px-3 py-1 font-semibold text-navy-900 shadow-2xs">
+              Cette semaine
+            </span>
+            <span className="px-3 py-1 text-slate-400">Semaine dernière</span>
           </div>
         </div>
 
-        {/* 3 Cartes Métriques Compactes */}
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          {/* Card 1: Missions */}
-          <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-xs transition hover:shadow-sm">
-            <div className="flex items-center justify-between">
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-50 text-brand-orange">
-                <Award size={18} />
-              </span>
-              <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-600">
-                {active ? "1 en cours" : "Disponible"}
-              </span>
-            </div>
-            <p className="mt-3 text-[11px] font-medium text-slate-400 uppercase tracking-wider">
-              Missions de test
-            </p>
-            <div className="mt-0.5 flex items-baseline gap-1.5">
-              <span className="font-display text-xl font-bold text-navy-900">
-                {participations.length}
-              </span>
-              <span className="text-[11px] text-slate-500">
-                ({completedCount} terminée{completedCount > 1 ? "s" : ""})
-              </span>
-            </div>
-          </div>
+        {/* SVG Smooth Curve Graph */}
+        {(() => {
+          const daysOfWeek = [
+            { label: "Lun", dayIndex: 1 },
+            { label: "Mar", dayIndex: 2 },
+            { label: "Mer", dayIndex: 3 },
+            { label: "Jeu", dayIndex: 4 },
+            { label: "Ven", dayIndex: 5 },
+            { label: "Sam", dayIndex: 6 },
+            { label: "Dim", dayIndex: 0 },
+          ];
+          const currentDay = today.getDay();
+          const dayXMap: Record<number, number> = {
+            1: 60,
+            2: 160,
+            3: 260,
+            4: 360,
+            5: 460,
+            6: 550,
+            0: 640,
+          };
+          const markerX = dayXMap[currentDay] ?? 360;
+          const markerY =
+            active && active.etapesCompletees > 0
+              ? Math.max(30, 105 - Math.round((progression / 100) * 70))
+              : 105;
 
-          {/* Card 2: Étapes validées */}
-          <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-xs transition hover:shadow-sm">
-            <div className="flex items-center justify-between">
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
-                <CheckCircle2 size={18} />
-              </span>
-              <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-600">
-                {active ? `${progression}% validé` : "En attente"}
-              </span>
-            </div>
-            <p className="mt-3 text-[11px] font-medium text-slate-400 uppercase tracking-wider">
-              Étapes validées
-            </p>
-            <div className="mt-0.5 flex items-baseline gap-1.5">
-              <span className="font-display text-xl font-bold text-navy-900">
-                {etapesValidees}
-              </span>
-              <span className="text-[11px] text-slate-500">
-                sur {totalEtapes || etapesValidees} au total
-              </span>
-            </div>
-          </div>
+          return (
+            <div className="pt-2">
+              <div className="relative h-36 w-full overflow-hidden">
+                <svg
+                  className="h-full w-full"
+                  viewBox="0 0 700 140"
+                  preserveAspectRatio="none"
+                >
+                  <defs>
+                    <linearGradient id="samreCurveGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                      <stop offset="0%" stopColor="#F97316" stopOpacity="0.22" />
+                      <stop offset="100%" stopColor="#F97316" stopOpacity="0.0" />
+                    </linearGradient>
+                    <linearGradient id="samreSubGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                      <stop offset="0%" stopColor="#0F172A" stopOpacity="0.08" />
+                      <stop offset="100%" stopColor="#0F172A" stopOpacity="0.0" />
+                    </linearGradient>
+                  </defs>
 
-          {/* Card 3: Rémunération estimée & Cagnotte */}
-          <div className="rounded-2xl border border-emerald-100/80 bg-gradient-to-br from-white via-emerald-50/15 to-white p-4 shadow-xs transition hover:shadow-sm">
-            <div className="flex items-center justify-between">
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 shadow-2xs">
-                <Wallet size={18} />
-              </span>
-              <span className="flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-100 px-2.5 py-0.5 text-[10px] font-bold text-emerald-700">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                {totalRemunerationGagnee > 0
-                  ? `${totalRemunerationGagnee.toLocaleString("fr-FR")} FCFA validés`
-                  : totalRemunerationEstimee > 0
-                  ? "À débloquer"
-                  : "Disponible"}
-              </span>
-            </div>
-            <p className="mt-3 text-[11px] font-medium text-slate-400 uppercase tracking-wider">
-              Rémunération estimée
-            </p>
-            <div className="mt-0.5 flex items-baseline gap-1.5">
-              <span className="font-display text-xl font-bold text-navy-900">
-                {totalRemunerationEstimee.toLocaleString("fr-FR")}
-              </span>
-              <span className="text-[11px] font-semibold text-slate-500">
-                FCFA
-              </span>
-            </div>
-            <p className="mt-1 text-[10px] text-slate-400 truncate">
-              {participations.length > 0
-                ? `${participations.length} mission${participations.length > 1 ? "s" : ""} (${completedCount} terminée${completedCount > 1 ? "s" : ""})`
-                : "Participez aux tests pour débloquer vos gains"}
-            </p>
-          </div>
-        </div>
+                  <line x1="0" y1="25" x2="700" y2="25" stroke="#F1F5F9" strokeDasharray="3 3" />
+                  <line x1="0" y1="65" x2="700" y2="65" stroke="#F1F5F9" strokeDasharray="3 3" />
+                  <line x1="0" y1="105" x2="700" y2="105" stroke="#F1F5F9" strokeDasharray="3 3" />
 
-        {/* Graphique de Performance Dynamique */}
-        <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-xs">
-          <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between pb-3">
-            <div>
-              <h3 className="font-display text-sm font-bold text-navy-900">
-                Activité & rythme des tests
-              </h3>
-              <p className="text-[11px] text-slate-400">
-                Suivi hebdomadaire des étapes validées par vos tests applicatifs
-              </p>
-            </div>
-            <div className="flex items-center gap-1 rounded-lg bg-slate-50 p-1 text-[11px]">
-              <span className="rounded-md bg-white px-2.5 py-0.5 font-semibold text-navy-900 shadow-xs">
-                Cette semaine
-              </span>
-              <span className="px-2 py-0.5 text-slate-400">Semaine dernière</span>
-            </div>
-          </div>
+                  <path
+                    d="M 0 110 C 120 100, 200 80, 320 85 C 440 95, 520 60, 700 55 L 700 140 L 0 140 Z"
+                    fill="url(#samreSubGrad)"
+                  />
+                  <path
+                    d="M 0 110 C 120 100, 200 80, 320 85 C 440 95, 520 60, 700 55"
+                    fill="none"
+                    stroke="#CBD5E1"
+                    strokeWidth="2"
+                  />
 
-          {/* SVG Smooth Curve Graph */}
-          {(() => {
-            const daysOfWeek = [
-              { label: "Lun", dayIndex: 1 },
-              { label: "Mar", dayIndex: 2 },
-              { label: "Mer", dayIndex: 3 },
-              { label: "Jeu", dayIndex: 4 },
-              { label: "Ven", dayIndex: 5 },
-              { label: "Sam", dayIndex: 6 },
-              { label: "Dim", dayIndex: 0 },
-            ];
-            const currentDay = today.getDay();
-            const dayXMap: Record<number, number> = {
-              1: 60,
-              2: 160,
-              3: 260,
-              4: 360,
-              5: 460,
-              6: 550,
-              0: 640,
-            };
-            const markerX = dayXMap[currentDay] ?? 360;
-            const markerY =
-              active && active.etapesCompletees > 0
-                ? Math.max(30, 105 - Math.round((progression / 100) * 70))
-                : 105;
+                  <path
+                    d="M 0 105 C 140 100, 240 85, 360 80 C 480 75, 560 60, 700 50 L 700 140 L 0 140 Z"
+                    fill="url(#samreCurveGrad)"
+                  />
+                  <path
+                    d="M 0 105 C 140 100, 240 85, 360 80 C 480 75, 560 60, 700 50"
+                    fill="none"
+                    stroke="#F97316"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                  />
 
-            return (
-              <>
-                <div className="relative h-36 w-full overflow-hidden">
-                  <svg
-                    className="h-full w-full"
-                    viewBox="0 0 700 140"
-                    preserveAspectRatio="none"
-                  >
-                    <defs>
-                      <linearGradient id="curveGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" stopColor="#F97316" stopOpacity="0.2" />
-                        <stop offset="100%" stopColor="#F97316" stopOpacity="0.0" />
-                      </linearGradient>
-                      <linearGradient id="blueGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" stopColor="#3B82F6" stopOpacity="0.1" />
-                        <stop offset="100%" stopColor="#3B82F6" stopOpacity="0.0" />
-                      </linearGradient>
-                    </defs>
+                  <circle cx={markerX} cy={markerY} r="5.5" fill="#F97316" stroke="#FFFFFF" strokeWidth="2.5" />
+                </svg>
 
-                    <line x1="0" y1="25" x2="700" y2="25" stroke="#F1F5F9" strokeDasharray="3 3" />
-                    <line x1="0" y1="65" x2="700" y2="65" stroke="#F1F5F9" strokeDasharray="3 3" />
-                    <line x1="0" y1="105" x2="700" y2="105" stroke="#F1F5F9" strokeDasharray="3 3" />
-
-                    <path
-                      d="M 0 110 C 120 100, 200 80, 320 85 C 440 95, 520 60, 700 55 L 700 140 L 0 140 Z"
-                      fill="url(#blueGradient)"
-                    />
-                    <path
-                      d="M 0 110 C 120 100, 200 80, 320 85 C 440 95, 520 60, 700 55"
-                      fill="none"
-                      stroke="#93C5FD"
-                      strokeWidth="2"
-                    />
-
-                    <path
-                      d="M 0 105 C 140 100, 240 85, 360 80 C 480 75, 560 60, 700 50 L 700 140 L 0 140 Z"
-                      fill="url(#curveGradient)"
-                    />
-                    <path
-                      d="M 0 105 C 140 100, 240 85, 360 80 C 480 75, 560 60, 700 50"
-                      fill="none"
-                      stroke="#F97316"
-                      strokeWidth="2.5"
-                      strokeLinecap="round"
-                    />
-
-                    <circle cx={markerX} cy={markerY} r="5" fill="#F97316" stroke="#FFFFFF" strokeWidth="2.5" />
-                  </svg>
-
-                  <div
-                    className="absolute top-2 -translate-x-1/2 rounded-xl bg-navy-950/95 px-3 py-1.5 text-[11px] text-white shadow-lg backdrop-blur-md transition-all pointer-events-none"
-                    style={{ left: `${Math.min(85, Math.max(15, (markerX / 700) * 100))}%` }}
-                  >
-                    <span className="font-semibold text-brand-orange">Aujourd&apos;hui : </span>
-                    {active ? (
-                      active.etapesCompletees > 0 ? (
-                        <span>
-                          Étape {active.etapesCompletees} {active.mission?.application || "mission"} validée ✓
-                        </span>
-                      ) : (
-                        <span>
-                          {active.mission?.application || "Mission"} — Étape 1 à valider
-                        </span>
-                      )
-                    ) : (
-                      <span>Aucun test en cours</span>
-                    )}
-                  </div>
-                </div>
-
-                <div className="mt-1 flex justify-between px-1 text-[10px] font-medium text-slate-400">
-                  {daysOfWeek.map((d) => {
-                    const isToday = d.dayIndex === currentDay;
-                    return (
-                      <span
-                        key={d.label}
-                        className={isToday ? "font-bold text-navy-900 underline decoration-brand-orange decoration-2 underline-offset-2" : undefined}
-                      >
-                        {d.label} {isToday ? "(Aujourd'hui)" : ""}
+                <div
+                  className="absolute top-2 -translate-x-1/2 rounded-xl bg-navy-900/95 px-3 py-1.5 text-xs text-white shadow-lg backdrop-blur-md transition-all pointer-events-none"
+                  style={{ left: `${Math.min(85, Math.max(15, (markerX / 700) * 100))}%` }}
+                >
+                  <span className="font-semibold text-brand-orange">Aujourd&apos;hui : </span>
+                  {active ? (
+                    active.etapesCompletees > 0 ? (
+                      <span>
+                        Étape {active.etapesCompletees} {active.mission?.application || "mission"} validée ✓
                       </span>
-                    );
-                  })}
+                    ) : (
+                      <span>
+                        {active.mission?.application || "Mission"} — Étape 1 à valider
+                      </span>
+                    )
+                  ) : (
+                    <span>Session de test à jour</span>
+                  )}
                 </div>
-              </>
-            );
-          })()}
-        </div>
+              </div>
 
-        {/* Mission en cours */}
-        <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-xs">
+              <div className="mt-1 flex justify-between px-2 text-xs font-semibold text-slate-400">
+                {daysOfWeek.map((d) => {
+                  const isToday = d.dayIndex === currentDay;
+                  return (
+                    <span
+                      key={d.label}
+                      className={isToday ? "font-bold text-navy-900 underline decoration-brand-orange decoration-2 underline-offset-4" : undefined}
+                    >
+                      {d.label} {isToday ? "(Aujourd'hui)" : ""}
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })()}
+      </div>
+
+      {/* 4. Missions en cours & Missions disponibles (Plein Largeur) */}
+      <div className="space-y-4">
+        {/* Mission active */}
+        <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-xs">
           <div className="flex items-center justify-between pb-3">
             <h3 className="font-display text-sm font-bold text-navy-900">
               Mission active en cours
             </h3>
             {active && (
-              <span className="flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-0.5 text-[11px] font-bold text-brand-orange">
+              <span className="flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-bold text-brand-orange">
                 <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-brand-orange" />
                 En cours de test
               </span>
@@ -344,7 +349,7 @@ const salutation =
           {active ? (
             <div className="rounded-xl border border-slate-100 bg-[#FBFBFC] p-4">
               <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                <div className="flex items-start gap-3">
+                <div className="flex items-start gap-3.5">
                   <div className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white border border-slate-200/80 p-1.5 shadow-xs overflow-hidden">
                     {active.mission?.image ? (
                       <img
@@ -362,14 +367,14 @@ const salutation =
                     <h4 className="font-display text-sm font-bold text-navy-900">
                       {active.mission?.titre}
                     </h4>
-                    <p className="mt-0.5 text-[11px] text-slate-500">
+                    <p className="mt-0.5 text-xs text-slate-500">
                       Application :{" "}
                       <span className="font-semibold text-navy-900">
                         {active.mission?.application || "Android"}
                       </span>{" "}
                       · Durée estimée :{" "}
                       <span className="font-medium text-slate-600">
-                        {active.mission?.dureEstime || "3 jours"}
+                        {active.mission?.dureEstime || "12 jours"}
                       </span>
                     </p>
                   </div>
@@ -389,19 +394,19 @@ const salutation =
                   </a>
                   <Link
                     href={`/dashboard/missions/${active.mission?.id}`}
-                    className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-navy-900 px-4 py-2 text-xs font-bold text-white shadow-xs transition hover:bg-navy-800"
+                    className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-brand-orange px-4 py-2 text-xs font-bold text-white shadow-xs transition hover:bg-orange-600"
                   >
-                    Continuer le test
+                    <span>Continuer le test</span>
                     <ChevronRight size={13} />
                   </Link>
                 </div>
               </div>
 
-              {/* Progress Bar & Details */}
+              {/* Barre de progression */}
               <div className="mt-3 border-t border-slate-200/60 pt-3">
-                <div className="flex items-center justify-between text-[11px] font-medium">
+                <div className="flex items-center justify-between text-xs font-semibold">
                   <span className="text-slate-500">
-                    Étape {active.etapesCompletees} sur {active.etapesTotal} complétées
+                    Étape {active.etapesCompletees} sur {active.etapesTotal || 12} complétées
                   </span>
                   <span className="font-bold text-brand-orange">
                     {progression}% accompli
@@ -424,7 +429,7 @@ const salutation =
                 href="/dashboard/missions"
                 className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-brand-orange hover:underline"
               >
-                Rejoindre une mission disponible
+                <span>Rejoindre une mission disponible</span>
                 <ArrowRight size={12} />
               </Link>
             </div>
@@ -432,21 +437,22 @@ const salutation =
         </div>
 
         {/* Missions recommandées & disponibles */}
-        <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-xs">
+        <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-xs">
           <div className="flex items-center justify-between pb-3">
             <div>
               <h3 className="font-display text-sm font-bold text-navy-900">
                 Missions disponibles
               </h3>
-              <p className="text-[11px] text-slate-400">
+              <p className="text-xs text-slate-500">
                 Sélectionnez une application pour débuter vos scénarios de test
               </p>
             </div>
             <Link
               href="/dashboard/missions"
-              className="text-xs font-bold text-brand-orange hover:underline"
+              className="text-xs font-bold text-brand-orange hover:underline flex items-center gap-1"
             >
-              Voir tout ({available.length})
+              <span>Voir tout ({available.length})</span>
+              <ChevronRight size={14} />
             </Link>
           </div>
 
@@ -455,11 +461,11 @@ const salutation =
               Toutes les missions ouvertes sont actuellement complètes.
             </p>
           ) : (
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              {available.slice(0, 4).map((m) => (
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {available.slice(0, 6).map((m) => (
                 <div
                   key={m.id}
-                  className="group flex flex-col justify-between rounded-xl border border-slate-100 bg-[#FBFBFC] p-3.5 transition hover:border-slate-200 hover:bg-white hover:shadow-xs"
+                  className="group flex flex-col justify-between rounded-xl border border-slate-100 bg-[#FBFBFC] p-4 transition hover:border-slate-200 hover:bg-white hover:shadow-xs"
                 >
                   <div>
                     <div className="flex items-start justify-between gap-2">
@@ -484,12 +490,12 @@ const salutation =
                     <h4 className="mt-2.5 font-display text-xs font-bold text-navy-900 group-hover:text-brand-orange transition-colors line-clamp-1">
                       {m.titre}
                     </h4>
-                    <p className="mt-1 line-clamp-2 text-[11px] leading-relaxed text-slate-500">
+                    <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-slate-500">
                       {m.description}
                     </p>
                   </div>
 
-                  <div className="mt-3 flex items-center justify-between border-t border-slate-200/50 pt-2 text-[11px]">
+                  <div className="mt-3 flex items-center justify-between border-t border-slate-200/50 pt-2 text-xs">
                     <span className="text-slate-400">
                       {m.dureEstime || `${m.duree || 3} jours`} • {m.nombreParticipantsSouhaites || 20} testeurs
                     </span>
@@ -507,15 +513,6 @@ const salutation =
           )}
         </div>
       </div>
-
-      {/* Panneau Latéral Droit Compact */}
-      <DesktopActivityPanel
-        prenom={prenom}
-        nom={nom}
-        email={email}
-        photo={photo}
-        notifications={notifications}
-      />
     </div>
   );
 }

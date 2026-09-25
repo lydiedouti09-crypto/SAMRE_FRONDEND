@@ -16,6 +16,8 @@ import {
   Signal,
   ChevronDown,
   ChevronUp,
+  Globe,
+  Server,
 } from "lucide-react";
 import { sdkApi, type IntegrationInfo } from "@/lib/api";
 
@@ -29,6 +31,20 @@ export default function DeveloperIntegrationPage() {
   const [copiedCode, setCopiedCode] = useState(false);
   const [copiedCommand, setCopiedCommand] = useState(false);
   const [showManualCode, setShowManualCode] = useState(false);
+
+  // Configuration de l'URL API (Localhost vs Externe / Ngrok)
+  const [apiMode, setApiMode] = useState<"local" | "remote">(() => {
+    if (typeof window !== "undefined" && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1") {
+      return "remote";
+    }
+    return "local";
+  });
+  const [customApiUrl, setCustomApiUrl] = useState<string>(() => {
+    if (typeof window !== "undefined" && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1") {
+      return window.location.origin;
+    }
+    return import.meta.env.VITE_API_URL || "http://localhost:8000";
+  });
 
   // Simulateur dans le smartphone virtuel
   const [phoneTesterId, setPhoneTesterId] = useState("TST-7A8B9C");
@@ -141,10 +157,8 @@ export default function DeveloperIntegrationPage() {
   }
 
   const app = info.application;
-  const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
-  const cliCommand = apiUrl.includes("localhost")
-    ? `npx samre-cli inject --token=${info.tokenIntegration}`
-    : `npx samre-cli inject --token=${info.tokenIntegration} --api-url=${apiUrl}`;
+  const activeApiUrl = customApiUrl.trim() || (import.meta.env.VITE_API_URL ?? "http://localhost:8000");
+  const cliCommand = `npx samre-cli inject --token=${info.tokenIntegration} --api-url=${activeApiUrl}`;
   const cliRemoveCommand = `npx samre-cli remove`;
 
   // Code Flutter autonome prêt à l'emploi si le développeur préfère l'ajouter manuellement
@@ -162,7 +176,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 class SamreConfig {
-  static const String apiUrl = "${apiUrl}";
+  static const String apiUrl = "${activeApiUrl}";
   static const String apiKey = "${info.apiKey}";
   static const String appId = "${app.id}";
   static const int requiredDurationSeconds = 25;
@@ -579,12 +593,68 @@ class _SamreValidationCardState extends State<SamreValidationCard> {
             
             {/* Étape 1 : La commande unique */}
             <div className="rounded-3xl border border-emerald-500/30 bg-gradient-to-br from-emerald-950/30 via-slate-900 to-slate-900 p-6 shadow-xl space-y-4">
-              <div className="flex items-center gap-2 text-emerald-400 font-bold text-sm">
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 text-slate-950 font-black text-xs">
-                  1
-                </span>
-                <span>Exécutez cette commande à la racine de votre projet Flutter :</span>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-2 text-emerald-400 font-bold text-sm">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 text-slate-950 font-black text-xs">
+                    1
+                  </span>
+                  <span>Exécutez cette commande à la racine de votre projet Flutter :</span>
+                </div>
+
+                {/* Sélecteur Local vs Externe / Ngrok */}
+                <div className="flex items-center gap-1 bg-slate-950/90 p-1 rounded-xl border border-slate-800 text-xs shrink-0 self-start sm:self-auto">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setApiMode("local");
+                      setCustomApiUrl("http://localhost:8000");
+                    }}
+                    className={`px-2.5 py-1 rounded-lg font-medium transition ${
+                      apiMode === "local"
+                        ? "bg-slate-800 text-emerald-300 shadow-sm"
+                        : "text-slate-400 hover:text-slate-200"
+                    }`}
+                  >
+                    Localhost
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setApiMode("remote");
+                      if (customApiUrl.includes("localhost")) {
+                        setCustomApiUrl("https://poise-magnitude-define.ngrok-free.dev");
+                      }
+                    }}
+                    className={`px-2.5 py-1 rounded-lg font-medium transition ${
+                      apiMode === "remote"
+                        ? "bg-emerald-600 text-white shadow-sm"
+                        : "text-slate-400 hover:text-slate-200"
+                    }`}
+                  >
+                    🌐 Distant / Ngrok
+                  </button>
+                </div>
               </div>
+
+              {/* Champ d'URL personnalisée si mode distant */}
+              {apiMode === "remote" && (
+                <div className="rounded-2xl border border-emerald-500/20 bg-slate-950/80 p-3 space-y-1.5">
+                  <div className="flex items-center justify-between text-[11px] text-slate-400">
+                    <span className="flex items-center gap-1.5 font-medium text-emerald-400">
+                      <Globe className="h-3.5 w-3.5" />
+                      URL publique de votre backend (Ngrok / Serveur en ligne) :
+                    </span>
+                    <span className="text-[10px] text-slate-500">Requis pour testeur externe ou vrai téléphone</span>
+                  </div>
+                  <input
+                    type="text"
+                    value={customApiUrl}
+                    onChange={(e) => setCustomApiUrl(e.target.value)}
+                    placeholder="https://votre-tunnel.ngrok-free.dev"
+                    className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-1.5 text-xs font-mono text-emerald-300 focus:outline-none focus:border-emerald-500/50"
+                  />
+                </div>
+              )}
 
               <div className="flex items-center justify-between gap-3 bg-slate-950 border border-slate-800 rounded-2xl p-3 pl-4">
                 <code className="text-xs sm:text-sm text-emerald-400 font-mono select-all truncate">

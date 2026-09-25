@@ -1,104 +1,154 @@
-import Image from "@/components/ui/Image";
-import RevealText from "@/components/RevealText";
+import React from 'react';
+import { ArrowRight, Sparkles } from 'lucide-react';
+import { ScrollReveal } from './ScrollReveal';
+import { useNavigate } from 'react-router-dom';
 
-export default function About() {
+export const About: React.FC = () => {
+  const navigate = useNavigate();
+
   return (
-    <section id="apropos" className="relative overflow-hidden bg-navy-950 py-20 lg:py-28 text-white">
-      {/* Decorative ambient background glows */}
-      <div className="pointer-events-none absolute -left-32 top-1/4 h-96 w-96 rounded-full bg-brand-orange/5 blur-3xl" />
-      <div className="pointer-events-none absolute -right-32 bottom-1/4 h-96 w-96 rounded-full bg-info/5 blur-3xl" />
+    <section
+      id="apropos"
+      style={{
+        padding: '6rem 0',
+        backgroundColor: '#FFFFFF',
+        position: 'relative',
+        borderTop: '1px solid #F1F5F9',
+        borderBottom: '1px solid #F1F5F9',
+      }}
+    >
+      <div
+        className="container"
+        style={{
+          maxWidth: '1020px',
+          margin: '0 auto',
+          padding: '0 1.5rem',
+          textAlign: 'center',
+        }}
+      >
+        {/* Label */}
+        <ScrollReveal direction="down" distance={20} duration={0.7}>
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              padding: '0.4rem 1.1rem',
+              borderRadius: '999px',
+              backgroundColor: '#FFF7ED',
+              border: '1px solid #FED7AA',
+              color: '#EA580C',
+              fontSize: '0.82rem',
+              fontWeight: 800,
+              textTransform: 'uppercase',
+              letterSpacing: '0.06em',
+              marginBottom: '1.5rem',
+            }}
+          >
+            <Sparkles size={14} />
+            <span>Notre Vision & Mission</span>
+          </div>
+        </ScrollReveal>
 
-      <div className="relative z-10 mx-auto max-w-wrap px-6">
-        <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-12 lg:gap-16">
-          
-          {/* Left Column: Text Content */}
-          <div className="lg:col-span-6">
-            <span className="mb-3 inline-block font-display text-xs font-bold uppercase tracking-widest text-brand-orange">
-              À PROPOS
-            </span>
+        {/* Big Heading */}
+        <ScrollReveal direction="down" distance={25} duration={0.8} delay={80}>
+          <h2
+            style={{
+              fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif",
+              fontSize: 'clamp(2.2rem, 4vw, 3.4rem)',
+              fontWeight: 800,
+              color: '#0A1C38',
+              lineHeight: 1.15,
+              letterSpacing: '-0.03em',
+              marginBottom: '1.5rem',
+            }}
+          >
+            Bâtir le pont entre talents africains et succès applicatif mondial
+          </h2>
+        </ScrollReveal>
 
-            <RevealText
-              as="h2"
-              className="font-display text-3xl font-bold leading-tight text-white sm:text-4xl lg:text-[2.65rem]"
+        {/* Narrative text */}
+        <ScrollReveal direction="fade" distance={20} delay={140} duration={0.85}>
+          <p
+            style={{
+              fontSize: 'clamp(1.05rem, 1.4vw, 1.24rem)',
+              color: '#475569',
+              lineHeight: 1.85,
+              maxWidth: '880px',
+              margin: '0 auto 2.5rem auto',
+            }}
+          >
+            <strong>SAMRE</strong> est la première plateforme d'accélération d'opportunités unifiée au Togo et en Afrique de l'Ouest.
+            Nous permettons aux <strong>étudiants et jeunes talents</strong> de décrocher des stages conventionnés et rémunérés en entreprise,
+            tout en apportant aux <strong>développeurs et éditeurs d'applications mobiles</strong> la cohorte de 20 testeurs réels certifiés
+            exigée pour franchir les 14 jours de Closed Testing Google Play Console.
+          </p>
+        </ScrollReveal>
+
+        {/* CTA Button */}
+        <ScrollReveal direction="up" distance={30} delay={200} duration={0.8}>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              onClick={() => navigate('/inscription')}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.65rem',
+                padding: '1rem 2.5rem',
+                borderRadius: '9999px',
+                backgroundColor: '#F97316',
+                color: '#FFFFFF',
+                fontSize: '1.02rem',
+                fontWeight: 800,
+                border: 'none',
+                cursor: 'pointer',
+                boxShadow: '0 8px 24px rgba(249, 115, 22, 0.32)',
+                transition: 'all 0.2s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#EA580C';
+                e.currentTarget.style.transform = 'translateY(-2px)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#F97316';
+                e.currentTarget.style.transform = 'translateY(0)';
+              }}
             >
-              Une startup togolaise
-              <br />
-              au service de la jeunesse
-            </RevealText>
+              <span>Rejoindre la communauté SAMRE</span>
+              <ArrowRight size={18} />
+            </button>
 
-            <div className="mt-6 space-y-4 text-sm leading-relaxed text-slate-300 sm:text-base">
-              <p>
-                SAMRE est une startup opérant dans les domaines du travail, de l&apos;emploi et de
-                l&apos;insertion professionnelle. Nos activités incluent la gestion des ressources
-                humaines, le recrutement, la communication et le placement étudiant.
-              </p>
-              <p>
-                Nous travaillons sur les problèmes des entreprises et connectons ces défis avec des
-                étudiants selon leurs parcours académiques, créant une synergie unique entre les
-                talents émergents et les besoins du marché.
-              </p>
-            </div>
-
-            {/* Bottom 3 pillars */}
-            <div className="mt-10 flex flex-wrap items-start gap-8 sm:gap-12 border-t border-white/10 pt-8">
-              <div>
-                <p className="font-display text-xl font-bold text-brand-orange sm:text-2xl">
-                  Startup
-                </p>
-                <p className="mt-1 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                  TOGOLAISE
-                </p>
-              </div>
-
-              <div>
-                <p className="font-display text-xl font-bold text-brand-orange sm:text-2xl">
-                  Emploi
-                </p>
-                <p className="mt-1 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                  NOTRE DOMAINE
-                </p>
-              </div>
-
-              <div>
-                <p className="font-display text-xl font-bold text-brand-orange sm:text-2xl">
-                  Jeunesse
-                </p>
-                <p className="mt-1 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                  NOTRE CŒUR
-                </p>
-              </div>
-            </div>
+            <a
+              href="#contact"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.65rem',
+                padding: '1rem 2.2rem',
+                borderRadius: '9999px',
+                backgroundColor: '#F8FAFC',
+                color: '#0A1C38',
+                fontSize: '1.02rem',
+                fontWeight: 700,
+                textDecoration: 'none',
+                border: '1px solid #CBD5E1',
+                transition: 'all 0.2s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#F1F5F9';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#F8FAFC';
+              }}
+            >
+              <span>Contacter l'équipe</span>
+            </a>
           </div>
-
-          {/* Right Column: Image with floating 2020 badge */}
-          <div className="relative lg:col-span-6">
-            <div className="relative mx-auto max-w-lg lg:max-w-none">
-              {/* Main Photo Card */}
-              <div className="relative aspect-[4/3] w-full overflow-hidden rounded-3xl shadow-2xl sm:aspect-[16/11]">
-                <Image
-                  src="/a-propos.jpg"
-                  alt="Jeune professionnel togolais SAMRE"
-                  fill
-                  sizes="(max-width: 1024px) 100vw, 50vw"
-                  className="object-cover object-center transition-transform duration-700 hover:scale-105"
-                  priority={false}
-                />
-              </div>
-
-              {/* Floating Orange Badge "2020 - Fondée à Lomé, Togo" */}
-              <div className="absolute -bottom-5 right-2 rounded-2xl bg-gradient-to-r from-brand-orange to-brand-orange-dark px-6 py-4 shadow-xl shadow-brand-orange/30 sm:-bottom-6 sm:right-6 sm:px-8 sm:py-5">
-                <p className="font-display text-3xl font-extrabold text-white sm:text-4xl leading-none">
-                  2020
-                </p>
-                <p className="mt-1 text-xs font-medium text-white/90 sm:text-sm">
-                  Fondée à Lomé, Togo
-                </p>
-              </div>
-            </div>
-          </div>
-
-        </div>
+        </ScrollReveal>
       </div>
     </section>
   );
-}
+};
+
+export default About;

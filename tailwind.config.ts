@@ -42,7 +42,7 @@ const config: Config = {
         mist: "#eef4fb",
       },
       fontFamily: {
-        sans: ["var(--font-inter)", "sans-serif"],
+        sans: ['Inter', 'sans-serif'],
         display: ["var(--font-sora)", "sans-serif"],
       },
       maxWidth: {

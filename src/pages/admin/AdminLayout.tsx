@@ -63,7 +63,7 @@ function AdminLayoutInner() {
 
   return (
     <div className="flex min-h-screen bg-[#F4F6F9] font-sans antialiased text-slate-800">
-      {/* Sidebar Admin Autonome */}
+      {/* Sidebar Admin SAMRE */}
       <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-slate-800 bg-[#0B1528] text-white lg:flex">
         {/* Header Branding */}
         <div className="p-5 pb-6 border-b border-slate-800/80">
@@ -83,7 +83,7 @@ function AdminLayoutInner() {
                 <span className="font-display text-lg font-bold tracking-tight text-white">
                   samré
                 </span>
-                <span className="rounded-md bg-rose-500/20 px-1.5 py-0.5 text-[10px] font-bold text-rose-400 border border-rose-500/30">
+                <span className="rounded-md bg-brand-orange/20 px-1.5 py-0.5 text-[10px] font-bold text-brand-orange border border-brand-orange/30">
                   ADMIN
                 </span>
               </div>
@@ -124,7 +124,7 @@ function AdminLayoutInner() {
         <div className="p-3 border-t border-slate-800/80">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5 overflow-hidden">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-rose-500/20 text-xs font-bold text-rose-400">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-orange/20 text-xs font-bold text-brand-orange">
                 {adminUser.prenom?.[0] || adminUser.nom?.[0] || "A"}
               </div>
               <div className="truncate">
@@ -158,8 +158,30 @@ function AdminLayoutInner() {
           </button>
         </header>
 
+        {/* Trait Horizontal Desktop : Barre supérieure avec délimitation nette */}
+        <header className="sticky top-0 z-30 hidden h-16 items-center justify-between border-b border-slate-200 bg-white px-8 shadow-2xs lg:flex">
+          <div className="flex items-center gap-3">
+            <h2 className="font-display text-sm font-bold tracking-tight text-navy-900">
+              Tableau de Bord
+            </h2>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="text-right">
+              <p className="text-xs font-bold text-navy-900 leading-tight">
+                {adminUser.prenom} {adminUser.nom || "Admin"}
+              </p>
+              <p className="text-[10px] font-semibold text-slate-400">
+                Super Admin
+              </p>
+            </div>
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-navy-900 text-xs font-bold text-white shadow-2xs">
+              {(adminUser.prenom?.[0] || "A").toUpperCase()}
+            </div>
+          </div>
+        </header>
+
         {/* Content Area */}
-        <main className="flex-1 p-5 md:p-8 max-w-7xl w-full mx-auto">
+        <main className="flex-1 p-6 md:p-8 max-w-7xl w-full mx-auto">
           <Outlet />
         </main>
       </div>

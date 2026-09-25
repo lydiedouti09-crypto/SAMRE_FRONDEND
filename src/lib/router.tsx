@@ -21,6 +21,7 @@ export interface LinkProps
 export function Link({ to, href, prefetch, replace, ...props }: LinkProps) {
   const target = to || href || "";
   if (
+    target.startsWith("#") ||
     target.startsWith("http://") ||
     target.startsWith("https://") ||
     target.startsWith("mailto:") ||
