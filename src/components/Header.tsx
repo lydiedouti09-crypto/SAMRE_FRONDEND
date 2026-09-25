@@ -142,29 +142,34 @@ export const Header: React.FC<HeaderProps> = () => {
       style={{
         position: 'sticky',
         top: 0,
+        left: 0,
+        right: 0,
         zIndex: 100,
-        background: '#ffffff',
-        borderBottom: '1px solid #f1f5f9',
-        boxShadow: '0 2px 12px -2px rgba(0, 0, 0, 0.04)',
+        width: '100%',
+        backgroundColor: '#ffffff',
+        borderBottom: '1px solid rgba(226, 232, 240, 0.9)',
+        boxShadow: '0 2px 12px rgba(10, 28, 56, 0.04)',
       }}
     >
-      {/* Barre Principale de Navigation */}
+      {/* Barre Principale de Navigation Pleine Largeur */}
       <div
         className="container"
         style={{
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          height: '84px',
-          gap: '1rem',
+          height: '76px',
+          maxWidth: '1320px',
+          margin: '0 auto',
+          padding: '0 1.75rem',
         }}
       >
-        {/* Logo SAMRE officiel style Medad */}
+        {/* Logo SAMRE officiel */}
         <Link
           href="#hero"
           style={{ textDecoration: 'none', flexShrink: 0 }}
         >
-          <SamreLogo size={42} />
+          <SamreLogo size={44} />
         </Link>
 
         {/* Liens Centraux Desktop */}
@@ -336,58 +341,27 @@ export const Header: React.FC<HeaderProps> = () => {
               display: 'inline-flex',
               alignItems: 'center',
               gap: '0.45rem',
-              padding: '0.65rem 1.15rem',
+              padding: '0.65rem 1.3rem',
               borderRadius: '999px',
-              backgroundColor: '#ffffff',
-              border: '1px solid #e2e8f0',
-              color: '#0a1c38',
-              fontWeight: 700,
-              fontSize: '0.88rem',
-              textDecoration: 'none',
-              transition: 'all 0.2s ease',
-              boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = '#cbd5e1';
-              e.currentTarget.style.backgroundColor = '#f8fafc';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = '#e2e8f0';
-              e.currentTarget.style.backgroundColor = '#ffffff';
-            }}
-          >
-            <LogIn size={15} color="#64748b" />
-            <span>Se connecter</span>
-          </Link>
-
-          <Link
-            href="/inscription"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              padding: '0.7rem 1.4rem',
-              borderRadius: '999px',
-              background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
+              backgroundColor: '#0a1c38',
               color: '#ffffff',
               fontWeight: 700,
               fontSize: '0.88rem',
               textDecoration: 'none',
-              boxShadow: '0 8px 20px -2px rgba(249, 115, 22, 0.35)',
-              transition: 'all 0.25s ease',
+              transition: 'all 0.2s ease',
+              boxShadow: '0 4px 14px rgba(10, 28, 56, 0.15)',
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-2px)';
-              e.currentTarget.style.boxShadow = '0 12px 28px -2px rgba(249, 115, 22, 0.45)';
+              e.currentTarget.style.backgroundColor = '#1e293b';
+              e.currentTarget.style.transform = 'translateY(-1px)';
             }}
             onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = '#0a1c38';
               e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 8px 20px -2px rgba(249, 115, 22, 0.35)';
             }}
           >
-            <UserPlus size={15} />
-            <span>Rejoindre Samré</span>
-            <ArrowRight size={14} />
+            <LogIn size={15} color="#ffffff" />
+            <span>Se connecter</span>
           </Link>
         </div>
 

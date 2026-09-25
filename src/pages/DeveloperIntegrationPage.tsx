@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import {
-  Smartphone,
   Code2,
   Copy,
   Check,
@@ -10,16 +9,19 @@ import {
   Loader2,
   FileCode,
   Download,
-  CheckSquare,
-  Wifi,
-  Battery,
-  Signal,
   ChevronDown,
   ChevronUp,
   Globe,
   Server,
+  ShieldCheck,
+  Zap,
+  ArrowRight,
+  ExternalLink,
+  Terminal,
+  RefreshCw,
 } from "lucide-react";
 import { sdkApi, type IntegrationInfo } from "@/lib/api";
+import SamreLogo from "@/components/SamreLogo";
 
 export default function DeveloperIntegrationPage() {
   const params = useParams();
@@ -30,32 +32,32 @@ export default function DeveloperIntegrationPage() {
   const [info, setInfo] = useState<IntegrationInfo | null>(null);
   const [copiedCode, setCopiedCode] = useState(false);
   const [copiedCommand, setCopiedCommand] = useState(false);
+  const [copiedRemoveCommand, setCopiedRemoveCommand] = useState(false);
   const [showManualCode, setShowManualCode] = useState(false);
+  const [activeSection, setActiveSection] = useState("installation");
 
   // Configuration de l'URL API (Localhost vs Externe / Ngrok)
   const [apiMode, setApiMode] = useState<"local" | "remote">(() => {
-    if (typeof window !== "undefined" && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1") {
+    if (
+      typeof window !== "undefined" &&
+      window.location.hostname !== "localhost" &&
+      window.location.hostname !== "127.0.0.1"
+    ) {
       return "remote";
     }
     return "local";
   });
+
   const [customApiUrl, setCustomApiUrl] = useState<string>(() => {
-    if (typeof window !== "undefined" && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1") {
+    if (
+      typeof window !== "undefined" &&
+      window.location.hostname !== "localhost" &&
+      window.location.hostname !== "127.0.0.1"
+    ) {
       return window.location.origin;
     }
     return import.meta.env.VITE_API_URL || "http://localhost:8000";
   });
-
-  // Simulateur dans le smartphone virtuel
-  const [phoneTesterId, setPhoneTesterId] = useState("TST-7A8B9C");
-  const [phoneCode, setPhoneCode] = useState("7K9P-4MX2");
-  const [phoneLoading, setPhoneLoading] = useState(false);
-  const [phoneResult, setPhoneResult] = useState<{
-    success: boolean;
-    message: string;
-    jour?: number;
-    progression?: number;
-  } | null>(null);
 
   useEffect(() => {
     if (!token) return;
@@ -73,7 +75,6 @@ export default function DeveloperIntegrationPage() {
     };
     fetchInfo();
   }, [token]);
-
 
   const handleCopyCode = (codeText: string) => {
     navigator.clipboard.writeText(codeText);
@@ -93,49 +94,13 @@ export default function DeveloperIntegrationPage() {
     URL.revokeObjectURL(url);
   };
 
-  const handlePhoneSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!info) return;
-    if (!phoneTesterId.trim() || !phoneCode.trim()) {
-      setPhoneResult({
-        success: false,
-        message: "Veuillez saisir votre identifiant panéliste et le code du jour.",
-      });
-      return;
-    }
-
-    setPhoneLoading(true);
-    setPhoneResult(null);
-
-    try {
-      const res = await sdkApi.verifyDay({
-        apiKey: info.apiKey,
-        panelisteId: phoneTesterId.trim(),
-        code: phoneCode.trim(),
-      });
-      setPhoneResult({
-        success: res.success,
-        message: res.message || "Journée validée avec succès !",
-        jour: res.jour,
-        progression: res.progression,
-      });
-    } catch (err: any) {
-      setPhoneResult({
-        success: false,
-        message: err.message || "Code incorrect ou panéliste non reconnu.",
-      });
-    } finally {
-      setPhoneLoading(false);
-    }
-  };
-
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-950 text-white">
+      <div className="flex min-h-screen items-center justify-center bg-[#FBFBFB] text-slate-800">
         <div className="flex flex-col items-center gap-3">
-          <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-          <p className="text-sm text-slate-400 font-medium">
-            Chargement de l&apos;espace développeur...
+          <Loader2 className="h-9 w-9 animate-spin text-[#FB682E]" />
+          <p className="text-sm font-medium text-slate-500">
+            Chargement de la documentation technique...
           </p>
         </div>
       </div>
@@ -144,13 +109,23 @@ export default function DeveloperIntegrationPage() {
 
   if (error || !info) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-950 p-4 text-white">
-        <div className="max-w-md rounded-3xl border border-rose-500/30 bg-slate-900 p-8 text-center shadow-2xl">
-          <AlertCircle className="mx-auto h-12 w-12 text-rose-500 mb-4" />
-          <h2 className="text-xl font-bold text-white font-display">Lien Invalide ou Expiré</h2>
-          <p className="mt-2 text-sm text-slate-400 leading-relaxed">
+      <div className="flex min-h-screen items-center justify-center bg-[#FBFBFB] p-4 text-slate-900">
+        <div className="max-w-md rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-xl">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-rose-50 text-rose-500 mb-4">
+            <AlertCircle className="h-7 w-7" />
+          </div>
+          <h2 className="text-xl font-extrabold text-slate-900 font-display">Lien Invalide ou Expiré</h2>
+          <p className="mt-2 text-sm text-slate-500 leading-relaxed">
             {error || "Ce portail d'intégration est inaccessible ou le jeton de sécurité est incorrect."}
           </p>
+          <div className="mt-6">
+            <Link
+              to="/"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#FB682E] text-white text-xs font-bold shadow-md hover:bg-[#e05620] transition"
+            >
+              Retour à l&apos;accueil Samré
+            </Link>
+          </div>
         </div>
       </div>
     );
@@ -158,465 +133,308 @@ export default function DeveloperIntegrationPage() {
 
   const app = info.application;
   const activeApiUrl = customApiUrl.trim() || (import.meta.env.VITE_API_URL ?? "http://localhost:8000");
-  const cliCommand = `npx samre-cli inject --token=${info.tokenIntegration} --api-url=${activeApiUrl}`;
-  const cliRemoveCommand = `npx samre-cli remove`;
+  const cliCommand = `npx github:lydiedouti09-crypto/samre-cli#main inject --token=${info.tokenIntegration} --api-url=${activeApiUrl}`;
+  const cliRemoveCommand = `npx github:lydiedouti09-crypto/samre-cli remove`;
 
-  // Code Flutter autonome prêt à l'emploi si le développeur préfère l'ajouter manuellement
-  const flutterCode = `// =================================================================
-// SDK Samré Mobile pour Flutter (Version Autonome)
-// Fichier : lib/samre_sdk.dart
-// Dépendance dans pubspec.yaml :
-//   dependencies:
-//     http: ^1.2.0
-// =================================================================
+  // Code Flutter autonome au cas où le dev préfère une intégration manuelle
+  const flutterCode = `// ==============================================================================
+// 📱 MODULE OFFICIEL SAMRÉ TEST PROTOCOL (Flutter)
+// Ce module gère la preuve de présence Google Play et le dialogue anti-triche
+// ==============================================================================
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 class SamreConfig {
-  static const String apiUrl = "${activeApiUrl}";
   static const String apiKey = "${info.apiKey}";
-  static const String appId = "${app.id}";
-  static const int requiredDurationSeconds = 25;
+  static const String baseUrl = "${activeApiUrl}";
+  static const int requiredUsageSeconds = 25;
 }
 
-/// Overlay automatique avec compteur anti-triche de 25 secondes
-class SamreOverlay extends StatefulWidget {
-  final Widget child;
-  const SamreOverlay({Key? key, required this.child}) : super(key: key);
-
-  @override
-  State<SamreOverlay> createState() => _SamreOverlayState();
-}
-
-class _SamreOverlayState extends State<SamreOverlay> {
-  int _secondsRemaining = SamreConfig.requiredDurationSeconds;
-  bool _canSubmit = false;
-  bool _showValidationDialog = false;
-  Timer? _timer;
-
-  @override
-  void initState() {
-    super.initState();
-    _startTimer();
-  }
-
-  void _startTimer() {
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (!mounted) return;
-      if (_secondsRemaining > 1) {
-        setState(() => _secondsRemaining--);
-      } else {
-        setState(() {
-          _secondsRemaining = 0;
-          _canSubmit = true;
-        });
-        timer.cancel();
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
-  }
-
-  void _openDialog() {
-    setState(() => _showValidationDialog = true);
-  }
-
-  void _closeDialog() {
-    setState(() => _showValidationDialog = false);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Directionality(
-      textDirection: TextDirection.ltr,
-      child: Stack(
-        children: [
-          widget.child,
-
-          // ── Bouton Flottant Rehaussé avec SafeArea ─────────────────────────
-          Positioned(
-            bottom: 56,
-            right: 18,
-            child: SafeArea(
-              child: Material(
-                elevation: 10,
-                borderRadius: BorderRadius.circular(30),
-                color: _canSubmit ? const Color(0xFF2563EB) : Colors.black.withOpacity(0.85),
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(30),
-                  onTap: _canSubmit ? _openDialog : null,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          _canSubmit ? Icons.verified_user_rounded : Icons.timer_outlined,
-                          color: Colors.white,
-                          size: 20,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          _canSubmit ? 'Valider Journée' : 'Test en cours (\${_secondsRemaining}s)',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13,
-                            decoration: TextDecoration.none,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-
-          // ── Fenêtre Modale de Validation (100% Indépendante du Navigator) ──
-          if (_showValidationDialog)
-            Positioned.fill(
-              child: Container(
-                color: Colors.black.withOpacity(0.75),
-                alignment: Alignment.center,
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Material(
-                  color: Colors.transparent,
-                  child: SamreValidationCard(
-                    onClose: _closeDialog,
-                  ),
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Carte de dialogue de validation du code quotidien
-class SamreValidationCard extends StatefulWidget {
-  final VoidCallback onClose;
-  const SamreValidationCard({Key? key, required this.onClose}) : super(key: key);
-
-  @override
-  State<SamreValidationCard> createState() => _SamreValidationCardState();
-}
-
-class _SamreValidationCardState extends State<SamreValidationCard> {
-  final _panelisteCtrl = TextEditingController();
-  final _codeCtrl = TextEditingController();
-  bool _loading = false;
-  String? _message;
-  bool _success = false;
-
-  @override
-  void dispose() {
-    _panelisteCtrl.dispose();
-    _codeCtrl.dispose();
-    super.dispose();
-  }
-
-  Future<void> _verify() async {
-    final paneliste = _panelisteCtrl.text.trim();
-    final code = _codeCtrl.text.trim();
-
-    if (paneliste.isEmpty || code.isEmpty) {
-      setState(() {
-        _message = 'Veuillez renseigner votre ID panéliste et le code du jour.';
-        _success = false;
-      });
-      return;
-    }
-
-    setState(() {
-      _loading = true;
-      _message = null;
-    });
-
-    try {
-      final uri = Uri.parse('\${SamreConfig.apiUrl}/api/sdk/verify-day');
-      final response = await http.post(
-        uri,
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'X-App-Key': SamreConfig.apiKey,
-          'ngrok-skip-browser-warning': '1',
-        },
-        body: jsonEncode({
-          'apiKey': SamreConfig.apiKey,
-          'app_id': SamreConfig.appId,
-          'panelisteId': paneliste,
-          'panelisteUid': paneliste,
-          'code': code,
-          'deviceId': Platform.isAndroid ? 'android-\${paneliste}' : 'ios-\${paneliste}',
-        }),
-      ).timeout(const Duration(seconds: 15));
-
-      final data = jsonDecode(response.body);
-
-      if (response.statusCode >= 200 && response.statusCode < 300 && data['success'] == true) {
-        setState(() {
-          _success = true;
-          _message = data['message'] ?? 'Félicitations ! Votre journée de test a été validée avec succès.';
-        });
-      } else {
-        setState(() {
-          _success = false;
-          _message = data['message'] ?? data['error'] ?? 'Code invalide ou expiré.';
-        });
-      }
-    } catch (e) {
-      setState(() {
-        _success = false;
-        _message = 'Erreur de connexion au serveur Samré. Vérifiez votre connexion internet.';
-      });
-    } finally {
-      setState(() => _loading = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      constraints: const BoxConstraints(maxWidth: 420),
-      decoration: BoxDecoration(
-        color: const Color(0xFF0F172A),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFF334155), width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.6),
-            blurRadius: 30,
-            spreadRadius: 5,
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.all(22),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF2563EB).withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(Icons.verified, color: Color(0xFF60A5FA), size: 22),
-              ),
-              const SizedBox(width: 12),
-              const Expanded(
-                child: Text(
-                  'Validation Samré',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.close, color: Color(0xFF94A3B8), size: 20),
-                onPressed: widget.onClose,
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          const Text(
-            'Saisissez vos identifiants pour enregistrer votre journée de test.',
-            style: TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _panelisteCtrl,
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
-            decoration: InputDecoration(
-              labelText: 'Identifiant Panéliste',
-              labelStyle: const TextStyle(color: Color(0xFF94A3B8)),
-              hintText: 'Ex: TST-7A8B9C',
-              hintStyle: const TextStyle(color: Color(0xFF475569)),
-              filled: true,
-              fillColor: const Color(0xFF1E293B),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Color(0xFF334155)),
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _codeCtrl,
-            textCapitalization: TextCapitalization.characters,
-            style: const TextStyle(color: Colors.white, letterSpacing: 2, fontWeight: FontWeight.bold),
-            decoration: InputDecoration(
-              labelText: 'Code Unique du Jour',
-              labelStyle: const TextStyle(color: Color(0xFF94A3B8)),
-              hintText: 'Ex: 7K9P-4MX2',
-              hintStyle: const TextStyle(color: Color(0xFF475569), letterSpacing: 0),
-              filled: true,
-              fillColor: const Color(0xFF1E293B),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Color(0xFF334155)),
-              ),
-            ),
-          ),
-          if (_message != null) ...[
-            const SizedBox(height: 14),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: _success ? const Color(0xFF065F46).withOpacity(0.3) : const Color(0xFF991B1B).withOpacity(0.3),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: _success ? const Color(0xFF10B981) : const Color(0xFFEF4444)),
-              ),
-              child: Text(
-                _message!,
-                style: TextStyle(
-                  color: _success ? const Color(0xFF34D399) : const Color(0xFFF87171),
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ],
-          const SizedBox(height: 18),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              TextButton(
-                onPressed: widget.onClose,
-                child: const Text('Fermer', style: TextStyle(color: Color(0xFF94A3B8))),
-              ),
-              const SizedBox(width: 8),
-              ElevatedButton(
-                onPressed: _loading ? null : _verify,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF2563EB),
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                child: _loading
-                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                    : const Text('Valider', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}`;
+// Pour le code complet généré avec l'observateur intelligent, 
+// utilisez la commande automatique recommandée :
+// npx github:lydiedouti09-crypto/samre-cli#main inject --token=${info.tokenIntegration}`;
 
   return (
-    <div className="min-h-screen bg-slate-950 font-sans text-slate-200">
-      {/* Top Navbar */}
-      <header className="sticky top-0 z-30 border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-md">
+    <div className="min-h-screen bg-[#FBFBFB] text-slate-800 font-sans selection:bg-[#FB682E]/20 selection:text-[#FB682E]">
+      {/* ── TOP HEADER MINIMALISTE & ÉPURÉ ──────────────────────────────── */}
+      <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/90 backdrop-blur-md">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600/20 text-blue-400 ring-1 ring-blue-500/30 shadow-sm">
-              <Code2 className="h-5 w-5" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-white tracking-tight text-lg font-display">
-                  Portail Développeur Samré
-                </span>
-                <span className="rounded-md bg-blue-500/10 px-2 py-0.5 text-[10px] font-bold text-blue-400 border border-blue-500/20">
-                  Étape 2 : Intégration
-                </span>
-              </div>
-              <p className="text-xs text-slate-400">Guide pour intégrer le formulaire de test dans votre application</p>
+          <div className="flex items-center gap-4">
+            <Link to="/" className="transition hover:opacity-90">
+              <SamreLogo size={36} showTagline={false} />
+            </Link>
+            <div className="h-5 w-px bg-slate-200" />
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                Documentation SDK
+              </span>
+              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600 border border-slate-200">
+                v1.0
+              </span>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-400 border border-emerald-500/20">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              API Prête
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 border border-emerald-200/60 shadow-xs">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              Campagne Active
             </span>
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="mx-auto max-w-7xl px-4 sm:px-6 py-10 space-y-10">
-        {/* Banner Application Simplifiée */}
-        <div className="rounded-3xl border border-slate-800 bg-gradient-to-br from-slate-900 via-slate-900 to-indigo-950/40 p-6 shadow-xl">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-lg font-bold text-xl">
-                {app.nom.slice(0, 2).toUpperCase()}
-              </div>
+      {/* ── CORPS PRINCIPAL : SIDEBAR + DOCUMENTATION (STYLE TASTESKILL) ── */}
+      <div className="mx-auto max-w-7xl px-6 py-12">
+        <div className="grid grid-cols-1 gap-12 lg:grid-cols-12">
+          
+          {/* ── SIDEBAR GAUCHE : "SUR CETTE PAGE" ────────────────────────── */}
+          <aside className="hidden lg:col-span-3 lg:block">
+            <div className="sticky top-28 space-y-6">
               <div>
-                <div className="flex flex-wrap items-center gap-2.5">
-                  <h1 className="text-xl font-extrabold text-white font-display">
-                    {app.nom}
-                  </h1>
-                  <span className="rounded-full bg-slate-800 px-2 py-0.5 text-xs text-slate-300 font-mono">
-                    v{app.version}
-                  </span>
-                  <span className="rounded-full bg-blue-500/10 px-2.5 py-0.5 text-xs text-blue-400 font-medium border border-blue-500/20">
-                    Flutter
-                  </span>
+                <p className="text-[11px] font-extrabold uppercase tracking-widest text-slate-400">
+                  Sur cette page
+                </p>
+                <nav className="mt-4 space-y-1 text-sm font-medium">
+                  <a
+                    href="#installation"
+                    onClick={() => setActiveSection("installation")}
+                    className={`block py-1.5 pl-3 transition rounded-r-md ${
+                      activeSection === "installation"
+                        ? "border-l-2 border-[#FB682E] font-bold text-slate-900 bg-orange-50/50"
+                        : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                    }`}
+                  >
+                    Installation
+                  </a>
+                  <a
+                    href="#reseau"
+                    onClick={() => setActiveSection("reseau")}
+                    className={`block py-1.5 pl-3 transition rounded-r-md ${
+                      activeSection === "reseau"
+                        ? "border-l-2 border-[#FB682E] font-bold text-slate-900 bg-orange-50/50"
+                        : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                    }`}
+                  >
+                    Mode Réseau (Local / Ngrok)
+                  </a>
+                  <a
+                    href="#lancement"
+                    onClick={() => setActiveSection("lancement")}
+                    className={`block py-1.5 pl-3 transition rounded-r-md ${
+                      activeSection === "lancement"
+                        ? "border-l-2 border-[#FB682E] font-bold text-slate-900 bg-orange-50/50"
+                        : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                    }`}
+                  >
+                    Lancement & Test
+                  </a>
+                  <a
+                    href="#anti-triche"
+                    onClick={() => setActiveSection("anti-triche")}
+                    className={`block py-1.5 pl-3 transition rounded-r-md ${
+                      activeSection === "anti-triche"
+                        ? "border-l-2 border-[#FB682E] font-bold text-slate-900 bg-orange-50/50"
+                        : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                    }`}
+                  >
+                    Protocole Anti-Triche
+                  </a>
+                  <a
+                    href="#desinstallation"
+                    onClick={() => setActiveSection("desinstallation")}
+                    className={`block py-1.5 pl-3 transition rounded-r-md ${
+                      activeSection === "desinstallation"
+                        ? "border-l-2 border-[#FB682E] font-bold text-slate-900 bg-orange-50/50"
+                        : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                    }`}
+                  >
+                    Désinstallation
+                  </a>
+                  <a
+                    href="#manuel"
+                    onClick={() => setActiveSection("manuel")}
+                    className={`block py-1.5 pl-3 transition rounded-r-md ${
+                      activeSection === "manuel"
+                        ? "border-l-2 border-[#FB682E] font-bold text-slate-900 bg-orange-50/50"
+                        : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                    }`}
+                  >
+                    Code Dart Manuel
+                  </a>
+                </nav>
+              </div>
+
+              {/* Fiche d'application compacte en rappel */}
+              <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#FB682E] text-white font-bold text-sm shadow-xs">
+                    {app.nom.slice(0, 2).toUpperCase()}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-bold text-slate-900">{app.nom}</p>
+                    <p className="text-[11px] text-slate-500 font-mono">v{app.version} • Flutter</p>
+                  </div>
                 </div>
-                <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-slate-400">
-                  <span>Campagne Google Play : <strong>{app.dureeJours || 12} jours</strong></span>
-                  <span>•</span>
-                  <span><strong>{app.nbMaxPanelistes || 12} panélistes</strong></span>
+                <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-600">
+                  <span>Panélistes</span>
+                  <span className="font-bold text-slate-900">{app.nbMaxPanelistes || 12} testeurs</span>
+                </div>
+                <div className="mt-1 flex items-center justify-between text-[11px] text-slate-600">
+                  <span>Durée test</span>
+                  <span className="font-bold text-slate-900">{app.dureeJours || 12} jours</span>
                 </div>
               </div>
             </div>
+          </aside>
 
-            <span className="inline-flex items-center gap-1.5 self-start sm:self-auto rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-400 border border-emerald-500/20">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              Prêt pour injection
-            </span>
-          </div>
-        </div>
-
-        {/* Section Double Colonne : L'essentiel à gauche | Smartphone Mockup à droite */}
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
-          {/* Colonne Gauche : Les 2 seules étapes du développeur (7 cols) */}
-          <div className="lg:col-span-7 space-y-5">
+          {/* ── CONTENU PRINCIPAL : DOCUMENTATION TECHNIQUE ──────────────── */}
+          <main className="lg:col-span-9 space-y-12">
             
-            {/* Étape 1 : La commande unique */}
-            <div className="rounded-3xl border border-emerald-500/30 bg-gradient-to-br from-emerald-950/30 via-slate-900 to-slate-900 p-6 shadow-xl space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div className="flex items-center gap-2 text-emerald-400 font-bold text-sm">
-                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 text-slate-950 font-black text-xs">
-                    1
-                  </span>
-                  <span>Exécutez cette commande à la racine de votre projet Flutter :</span>
+            {/* EN-TÊTE PRINCIPAL (STYLE COMMENCER . DE TASTESKILL) */}
+            <div className="space-y-4">
+              <div className="inline-flex items-center gap-2 rounded-full bg-orange-100/70 px-3 py-1 text-xs font-bold text-[#FB682E]">
+                <span className="h-2 w-2 rounded-full bg-[#FB682E]" />
+                DOCUMENTATION OFFICIELLE
+              </div>
+
+              <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-slate-950 font-display">
+                Commencer .
+              </h1>
+
+              <p className="text-lg text-slate-600 leading-relaxed max-w-3xl">
+                Installez le SDK Samré dans votre projet Flutter, assurez automatiquement la preuve de présence Google Play de vos 12 panélistes et préservez l&apos;intégrité de votre code d&apos;origine.
+              </p>
+            </div>
+
+            {/* BANDEAU RÉCAPITULATIF APPLICATION */}
+            <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-tr from-[#FB682E] to-amber-500 text-white font-black text-lg shadow-sm">
+                  {app.nom.slice(0, 2).toUpperCase()}
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-lg font-bold text-slate-900">{app.nom}</span>
+                    <span className="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-mono text-slate-600">
+                      v{app.version}
+                    </span>
+                    <span className="rounded-md bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700 border border-blue-100">
+                      Flutter
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-1">
+                    Campagne Google Play : <strong>{app.dureeJours || 12} jours consécutifs</strong> • <strong>{app.nbMaxPanelistes || 12} panélistes affectés</strong>
+                  </p>
+                </div>
+              </div>
+
+              <span className="inline-flex items-center gap-1.5 self-start sm:self-auto rounded-full bg-emerald-50 px-3.5 py-1 text-xs font-bold text-emerald-700 border border-emerald-200">
+                <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                Prêt pour injection
+              </span>
+            </div>
+
+            {/* ── SECTION 1 : INSTALLATION ───────────────────────────────── */}
+            <section id="installation" className="space-y-4 pt-2">
+              <div className="flex items-center gap-3">
+                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-900 text-white text-xs font-bold">
+                  1
+                </div>
+                <h2 className="text-2xl font-bold text-slate-950">
+                  Installation
+                </h2>
+              </div>
+
+              <p className="text-sm text-slate-600 leading-relaxed">
+                L&apos;installation par défaut utilise l&apos;injecteur automatique direct via GitHub. Le script crée le module <code className="rounded bg-slate-100 px-1.5 py-0.5 text-xs font-mono text-slate-800 border border-slate-200">lib/samre_sdk.dart</code> et branche l&apos;observateur dans <code className="rounded bg-slate-100 px-1.5 py-0.5 text-xs font-mono text-slate-800 border border-slate-200">lib/main.dart</code> en toute sécurité.
+              </p>
+
+              {/* COMMANDE CODE BLOCK (STYLE TASTESKILL CLI) */}
+              <div className="relative rounded-2xl border border-slate-200 bg-slate-900 p-4 sm:p-5 shadow-sm text-white">
+                <div className="flex items-center justify-between text-xs text-slate-400 pb-3 border-b border-slate-800">
+                  <div className="flex items-center gap-2">
+                    <Terminal className="h-4 w-4 text-[#FB682E]" />
+                    <span className="font-mono">Terminal (Racine de votre projet Flutter)</span>
+                  </div>
+                  <span className="text-[11px] text-slate-500">npx / zero dépendance globale</span>
                 </div>
 
-                {/* Sélecteur Local vs Externe / Ngrok */}
-                <div className="flex items-center gap-1 bg-slate-950/90 p-1 rounded-xl border border-slate-800 text-xs shrink-0 self-start sm:self-auto">
+                <div className="mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="font-mono text-xs sm:text-sm text-emerald-400 overflow-x-auto py-1">
+                    <span className="text-slate-500 mr-2 select-none">$</span>
+                    <span className="select-all font-semibold">{cliCommand}</span>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(cliCommand);
+                      setCopiedCommand(true);
+                      setTimeout(() => setCopiedCommand(false), 2000);
+                    }}
+                    className="shrink-0 inline-flex items-center justify-center gap-2 rounded-xl bg-[#FB682E] px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-[#e05620] transition active:scale-95"
+                  >
+                    {copiedCommand ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                    <span>{copiedCommand ? "Copié !" : "Copier la commande"}</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* 3 piliers de sécurité */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 text-xs text-slate-600">
+                <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white p-3 shadow-2xs">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+                  <span className="font-medium">Zéro code manuel</span>
+                </div>
+                <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white p-3 shadow-2xs">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+                  <span className="font-medium">Apparition anti-triche</span>
+                </div>
+                <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white p-3 shadow-2xs">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+                  <span className="font-medium">Sauvegarde lib/main.dart</span>
+                </div>
+              </div>
+            </section>
+
+            {/* ── SECTION 2 : CONFIGURATION DU RÉSEAU (LOCAL VS NGROK) ────── */}
+            <section id="reseau" className="space-y-4 pt-4 border-t border-slate-200">
+              <div className="flex items-center gap-3">
+                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-900 text-white text-xs font-bold">
+                  2
+                </div>
+                <h2 className="text-2xl font-bold text-slate-950">
+                  Mode Réseau : Localhost vs Testeur Extérieur (Ngrok)
+                </h2>
+              </div>
+
+              <p className="text-sm text-slate-600 leading-relaxed">
+                Choisissez selon votre contexte de test. Si vous testez sur un <strong>vrai smartphone</strong> ou qu&apos;une <strong>personne extérieure</strong> utilise l&apos;application, votre backend local doit être accessible via une adresse publique HTTPS.
+              </p>
+
+              {/* SÉLECTEUR DE MODE INTERACTIF */}
+              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs space-y-4">
+                <div className="flex flex-wrap items-center gap-2">
                   <button
                     type="button"
                     onClick={() => {
                       setApiMode("local");
                       setCustomApiUrl("http://localhost:8000");
                     }}
-                    className={`px-2.5 py-1 rounded-lg font-medium transition ${
+                    className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
                       apiMode === "local"
-                        ? "bg-slate-800 text-emerald-300 shadow-sm"
-                        : "text-slate-400 hover:text-slate-200"
+                        ? "bg-slate-900 text-white shadow-xs"
+                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                     }`}
                   >
-                    Localhost
+                    <Server className="h-3.5 w-3.5" />
+                    <span>Émulateur PC (Localhost:8000)</span>
                   </button>
+
                   <button
                     type="button"
                     onClick={() => {
@@ -625,289 +443,222 @@ class _SamreValidationCardState extends State<SamreValidationCard> {
                         setCustomApiUrl("https://poise-magnitude-define.ngrok-free.dev");
                       }
                     }}
-                    className={`px-2.5 py-1 rounded-lg font-medium transition ${
+                    className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
                       apiMode === "remote"
-                        ? "bg-emerald-600 text-white shadow-sm"
-                        : "text-slate-400 hover:text-slate-200"
+                        ? "bg-[#FB682E] text-white shadow-xs"
+                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                     }`}
                   >
-                    🌐 Distant / Ngrok
+                    <Globe className="h-3.5 w-3.5" />
+                    <span>Vrai Smartphone / Testeur Extérieur (Ngrok)</span>
                   </button>
                 </div>
+
+                {/* CHAMP D'URL PUBLIQUE NGROK */}
+                {apiMode === "remote" ? (
+                  <div className="rounded-xl border border-orange-200 bg-orange-50/50 p-4 space-y-2">
+                    <label className="block text-xs font-bold text-slate-800">
+                      URL Publique de votre Backend (Ngrok / Localtunnel / Serveur) :
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={customApiUrl}
+                        onChange={(e) => setCustomApiUrl(e.target.value)}
+                        placeholder="https://votre-tunnel.ngrok-free.dev"
+                        className="flex-1 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-mono text-slate-900 focus:border-[#FB682E] focus:outline-none shadow-2xs"
+                      />
+                    </div>
+                    <p className="text-[11px] text-slate-500">
+                      💡 <em>Conseil :</em> Pour obtenir cette URL gratuite en 10 secondes, tapez <code className="rounded bg-white px-1.5 py-0.5 font-mono text-[10px] border border-orange-200 text-slate-800">ngrok http 8000</code> dans un terminal de votre ordinateur.
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-xs text-slate-500 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                    💡 Le mode <strong>Localhost</strong> fonctionne uniquement si vous lancez l&apos;application sur le même PC que votre serveur web (émulateur Android Studio ou Chrome).
+                  </p>
+                )}
+              </div>
+            </section>
+
+            {/* ── SECTION 3 : LANCEMENT DE L'APPLICATION ─────────────────── */}
+            <section id="lancement" className="space-y-4 pt-4 border-t border-slate-200">
+              <div className="flex items-center gap-3">
+                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-900 text-white text-xs font-bold">
+                  3
+                </div>
+                <h2 className="text-2xl font-bold text-slate-950">
+                  Lancement & Test dans votre Application
+                </h2>
               </div>
 
-              {/* Champ d'URL personnalisée si mode distant */}
-              {apiMode === "remote" && (
-                <div className="rounded-2xl border border-emerald-500/20 bg-slate-950/80 p-3 space-y-1.5">
-                  <div className="flex items-center justify-between text-[11px] text-slate-400">
-                    <span className="flex items-center gap-1.5 font-medium text-emerald-400">
-                      <Globe className="h-3.5 w-3.5" />
-                      URL publique de votre backend (Ngrok / Serveur en ligne) :
-                    </span>
-                    <span className="text-[10px] text-slate-500">Requis pour testeur externe ou vrai téléphone</span>
-                  </div>
-                  <input
-                    type="text"
-                    value={customApiUrl}
-                    onChange={(e) => setCustomApiUrl(e.target.value)}
-                    placeholder="https://votre-tunnel.ngrok-free.dev"
-                    className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-1.5 text-xs font-mono text-emerald-300 focus:outline-none focus:border-emerald-500/50"
-                  />
-                </div>
-              )}
+              <p className="text-sm text-slate-600 leading-relaxed">
+                Une fois la commande d&apos;injection exécutée, compilez et lancez simplement votre application Flutter :
+              </p>
 
-              <div className="flex items-center justify-between gap-3 bg-slate-950 border border-slate-800 rounded-2xl p-3 pl-4">
-                <code className="text-xs sm:text-sm text-emerald-400 font-mono select-all truncate">
-                  {cliCommand}
-                </code>
+              <div className="rounded-2xl border border-slate-200 bg-slate-900 p-4 text-white font-mono text-xs sm:text-sm">
+                <span className="text-slate-500 mr-2">$</span>
+                <span className="text-cyan-300 font-bold select-all">flutter run</span>
+              </div>
+
+              <div className="rounded-2xl border border-slate-200 bg-white p-5 space-y-3">
+                <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                  <Zap className="h-4 w-4 text-[#FB682E]" />
+                  Ce qui se passe dans l&apos;application :
+                </h3>
+                <ul className="space-y-2 text-xs text-slate-600 list-disc list-inside leading-relaxed">
+                  <li>L&apos;application démarre normalement sans aucun changement visible sur l&apos;écran d&apos;accueil.</li>
+                  <li>Lorsque le testeur navigue et explore les différentes pages de votre application, un bouton discret <strong>« Valider le test »</strong> apparaît.</li>
+                  <li>Le testeur clique dessus, entre son identifiant panéliste (ex: <code>TST-65CE12</code>) et son code du jour.</li>
+                  <li>Dès que la journée est validée, le formulaire disparaît totalement jusqu&apos;au lendemain !</li>
+                </ul>
+              </div>
+            </section>
+
+            {/* ── SECTION 4 : PROTOCOLE ANTI-TRICHE INTÉGRÉ ──────────────── */}
+            <section id="anti-triche" className="space-y-4 pt-4 border-t border-slate-200">
+              <div className="flex items-center gap-3">
+                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-900 text-white text-xs font-bold">
+                  4
+                </div>
+                <h2 className="text-2xl font-bold text-slate-950">
+                  Protocole Anti-Triche Google Play Intégré
+                </h2>
+              </div>
+
+              <p className="text-sm text-slate-600 leading-relaxed">
+                Pour garantir à Google que vos 12 panélistes utilisent réellement l&apos;application chaque jour pendant 14 jours, Samré intègre 3 verrous automatiques :
+              </p>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="rounded-2xl border border-slate-200 bg-white p-5 space-y-2 shadow-xs">
+                  <div className="h-9 w-9 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center font-bold text-sm">
+                    🚫
+                  </div>
+                  <h4 className="font-bold text-sm text-slate-900">Interdit sur l&apos;Accueil</h4>
+                  <p className="text-xs text-slate-500 leading-relaxed">
+                    Le formulaire ne s&apos;affiche jamais sur le Splash Screen ou la page initiale pour forcer l&apos;utilisateur à naviguer.
+                  </p>
+                </div>
+
+                <div className="rounded-2xl border border-slate-200 bg-white p-5 space-y-2 shadow-xs">
+                  <div className="h-9 w-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-sm">
+                    🎲
+                  </div>
+                  <h4 className="font-bold text-sm text-slate-900">Apparition Aléatoire</h4>
+                  <p className="text-xs text-slate-500 leading-relaxed">
+                    L&apos;emplacement et l&apos;instant d&apos;apparition varient selon les sessions et les sous-pages visitées.
+                  </p>
+                </div>
+
+                <div className="rounded-2xl border border-slate-200 bg-white p-5 space-y-2 shadow-xs">
+                  <div className="h-9 w-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-sm">
+                    🔒
+                  </div>
+                  <h4 className="font-bold text-sm text-slate-900">Verrou Quotidien Unique</h4>
+                  <p className="text-xs text-slate-500 leading-relaxed">
+                    Une seule validation acceptée par 24h. Une fois le code entré, le composant s&apos;éteint jusqu&apos;au jour suivant.
+                  </p>
+                </div>
+              </div>
+            </section>
+
+            {/* ── SECTION 5 : DÉSINSTALLATION POST-CAMPAGNE ──────────────── */}
+            <section id="desinstallation" className="space-y-4 pt-4 border-t border-slate-200">
+              <div className="flex items-center gap-3">
+                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-900 text-white text-xs font-bold">
+                  5
+                </div>
+                <h2 className="text-2xl font-bold text-slate-950">
+                  Désinstallation (Fin de Campagne)
+                </h2>
+              </div>
+
+              <p className="text-sm text-slate-600 leading-relaxed">
+                Une fois les 14 jours de tests validés par la console Google Play, retirez le module en une fraction de seconde pour retrouver votre code 100% propre :
+              </p>
+
+              <div className="rounded-2xl border border-slate-200 bg-slate-900 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-white font-mono text-xs sm:text-sm">
+                <div>
+                  <span className="text-slate-500 mr-2 select-none">$</span>
+                  <span className="text-amber-300 font-bold select-all">{cliRemoveCommand}</span>
+                </div>
+
                 <button
                   type="button"
                   onClick={() => {
-                    navigator.clipboard.writeText(cliCommand);
-                    setCopiedCommand(true);
-                    setTimeout(() => setCopiedCommand(false), 2000);
+                    navigator.clipboard.writeText(cliRemoveCommand);
+                    setCopiedRemoveCommand(true);
+                    setTimeout(() => setCopiedRemoveCommand(false), 2000);
                   }}
-                  className="shrink-0 flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs transition shadow-sm"
+                  className="shrink-0 inline-flex items-center gap-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 px-3.5 py-2 text-xs font-semibold text-slate-200 transition"
                 >
-                  {copiedCommand ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                  {copiedCommand ? "Copié !" : "Copier la commande"}
+                  {copiedRemoveCommand ? <Check className="h-4 w-4 text-emerald-400" /> : <Copy className="h-4 w-4" />}
+                  <span>{copiedRemoveCommand ? "Copié !" : "Copier"}</span>
                 </button>
               </div>
 
-              {/* 3 garanties rapides */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1 text-[11px] text-slate-300">
-                <div className="flex items-center gap-2 bg-slate-900/80 rounded-xl p-2.5 border border-slate-800">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
-                  <span>Zéro code manuel</span>
-                </div>
-                <div className="flex items-center gap-2 bg-slate-900/80 rounded-xl p-2.5 border border-slate-800">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
-                  <span>Overlay actif après 25s</span>
-                </div>
-                <div className="flex items-center gap-2 bg-slate-900/80 rounded-xl p-2.5 border border-slate-800">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
-                  <span>Sauvegarde auto créée</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Étape 2 : Lancer l'app */}
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5 space-y-3">
-              <div className="flex items-center gap-2 text-white font-bold text-sm">
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-white font-black text-xs">
-                  2
-                </span>
-                <span>Lancez votre application pour tester :</span>
-              </div>
-
-              <div className="bg-slate-950 border border-slate-800 rounded-xl p-3 pl-4">
-                <code className="text-xs font-mono text-cyan-300 select-all">
-                  flutter run
-                </code>
-              </div>
-
-              <p className="text-xs text-slate-400 leading-relaxed">
-                👉 Un bouton discret <strong>&quot;Test en cours&quot;</strong> apparaît sur votre écran. Après <strong>25 secondes</strong> d&apos;utilisation, il passera en <strong>&quot;Valider Journée&quot;</strong> pour permettre au testeur de saisir son code du jour.
+              <p className="text-xs text-slate-500">
+                Cette commande supprime <code className="text-slate-800 bg-slate-100 px-1 py-0.5 rounded">lib/samre_sdk.dart</code> et restaure automatiquement <code className="text-slate-800 bg-slate-100 px-1 py-0.5 rounded">lib/main.dart</code> à son état initial exact.
               </p>
-            </div>
+            </section>
 
-            {/* Étape 3 : Retrait post-campagne */}
-            <div className="rounded-2xl border border-slate-800/80 bg-slate-900/40 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-              <div>
-                <span className="font-bold text-slate-300 block">Désinstallation propre (après les 12 jours) :</span>
-                <span className="text-slate-500 text-[11px]">Restaure votre application dans son état d&apos;origine sans résidu.</span>
-              </div>
-              <div className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 font-mono text-amber-300 text-xs shrink-0 select-all">
-                <code>{cliRemoveCommand}</code>
-              </div>
-            </div>
-
-            {/* Accordéon repliable : Code Flutter manuel (Optionnel) */}
-            <div className="border border-slate-800 rounded-2xl bg-slate-900/50 overflow-hidden">
-              <button
-                type="button"
-                onClick={() => setShowManualCode(!showManualCode)}
-                className="w-full flex items-center justify-between px-5 py-3.5 text-xs font-semibold text-slate-400 hover:text-white transition"
-              >
-                <div className="flex items-center gap-2">
-                  <FileCode className="h-4 w-4 text-blue-400" />
-                  <span>Vous préférez intégrer le code Dart manuellement sans le CLI ? (Optionnel)</span>
-                </div>
-                {showManualCode ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-              </button>
-
-              {showManualCode && (
-                <div className="border-t border-slate-800 p-4 space-y-3 bg-slate-950">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-slate-400 text-[11px]">Fichier : lib/samre_sdk.dart</span>
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => handleCopyCode(flutterCode)}
-                        className="inline-flex items-center gap-1 text-[11px] text-blue-400 hover:text-blue-300 font-semibold"
-                      >
-                        {copiedCode ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
-                        {copiedCode ? "Copié !" : "Copier le code"}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDownloadFile("samre_sdk.dart", flutterCode)}
-                        className="inline-flex items-center gap-1 rounded-lg bg-slate-800 px-2.5 py-1 text-[11px] text-slate-300 hover:bg-slate-700"
-                      >
-                        <Download className="h-3 w-3" />
-                        Télécharger
-                      </button>
-                    </div>
+            {/* ── SECTION 6 : CODE DART MANUEL (OPTIONNEL) ───────────────── */}
+            <section id="manuel" className="pt-4 border-t border-slate-200">
+              <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-xs">
+                <button
+                  type="button"
+                  onClick={() => setShowManualCode(!showManualCode)}
+                  className="w-full flex items-center justify-between p-5 text-left text-sm font-bold text-slate-900 hover:bg-slate-50 transition"
+                >
+                  <div className="flex items-center gap-3">
+                    <FileCode className="h-5 w-5 text-[#FB682E]" />
+                    <span>Intégration Manuelle Dart (Sans utiliser le CLI)</span>
                   </div>
-                  <pre className="p-3 bg-slate-900/80 rounded-xl font-mono text-[11px] text-cyan-300 overflow-x-auto max-h-[350px]">
-                    {flutterCode}
-                  </pre>
-                </div>
-              )}
-            </div>
+                  {showManualCode ? <ChevronUp className="h-5 w-5 text-slate-400" /> : <ChevronDown className="h-5 w-5 text-slate-400" />}
+                </button>
 
-          </div>
-
-          {/* Colonne Droite : Smartphone Virtuel avec formulaire (5 cols) */}
-          <div className="lg:col-span-5 flex flex-col items-center justify-start">
-            <div className="w-full text-center mb-3">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center justify-center gap-1.5">
-                <Smartphone className="h-4 w-4 text-blue-400" />
-                Application testée avec formulaire (Aperçu direct)
-              </span>
-              <p className="text-[11px] text-slate-500 mt-0.5">
-                Voici exactement ce que le composant affiche dans votre application
-              </p>
-            </div>
-
-            {/* Smartphone Frame (Mockup Réaliste) */}
-            <div className="relative w-[320px] rounded-[42px] border-[8px] border-slate-800 bg-slate-900 shadow-2xl overflow-hidden ring-1 ring-white/10">
-              {/* Dynamic Island / Speaker */}
-              <div className="absolute top-2 left-1/2 -translate-x-1/2 z-20 h-4 w-28 rounded-full bg-slate-950 flex items-center justify-center">
-                <div className="h-2 w-2 rounded-full bg-slate-900 mr-2" />
-                <div className="h-1.5 w-8 rounded-full bg-slate-800" />
-              </div>
-
-              {/* Smartphone Status Bar */}
-              <div className="flex items-center justify-between px-6 pt-3 pb-2 text-[10px] text-slate-400 bg-slate-900 font-medium">
-                <span>09:41</span>
-                <div className="flex items-center gap-1.5">
-                  <Signal className="h-3 w-3" />
-                  <Wifi className="h-3 w-3" />
-                  <Battery className="h-3.5 w-3.5" />
-                </div>
-              </div>
-
-              {/* Screen Content : Formulaire de test Samré */}
-              <div className="bg-white min-h-[500px] text-slate-900 flex flex-col justify-between">
-                {/* App Bar interne */}
-                <div className="bg-[#0F172A] px-4 py-3 text-white flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="h-6 w-6 rounded-md bg-blue-600 flex items-center justify-center text-[10px] font-bold">
-                      S
-                    </div>
-                    <span className="font-bold text-xs">Espace Testeur Samré</span>
-                  </div>
-                  <span className="text-[10px] text-emerald-400 bg-emerald-500/20 px-2 py-0.5 rounded-full font-medium">
-                    Actif
-                  </span>
-                </div>
-
-                {/* Formulaire réel dans l'app */}
-                <form onSubmit={handlePhoneSubmit} className="p-4 space-y-3.5 flex-1">
-                  <div>
-                    <h4 className="font-bold text-sm text-slate-900">
-                      Validation Quotidienne
-                    </h4>
-                    <p className="text-[10px] text-slate-500 mt-0.5">
-                      Application : <strong>{app.nom}</strong>
-                    </p>
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                      Identifiant Panéliste *
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Ex: TST-7A8B9C"
-                      value={phoneTesterId}
-                      onChange={(e) => setPhoneTesterId(e.target.value)}
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-mono text-slate-900 focus:bg-white focus:border-blue-600 focus:outline-none"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                      Code Unique du Jour *
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Ex: 7K9P-4MX2"
-                      value={phoneCode}
-                      onChange={(e) => setPhoneCode(e.target.value.toUpperCase())}
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-mono uppercase text-slate-900 focus:bg-white focus:border-blue-600 focus:outline-none"
-                    />
-                  </div>
-
-                  <button
-                    type="submit"
-                    disabled={phoneLoading}
-                    className="w-full inline-flex items-center justify-center gap-1.5 rounded-xl bg-blue-600 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-blue-700 transition disabled:opacity-60"
-                  >
-                    {phoneLoading ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    ) : (
-                      <CheckSquare className="h-3.5 w-3.5" />
-                    )}
-                    <span>Valider ma journée de test</span>
-                  </button>
-
-                  {/* Résultat visuel en direct sur l'écran du smartphone */}
-                  {phoneResult && (
-                    <div
-                      className={`rounded-xl border p-2.5 text-[11px] leading-tight transition ${
-                        phoneResult.success
-                          ? "border-emerald-200 bg-emerald-50 text-emerald-900"
-                          : "border-rose-200 bg-rose-50 text-rose-900"
-                      }`}
-                    >
-                      <div className="flex items-start gap-1.5">
-                        {phoneResult.success ? (
-                          <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
-                        ) : (
-                          <AlertCircle className="h-4 w-4 text-rose-600 shrink-0 mt-0.5" />
-                        )}
-                        <div>
-                          <p className="font-bold">{phoneResult.message}</p>
-                          {phoneResult.jour && (
-                            <p className="mt-0.5 text-[10px] text-emerald-700">
-                              Jour {phoneResult.jour} validé • Progression : {phoneResult.progression}%
-                            </p>
-                          )}
-                        </div>
+                {showManualCode && (
+                  <div className="border-t border-slate-100 p-5 space-y-4 bg-slate-50/60">
+                    <div className="flex items-center justify-between text-xs text-slate-500">
+                      <span>Fichier : <strong>lib/samre_sdk.dart</strong></span>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleCopyCode(flutterCode)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50 shadow-2xs"
+                        >
+                          {copiedCode ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
+                          <span>{copiedCode ? "Copié !" : "Copier le code"}</span>
+                        </button>
                       </div>
                     </div>
-                  )}
 
-                  <div className="rounded-xl border border-slate-100 bg-slate-50 p-2.5 text-[10px] text-slate-500 leading-normal">
-                    💡 <em>Simulation en direct :</em> Les panélistes Samré entreront chaque jour leur code ici pour faire progresser leur test.
+                    <pre className="p-4 bg-slate-900 rounded-xl font-mono text-xs text-emerald-400 overflow-x-auto max-h-[300px]">
+                      {flutterCode}
+                    </pre>
                   </div>
-                </form>
-
-                {/* Home Indicator en bas du smartphone */}
-                <div className="py-2 flex justify-center bg-white">
-                  <div className="h-1 w-24 rounded-full bg-slate-300" />
-                </div>
+                )}
               </div>
-            </div>
+            </section>
+
+          </main>
+        </div>
+      </div>
+
+      {/* ── FOOTER ÉPURÉ ──────────────────────────────────────────────── */}
+      <footer className="mt-20 border-t border-slate-200 bg-white py-10 text-center text-xs text-slate-500">
+        <div className="mx-auto max-w-7xl px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p>© 2026 SAMRÉ Global. Plateforme de mise en conformité Google Play.</p>
+          <div className="flex items-center gap-4 text-slate-600">
+            <Link to="/" className="hover:text-[#FB682E] transition">Accueil</Link>
+            <span>•</span>
+            <a href="https://github.com/lydiedouti09-crypto/samre-cli" target="_blank" rel="noopener noreferrer" className="hover:text-[#FB682E] transition inline-flex items-center gap-1">
+              <span>GitHub CLI</span>
+              <ExternalLink className="h-3 w-3" />
+            </a>
           </div>
         </div>
-      </main>
-
-      {/* Footer */}
-      <footer className="border-t border-slate-900 bg-slate-950 py-8 text-center text-xs text-slate-500">
-        Portail Technique Développeur Samré • Intégration du formulaire de test
       </footer>
     </div>
   );
