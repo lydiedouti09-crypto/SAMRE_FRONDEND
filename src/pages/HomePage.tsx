@@ -9,6 +9,7 @@ import Testimonials from '@/components/Testimonials';
 import Faq from '@/components/Faq';
 import Contact from '@/components/Contact';
 import Footer from '@/components/Footer';
+import StatsBand from '@/components/StatsBand';
 
 export default function HomePage() {
   useEffect(() => {
@@ -22,6 +23,7 @@ export default function HomePage() {
 
       {/* 2. Hero Section SAMRE avec diaporama interactif et couleurs de marque */}
       <Hero />
+      <StatsBand />
 
       {/* Main Content */}
       <main style={{ flex: 1 }}>

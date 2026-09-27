@@ -1,36 +1,42 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import { ArrowRight } from 'lucide-react';
 
 export const Hero: React.FC = () => {
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const [phoneTilt, setPhoneTilt] = useState({ x: 0, y: 0 });
 
-  useEffect(() => {
-    if (videoRef.current) {
-      videoRef.current.defaultMuted = true;
-      videoRef.current.muted = true;
-      videoRef.current.volume = 0;
-      videoRef.current.play().catch(() => {});
-    }
-  }, []);
+  const handlePhoneMove = (event: React.MouseEvent<HTMLDivElement>) => {
+    const bounds = event.currentTarget.getBoundingClientRect();
+    setPhoneTilt({
+      x: ((event.clientX - bounds.left) / bounds.width - 0.5) * 5,
+      y: ((event.clientY - bounds.top) / bounds.height - 0.5) * -5,
+    });
+  };
 
   return (
     <section id="hero" className="hero-section">
       <style>{`
         .hero-section {
           position: relative;
-          /* Couleur officielle SAMRÉ : Orange du logo (#f2811d) illuminé et adouci avec du blanc */
-          background: #f2811d;
+          background: #fffdf9;
           background: 
-            radial-gradient(ellipse 90% 70% at 20% 15%, rgba(255, 255, 255, 0.38) 0%, transparent 60%),
-            radial-gradient(ellipse 80% 60% at 85% 85%, rgba(255, 255, 255, 0.22) 0%, transparent 55%),
-            radial-gradient(circle at 50% 50%, rgba(255, 243, 230, 0.18) 0%, transparent 70%),
-            linear-gradient(145deg, #f79a3e 0%, #f2811d 45%, #ea7312 100%);
+            radial-gradient(ellipse 55% 75% at 86% 50%, rgba(255, 235, 210, 0.8) 0%, transparent 68%),
+            radial-gradient(ellipse 70% 80% at 8% 20%, rgba(255, 248, 238, 0.95) 0%, transparent 72%),
+            linear-gradient(135deg, #ffffff 0%, #fffaf3 100%);
           overflow: hidden;
-          padding-top: 4.5rem;
-          padding-bottom: 5rem;
-          border-bottom-left-radius: 44px;
-          border-bottom-right-radius: 44px;
-          box-shadow: 0 25px 50px -15px rgba(242, 129, 29, 0.35);
+          padding: 2.5rem 1.25rem 3.5rem;
+          border-bottom: 1px solid rgba(226, 232, 240, 0.7);
+        }
+
+        .hero-card {
+          position: relative;
+          max-width: 1320px;
+          margin: 0 auto;
+          padding: 3.5rem 2rem 2.5rem;
+          background: rgba(255, 255, 255, 0.9);
+          border: 1px solid rgba(226, 232, 240, 0.85);
+          border-radius: 32px;
+          box-shadow: 0 28px 70px rgba(15, 23, 42, 0.08);
+          overflow: hidden;
         }
 
         /* Vagues graphiques légères et blanches en arrière-plan */
@@ -63,6 +69,7 @@ export const Hero: React.FC = () => {
           .hero-grid {
             grid-template-columns: 1.15fr 0.95fr;
             gap: 3.5rem;
+            transform: translateY(-2.25rem);
           }
         }
 
@@ -72,6 +79,7 @@ export const Hero: React.FC = () => {
           flex-direction: column;
           align-items: flex-start;
           text-align: left;
+          animation: hero-copy-in 0.8s 0.15s both cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .hero-title {
@@ -80,24 +88,24 @@ export const Hero: React.FC = () => {
           font-weight: 900;
           letter-spacing: -0.035em;
           line-height: 1.12;
-          color: #ffffff;
+          color: #0a1c38;
           margin: 0 0 1.25rem 0;
-          text-shadow: 0 3px 20px rgba(10, 28, 56, 0.18);
+          animation: hero-copy-item-in 0.7s 0.28s both cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .hero-title-highlight {
-          color: #ffffff;
+          color: #f2811d;
           display: block;
         }
 
         .hero-desc {
           font-size: clamp(0.98rem, 1.2vw, 1.14rem);
-          color: rgba(255, 255, 255, 0.95);
+          color: #475569;
           line-height: 1.68;
           margin: 0 0 2.2rem 0;
           max-width: 540px;
           font-weight: 500;
-          text-shadow: 0 1px 8px rgba(10, 28, 56, 0.12);
+          animation: hero-copy-item-in 0.7s 0.42s both cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .hero-actions-row {
@@ -105,6 +113,7 @@ export const Hero: React.FC = () => {
           align-items: center;
           gap: 1.1rem;
           flex-wrap: wrap;
+          animation: hero-copy-item-in 0.7s 0.56s both cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .hero-btn-dark {
@@ -156,11 +165,12 @@ export const Hero: React.FC = () => {
           align-items: center;
           gap: 1rem;
           padding: 0.85rem 1.25rem;
-          background: rgba(255, 255, 255, 0.22);
+          background: rgba(255, 255, 255, 0.7);
           backdrop-filter: blur(14px);
-          border: 1px solid rgba(255, 255, 255, 0.45);
+          border: 1px solid rgba(226, 232, 240, 0.9);
           border-radius: 20px;
-          box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+          box-shadow: 0 8px 22px rgba(15, 23, 42, 0.06);
+          animation: hero-copy-item-in 0.7s 0.7s both cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         /* ─── 2. Colonne Droite : Intégration Naturelle de la Vidéo du Smartphone ─── */
@@ -170,19 +180,106 @@ export const Hero: React.FC = () => {
           justify-content: center;
           align-items: center;
           width: 100%;
+          perspective: 1000px;
+          animation: hero-phone-in 1s 0.35s both cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .hero-video-wrapper::before {
+          content: '';
+          position: absolute;
+          width: 72px;
+          height: 72px;
+          left: 3%;
+          top: 19%;
+          border: 2px solid rgba(242, 129, 29, 0.32);
+          border-right-color: transparent;
+          border-bottom-color: transparent;
+          border-radius: 50%;
+          transform: rotate(-24deg);
+          animation: hero-orbit 6s ease-in-out infinite;
+          pointer-events: none;
+          z-index: 0;
+        }
+
+        .hero-video-wrapper::after {
+          content: '';
+          position: absolute;
+          width: 7px;
+          height: 7px;
+          top: 13%;
+          right: 8%;
+          border-radius: 50%;
+          background: #f2811d;
+          box-shadow: 0 0 0 5px rgba(242, 129, 29, 0.1);
+          animation: hero-dot-float 3.5s ease-in-out infinite;
+          pointer-events: none;
+          z-index: 2;
+        }
+
+        .hero-effect-layer {
+          position: absolute;
+          inset: -8% -16% -4% -10%;
+          width: 126%;
+          height: 112%;
+          pointer-events: none;
+          overflow: visible;
+          z-index: 0;
+        }
+
+        .hero-effect-path {
+          fill: none;
+          stroke: rgba(242, 129, 29, 0.3);
+          stroke-width: 2.2;
+          stroke-linecap: round;
+          stroke-dasharray: 8 12;
+          animation: hero-line-draw 8s linear infinite;
+        }
+
+        .hero-effect-path.secondary {
+          stroke: rgba(15, 55, 98, 0.16);
+          stroke-width: 1.5;
+          stroke-dasharray: 5 16;
+          animation-duration: 11s;
+          animation-direction: reverse;
+        }
+
+        .hero-effect-star {
+          fill: #f2811d;
+          opacity: 0.65;
+          animation: hero-star-pulse 3s ease-in-out infinite;
+        }
+
+        @keyframes hero-orbit {
+          0%, 100% { transform: translate(0, 0) rotate(-24deg); }
+          50% { transform: translate(10px, -8px) rotate(12deg); }
+        }
+
+        @keyframes hero-dot-float {
+          0%, 100% { transform: translateY(0) scale(1); }
+          50% { transform: translateY(-10px) scale(1.15); }
+        }
+
+        @keyframes hero-line-draw {
+          to { stroke-dashoffset: -160; }
+        }
+
+        @keyframes hero-star-pulse {
+          0%, 100% { opacity: 0.35; transform: scale(0.85); }
+          50% { opacity: 0.9; transform: scale(1.1); }
         }
 
         .hero-video-frame {
           position: relative;
           width: 100%;
           max-width: 440px;
-          border-radius: 32px;
+          border-radius: 0;
           overflow: hidden;
-          box-shadow: 0 25px 50px -12px rgba(10, 28, 56, 0.35), 0 10px 25px -5px rgba(0, 0, 0, 0.15);
-          border: 4px solid rgba(255, 255, 255, 0.35);
-          background: rgba(255, 255, 255, 0.12);
-          backdrop-filter: blur(8px);
+          box-shadow: none;
+          border: 0;
+          background: transparent;
           transition: transform 0.3s ease;
+          transform: rotateX(var(--phone-y, 0deg)) rotateY(var(--phone-x, 0deg));
+          transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .hero-video-frame:hover {
@@ -197,12 +294,43 @@ export const Hero: React.FC = () => {
           display: block;
         }
 
+        .hero-image-media {
+          width: 100%;
+          height: auto;
+          max-height: 620px;
+          object-fit: contain;
+          display: block;
+          animation: hero-image-float 5s ease-in-out infinite alternate;
+        }
+
+        @keyframes hero-copy-in {
+          from { opacity: 0; transform: translateY(24px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes hero-copy-item-in {
+          from { opacity: 0; transform: translateY(18px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes hero-phone-in {
+          from { opacity: 0; transform: translate3d(42px, 32px, 0) rotate(5deg) scale(0.94); }
+          to { opacity: 1; transform: translate3d(0, 0, 0) rotate(0) scale(1); }
+        }
+
+        @keyframes hero-image-float {
+          from { transform: translateY(0) rotate(-1deg); }
+          to { transform: translateY(-8px) rotate(1deg); }
+        }
+
         @media (max-width: 1023px) {
           .hero-section {
-            padding-top: 3rem;
-            padding-bottom: 3.5rem;
-            border-bottom-left-radius: 32px;
-            border-bottom-right-radius: 32px;
+            padding: 1.25rem 0.75rem 2.5rem;
+            border-bottom: 1px solid rgba(226, 232, 240, 0.7);
+          }
+          .hero-card {
+            padding: 2.25rem 1rem 1.5rem;
+            border-radius: 24px;
           }
           .hero-left {
             align-items: center;
@@ -231,7 +359,8 @@ export const Hero: React.FC = () => {
         <path d="M-100 500 C350 400, 800 700, 1500 450" stroke="rgba(255,255,255,0.25)" strokeWidth="1" fill="none" />
       </svg>
 
-      <div className="hero-container">
+      <div className="hero-card">
+        <div className="hero-container">
         <div className="hero-grid">
 
           {/* ─── 1. COLONNE GAUCHE (TITRE, DESCRIPTION, BOUTONS, CARTE AVATARS) ─── */}
@@ -302,23 +431,37 @@ export const Hero: React.FC = () => {
           </div>
 
           {/* ─── 2. COLONNE DROITE : INTÉGRATION NATURELLE DU SMARTPHONE & VIDÉO ─── */}
-          <div className="hero-video-wrapper">
-            <div className="hero-video-frame">
-              <video
-                ref={videoRef}
-                autoPlay
-                loop
-                muted
-                playsInline
-                preload="auto"
-                className="hero-video-media"
-              >
-                <source src="/hero-showcase.mp4" type="video/mp4" />
-                <source src="/non_pas_ça_pa_un_fond_blant_un.mp4" type="video/mp4" />
-              </video>
+          <div
+            className="hero-video-wrapper"
+            onMouseMove={handlePhoneMove}
+            onMouseLeave={() => setPhoneTilt({ x: 0, y: 0 })}
+          >
+            <svg className="hero-effect-layer" viewBox="0 0 620 720" aria-hidden="true">
+              <path
+                className="hero-effect-path"
+                d="M35 235 C140 80, 300 80, 455 180 S610 385, 505 510 S260 650, 80 565"
+              />
+              <path
+                className="hero-effect-path secondary"
+                d="M90 110 C220 190, 400 110, 530 250 S520 520, 365 625"
+              />
+              <circle className="hero-effect-star" cx="104" cy="164" r="4" />
+              <circle className="hero-effect-star" cx="526" cy="237" r="3" style={{ animationDelay: '0.8s' }} />
+              <circle className="hero-effect-star" cx="118" cy="535" r="3" style={{ animationDelay: '1.4s' }} />
+            </svg>
+            <div
+              className="hero-video-frame"
+              style={{ '--phone-x': `${phoneTilt.x}deg`, '--phone-y': `${phoneTilt.y}deg` } as React.CSSProperties}
+            >
+              <img
+                src="/ChatGPT%20Image%2028%20sept.%202026,%2000_26_33.png"
+                alt="Application mobile Samré affichée sur un smartphone"
+                className="hero-image-media"
+              />
             </div>
           </div>
 
+        </div>
         </div>
       </div>
     </section>

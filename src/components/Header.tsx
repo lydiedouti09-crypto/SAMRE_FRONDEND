@@ -33,12 +33,17 @@ const ALL_SECTION_IDS = [
 export const Header: React.FC<HeaderProps> = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const [activeLink, setActiveLink] = useState<string>('hero');
   const dropdownRef = useRef<HTMLDivElement>(null);
   const dropdownTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const manualSetRef = useRef<boolean>(false);
 
   useEffect(() => {
+    const handleScroll = () => setIsScrolled(window.scrollY > 24);
+    handleScroll();
+    window.addEventListener('scroll', handleScroll, { passive: true });
+
     const observers: IntersectionObserver[] = [];
     const visibleSections = new Map<string, number>();
 
@@ -81,7 +86,10 @@ export const Header: React.FC<HeaderProps> = () => {
       observers.push(obs);
     });
 
-    return () => observers.forEach((o) => o.disconnect());
+    return () => {
+      observers.forEach((o) => o.disconnect());
+      window.removeEventListener('scroll', handleScroll);
+    };
   }, []);
 
   const handleNavClick = (id: string) => {
@@ -146,9 +154,11 @@ export const Header: React.FC<HeaderProps> = () => {
         right: 0,
         zIndex: 100,
         width: '100%',
-        backgroundColor: '#ffffff',
-        borderBottom: '1px solid rgba(226, 232, 240, 0.9)',
-        boxShadow: '0 2px 12px rgba(10, 28, 56, 0.04)',
+        backgroundColor: isScrolled ? 'rgba(255, 255, 255, 0.92)' : '#ffffff',
+        borderBottom: isScrolled ? '1px solid rgba(226, 232, 240, 0.7)' : '1px solid rgba(226, 232, 240, 0.9)',
+        boxShadow: isScrolled ? '0 10px 30px rgba(10, 28, 56, 0.1)' : '0 2px 12px rgba(10, 28, 56, 0.04)',
+        backdropFilter: isScrolled ? 'blur(14px)' : 'none',
+        transition: 'background-color 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease',
       }}
     >
       {/* Barre Principale de Navigation Pleine Largeur */}
@@ -335,6 +345,31 @@ export const Header: React.FC<HeaderProps> = () => {
 
         {/* Boutons d'Action Droite (Connexion & Inscription) */}
         <div className="desktop-actions" style={{ alignItems: 'center', gap: '0.75rem' }}>
+          <Link
+            href="/inscription"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              padding: '0.62rem 1.15rem',
+              borderRadius: '999px',
+              border: '1px solid #f97316',
+              color: '#ea580c',
+              fontWeight: 700,
+              fontSize: '0.88rem',
+              textDecoration: 'none',
+              transition: 'all 0.2s ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#fff7ed';
+              e.currentTarget.style.transform = 'translateY(-1px)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+              e.currentTarget.style.transform = 'translateY(0)';
+            }}
+          >
+            S&apos;inscrire
+          </Link>
           <Link
             href="/connexion"
             style={{
