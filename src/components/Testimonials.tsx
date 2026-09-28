@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { Quote, MapPin, ChevronLeft, ChevronRight, Pause, Play, Sparkles } from 'lucide-react';
+import { Quote, MapPin, ChevronLeft, ChevronRight, Pause, Play } from 'lucide-react';
 import { ScrollReveal } from './ScrollReveal';
 
 export interface TestimonialItem {
@@ -7,7 +7,6 @@ export interface TestimonialItem {
   name: string;
   role: string;
   district: string;
-  badge: string;
   badgeColor: string;
   badgeBg: string;
   text: string;
@@ -20,21 +19,19 @@ const TESTIMONIALS: TestimonialItem[] = [
     name: 'Koffi A. Mensah',
     role: 'Étudiant en Informatique & Testeur',
     district: 'Lomé, Agoè-Nyivé',
-    badge: '32 500 F CFA gagnés',
     badgeColor: '#10B981',
     badgeBg: '#ECFDF5',
-    text: 'Grâce à SAMRE, j\'ai participé à 2 campagnes de test de 14 jours. Chaque jour, 25 secondes d\'activité sur mon téléphone et j\'ai reçu mes virements T-Money sans aucun retard. En plus, cela m\'a donné un super badge sur mon CV !',
+    text: 'Grâce à SAMRE, j\'ai participé à 2 campagnes de test de 14 jours. Chaque jour, juste quelque minute d\'activité sur mon téléphone et j\'ai reçu mes virements sans aucun retard. En plus, cela m\'a donné un super badge sur mon CV !',
     avatarLetter: 'K',
   },
   {
     id: '2',
     name: 'Arnaud Tossou',
-    role: 'Lead Développeur Android — FinTech Togo',
+    role: 'Lead Développeur Android',
     district: 'Lomé, Déckon',
-    badge: 'App validée en 14 jours',
     badgeColor: '#2563EB',
     badgeBg: '#EFF6FF',
-    text: 'Nous avions été rejetés deux fois par Google Play Console par manque de testeurs actifs consécutifs. En passant par SAMRE, 20 testeurs togolais ont interagi chaque jour avec des logs irréprochables. Approbation reçue du premier coup !',
+    text: 'Nous avions été rejetés deux fois par Google Play Console par manque de testeurs actifs consécutifs. En passant par SAMRE, 20 testeurs ont interagi chaque jour avec des logs irréprochables. Approbation reçue du premier coup !',
     avatarLetter: 'A',
   },
   {
@@ -42,7 +39,6 @@ const TESTIMONIALS: TestimonialItem[] = [
     name: 'Abla Sophie Lawson',
     role: 'Stagiaire Assistante Marketing',
     district: 'Lomé, Adidogomé',
-    badge: 'Stage Décroché • 80 000 F/m',
     badgeColor: '#F97316',
     badgeBg: '#FFF7ED',
     text: 'Trouver un stage rémunéré à Lomé était un vrai parcours du combattant. Sur SAMRE, j\'ai postulé en 1 clic grâce à mon profil certifié. J\'ai passé un entretien 48h plus tard chez une agence partenaire et j\'ai été retenue.',
@@ -50,32 +46,19 @@ const TESTIMONIALS: TestimonialItem[] = [
   },
   {
     id: '4',
-    name: 'Fabrice D. Kodjo',
-    role: 'Fondateur de Startup Mobile',
-    district: 'Cotonou, Bénin',
-    badge: '100% Conformité Google',
-    badgeColor: '#10B981',
-    badgeBg: '#ECFDF5',
-    text: 'La gestion des 20 testeurs Google Play est un cauchemar logistique quand on le fait manuellement. SAMRE automatise le rappel quotidien, le chronométrage et fournit le récapitulatif prêt pour la soumission finale.',
-    avatarLetter: 'F',
-  },
-  {
-    id: '5',
     name: 'Yao Emmanuel',
     role: 'Développeur Junior & Stagiaire Web',
     district: 'Lomé, Kégué',
-    badge: 'Embauche après stage',
     badgeColor: '#F97316',
     badgeBg: '#FFF7ED',
     text: 'J\'ai commencé comme testeur panéliste, puis j\'ai complété les défis de rigueur. Une entreprise qui cherchait un profil junior m\'a directement contacté via SAMRE. Mon stage de 3 mois vient de déboucher sur un contrat.',
     avatarLetter: 'Y',
   },
   {
-    id: '6',
+    id: '5',
     name: 'Mariam Diop',
-    role: 'Éditrice d\'Applications EdTech',
-    district: 'Dakar, Sénégal',
-    badge: '20 testeurs mobilisés',
+    role: 'Secretaire Administrative',
+    district: 'Lomé, Bè',
     badgeColor: '#2563EB',
     badgeBg: '#EFF6FF',
     text: 'L\'expérience de test était hyper pro : de vrais utilisateurs avec des feedbacks précieux sur l\'ergonomie de notre app éducative. Une solution indispensable pour tous les créateurs d\'applications en Afrique.',
@@ -206,27 +189,6 @@ export const Testimonials: React.FC = () => {
 
       <ScrollReveal direction="down" distance={25}>
         <div className="testimonials-header">
-          <div
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              padding: '0.4rem 1rem',
-              borderRadius: '999px',
-              backgroundColor: '#FFF7ED',
-              border: '1px solid #FED7AA',
-              color: '#EA580C',
-              fontSize: '0.82rem',
-              fontWeight: 800,
-              textTransform: 'uppercase',
-              letterSpacing: '0.06em',
-              marginBottom: '1rem',
-            }}
-          >
-            <Sparkles size={14} />
-            <span>Retours d'Expérience & Preuve Sociale</span>
-          </div>
-
           <h2
             style={{
               fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif",

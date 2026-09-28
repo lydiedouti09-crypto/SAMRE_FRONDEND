@@ -7,7 +7,7 @@ interface SamreLogoProps {
 
 export const SamreLogo: React.FC<SamreLogoProps> = ({ size = 48, showTagline = true }) => {
   return (
-    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.85rem', textDecoration: 'none' }}>
+    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.7rem', textDecoration: 'none' }}>
       {/* Emblème officiel Samré avec son encart lumineux comme sur la maquette */}
       <div
         style={{

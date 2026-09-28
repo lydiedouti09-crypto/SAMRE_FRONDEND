@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Minus, Search, HelpCircle, MessageSquare } from 'lucide-react';
+import { Plus, Minus, Search } from 'lucide-react';
 import { ScrollReveal } from './ScrollReveal';
 
 interface FaqItem {
@@ -63,9 +63,7 @@ const FAQ_DATA: FaqItem[] = [
 
 const CATEGORIES = [
   { id: 'all', label: 'Toutes les questions' },
-  { id: 'testing', label: 'Closed Testing 14 Jours' },
   { id: 'stage', label: 'Stages & Recrutement' },
-  { id: 'paiement', label: 'Paiements T-Money / Flooz' },
   { id: 'general', label: 'Adhésion & Fonctionnement' },
 ];
 
@@ -180,27 +178,6 @@ export const Faq: React.FC = () => {
         {/* Title */}
         <ScrollReveal direction="down" distance={20}>
           <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
-            <div
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                padding: '0.4rem 1rem',
-                borderRadius: '999px',
-                backgroundColor: '#EFF6FF',
-                border: '1px solid #BFDBFE',
-                color: '#1D4ED8',
-                fontSize: '0.82rem',
-                fontWeight: 800,
-                textTransform: 'uppercase',
-                letterSpacing: '0.06em',
-                marginBottom: '1rem',
-              }}
-            >
-              <HelpCircle size={14} />
-              <span>Questions Fréquentes</span>
-            </div>
-
             <h2
               style={{
                 fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif",
@@ -216,7 +193,7 @@ export const Faq: React.FC = () => {
             </h2>
 
             <p style={{ fontSize: '1.05rem', color: '#64748B', maxWidth: '680px', margin: '0 auto', lineHeight: 1.6 }}>
-              Des réponses claires sur le protocole de test Google Play 14 jours, les candidatures de stage et les paiements mobiles.
+              Des réponses claires sur le protocole de test, les candidatures de stage et les paiements mobiles.
             </p>
           </div>
         </ScrollReveal>
@@ -226,7 +203,7 @@ export const Faq: React.FC = () => {
           <Search size={18} color="#94A3B8" style={{ position: 'absolute', left: '1.25rem', top: '50%', transform: 'translateY(-50%)' }} />
           <input
             type="text"
-            placeholder="Rechercher une question (Google Play, T-Money, stage, délais...)"
+            placeholder="Rechercher une question "
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             style={{
@@ -306,49 +283,6 @@ export const Faq: React.FC = () => {
           )}
         </div>
 
-        {/* Reassurance Footer */}
-        <div
-          style={{
-            marginTop: '3.5rem',
-            padding: '2rem',
-            backgroundColor: '#F8FAFC',
-            borderRadius: '20px',
-            border: '1px solid #E2E8F0',
-            textAlign: 'center',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '1rem',
-          }}
-        >
-          <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0A1C38' }}>
-            Vous avez une question spécifique ou un projet sur mesure ?
-          </div>
-          <p style={{ fontSize: '0.94rem', color: '#64748B', margin: 0, maxWidth: '600px' }}>
-            Nos équipes techniques et conseillers stages vous répondent instantanément par WhatsApp ou directement par email.
-          </p>
-          <a
-            href="https://wa.me/22897317825?text=Bonjour%20SAMRE,%20j'ai%20une%20question%20spécifique"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              padding: '0.8rem 1.8rem',
-              borderRadius: '999px',
-              backgroundColor: '#25D366',
-              color: '#FFFFFF',
-              fontWeight: 800,
-              fontSize: '0.92rem',
-              textDecoration: 'none',
-              boxShadow: '0 4px 14px rgba(37, 211, 102, 0.35)',
-            }}
-          >
-            <MessageSquare size={16} />
-            <span>Poser ma question sur WhatsApp</span>
-          </a>
-        </div>
       </div>
     </section>
   );

@@ -10,7 +10,6 @@ import {
   HelpCircle,
   Briefcase,
   CheckCircle2,
-  LogIn,
   UserPlus
 } from 'lucide-react';
 import SamreLogo from '@/components/SamreLogo';
@@ -27,7 +26,6 @@ const ALL_SECTION_IDS = [
   'apropos',
   'temoignages',
   'faq',
-  'contact',
 ];
 
 export const Header: React.FC<HeaderProps> = () => {
@@ -103,9 +101,7 @@ export const Header: React.FC<HeaderProps> = () => {
   const primaryNavItems: { id: string; label: string; href: string }[] = [
     { id: 'hero', label: 'Accueil', href: '#' },
     { id: 'services', label: 'Nos services', href: '#services' },
-    { id: 'agences', label: 'Agences', href: '#agences' },
     { id: 'apropos', label: 'À propos', href: '#apropos' },
-    { id: 'contact', label: 'Contact', href: '#contact' },
   ];
 
   const dropdownItems = [
@@ -177,9 +173,9 @@ export const Header: React.FC<HeaderProps> = () => {
         {/* Logo SAMRE officiel */}
         <Link
           href="#hero"
-          style={{ textDecoration: 'none', flexShrink: 0 }}
+          style={{ textDecoration: 'none', flexShrink: 0, marginLeft: '1.25rem' }}
         >
-          <SamreLogo size={44} />
+          <SamreLogo size={44} showTagline={false} />
         </Link>
 
         {/* Liens Centraux Desktop */}
@@ -346,32 +342,8 @@ export const Header: React.FC<HeaderProps> = () => {
         {/* Boutons d'Action Droite (Connexion & Inscription) */}
         <div className="desktop-actions" style={{ alignItems: 'center', gap: '0.75rem' }}>
           <Link
-            href="/inscription"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              padding: '0.62rem 1.15rem',
-              borderRadius: '999px',
-              border: '1px solid #f97316',
-              color: '#ea580c',
-              fontWeight: 700,
-              fontSize: '0.88rem',
-              textDecoration: 'none',
-              transition: 'all 0.2s ease',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#fff7ed';
-              e.currentTarget.style.transform = 'translateY(-1px)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent';
-              e.currentTarget.style.transform = 'translateY(0)';
-            }}
-          >
-            S&apos;inscrire
-          </Link>
-          <Link
             href="/connexion"
+            className="desktop-login-link"
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -387,16 +359,17 @@ export const Header: React.FC<HeaderProps> = () => {
               boxShadow: '0 4px 14px rgba(10, 28, 56, 0.15)',
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#1e293b';
-              e.currentTarget.style.transform = 'translateY(-1px)';
+              e.currentTarget.style.backgroundColor = '#f2811d';
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow = '0 10px 26px rgba(242, 129, 29, 0.3)';
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.backgroundColor = '#0a1c38';
               e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 4px 14px rgba(10, 28, 56, 0.15)';
             }}
           >
-            <LogIn size={15} color="#ffffff" />
-            <span>Se connecter</span>
+            <span style={{ position: 'relative', zIndex: 1 }}>Se connecter</span>
           </Link>
         </div>
 
@@ -587,6 +560,23 @@ export const Header: React.FC<HeaderProps> = () => {
       )}
 
       <style>{`
+        .desktop-login-link {
+          position: relative;
+          isolation: isolate;
+          overflow: hidden;
+        }
+        .desktop-login-link::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(110deg, transparent 20%, rgba(255, 255, 255, 0.24) 50%, transparent 80%);
+          transform: translateX(-140%);
+          transition: transform 0.65s ease;
+          pointer-events: none;
+        }
+        .desktop-login-link:hover::before {
+          transform: translateX(140%);
+        }
         @media (min-width: 992px) {
           .desktop-menu {
             display: flex !important;

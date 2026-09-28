@@ -38,6 +38,7 @@ import {
   getImageUrl,
   type ApplicationItem,
   type ApplicationPayload,
+  type DailySdkPage,
 } from "@/lib/api";
 import ConfirmModal, { type ConfirmVariant } from "@/components/ui/ConfirmModal";
 
@@ -83,6 +84,13 @@ export default function AdminApplicationsPage() {
   const [statut, setStatut] = useState("en_attente_integration");
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const logoInputRef = useRef<HTMLInputElement>(null);
+  const [dailyPagesApp, setDailyPagesApp] = useState<ApplicationItem | null>(null);
+  const [dailyPageDrafts, setDailyPageDrafts] = useState<DailySdkPage[]>([]);
+  const [selectedDailyDay, setSelectedDailyDay] = useState(1);
+  const [savingDailyPages, setSavingDailyPages] = useState(false);
+  const [uploadingDailyImage, setUploadingDailyImage] = useState(false);
+  const [dailyPagesError, setDailyPagesError] = useState("");
+  const dailyImageInputRef = useRef<HTMLInputElement>(null);
 
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -101,6 +109,88 @@ export default function AdminApplicationsPage() {
     } finally {
       setUploadingLogo(false);
       if (e.target) e.target.value = "";
+    }
+  };
+
+  const handleOpenDailyPages = (app: ApplicationItem) => {
+    setDailyPagesApp(app);
+    setDailyPageDrafts(app.dailyPages || []);
+    setSelectedDailyDay(1);
+    setDailyPagesError("");
+  };
+
+  const updateSelectedDailyPage = (
+    field: Exclude<keyof DailySdkPage, "day">,
+    value: string
+  ) => {
+    setDailyPageDrafts((current) => {
+      const existing = current.find((page) => page.day === selectedDailyDay);
+      const base: DailySdkPage = existing || {
+        day: selectedDailyDay,
+        title: "",
+        body: "",
+        imageUrl: "",
+        buttonLabel: "Continuer",
+      };
+      const updated = { ...base, [field]: value };
+      return existing
+        ? current.map((page) => page.day === selectedDailyDay ? updated : page)
+        : [...current, updated];
+    });
+  };
+
+  const handleDailyImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.currentTarget.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setDailyPagesError("Veuillez sélectionner un fichier image valide.");
+      return;
+    }
+    try {
+      setUploadingDailyImage(true);
+      setDailyPagesError("");
+      const result = await adminApi.uploadImage(file);
+      updateSelectedDailyPage("imageUrl", result.url);
+    } catch (err) {
+      setDailyPagesError(err instanceof Error ? err.message : "Échec du téléversement de l’image.");
+    } finally {
+      setUploadingDailyImage(false);
+      e.currentTarget.value = "";
+    }
+  };
+
+  const handleSaveDailyPages = async () => {
+    if (!dailyPagesApp) return;
+
+    const configuredPages = dailyPageDrafts.filter((page) =>
+      page.title.trim() || page.body.trim() || page.imageUrl.trim()
+    );
+    if (configuredPages.some((page) => !page.title.trim())) {
+      setDailyPagesError("Chaque écran configuré doit avoir un titre.");
+      return;
+    }
+
+    const payload = configuredPages.map((page) => ({
+      ...page,
+      title: page.title.trim(),
+      body: page.body.trim(),
+      imageUrl: page.imageUrl.trim(),
+      buttonLabel: page.buttonLabel.trim() || "Continuer",
+    }));
+
+    try {
+      setSavingDailyPages(true);
+      setDailyPagesError("");
+      await applicationsApi.updateDailyPages(dailyPagesApp.id, payload);
+      setApps((current) => current.map((app) =>
+        app.id === dailyPagesApp.id ? { ...app, dailyPages: payload } : app
+      ));
+      setSuccessMsg(`Écrans quotidiens enregistrés pour ${dailyPagesApp.nom}.`);
+      setDailyPagesApp(null);
+    } catch (err) {
+      setDailyPagesError(err instanceof Error ? err.message : "Impossible d’enregistrer les écrans quotidiens.");
+    } finally {
+      setSavingDailyPages(false);
     }
   };
 
@@ -338,6 +428,17 @@ export default function AdminApplicationsPage() {
     if (typeof window === "undefined") return `/integration/${token}`;
     return `${window.location.origin}/integration/${token}`;
   };
+
+  const selectedDailyPage = dailyPageDrafts.find((page) => page.day === selectedDailyDay) || {
+    day: selectedDailyDay,
+    title: "",
+    body: "",
+    imageUrl: "",
+    buttonLabel: "Continuer",
+  };
+  const dailyPageDays = dailyPagesApp
+    ? Array.from({ length: Math.max(1, Math.min(60, dailyPagesApp.dureeJoursDefaut || 12)) }, (_, index) => index + 1)
+    : [];
 
   return (
     <div className="space-y-8 p-6 lg:p-8 max-w-[1600px] mx-auto">
@@ -726,6 +827,13 @@ export default function AdminApplicationsPage() {
                         <td className="px-5 py-3.5 text-right whitespace-nowrap">
                           <div className="inline-flex items-center gap-1">
                             <button
+                              onClick={() => handleOpenDailyPages(app)}
+                              title="Configurer les écrans affichés chaque jour"
+                              className="rounded-lg border border-slate-200 p-1.5 text-slate-600 hover:bg-violet-50 hover:text-violet-700 hover:border-violet-200 transition"
+                            >
+                              <Calendar className="h-3.5 w-3.5" />
+                            </button>
+                            <button
                               onClick={() => router.push(`/admin/missions?action=new&appId=${app.id}`)}
                               title="Créer une mission pour cette application"
                               className="rounded-lg border border-slate-200 p-1.5 text-slate-600 hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-200 transition"
@@ -921,6 +1029,13 @@ export default function AdminApplicationsPage() {
 
                     <div className="flex items-center gap-1">
                       <button
+                        onClick={() => handleOpenDailyPages(app)}
+                        title="Configurer les écrans quotidiens"
+                        className="rounded-lg border border-slate-200 p-1.5 text-slate-600 hover:bg-violet-50 hover:text-violet-700 transition"
+                      >
+                        <Calendar className="h-3.5 w-3.5" />
+                      </button>
+                      <button
                         onClick={() => router.push(`/admin/missions?action=new&appId=${app.id}`)}
                         title="Créer une mission"
                         className="rounded-lg border border-slate-200 p-1.5 text-slate-600 hover:bg-emerald-50 hover:text-emerald-600 transition"
@@ -987,6 +1102,217 @@ export default function AdminApplicationsPage() {
             )}
           </div>
         </div>
+      )}
+
+      {/* Modal de configuration des écrans affichés par jour */}
+      {dailyPagesApp && mounted && createPortal(
+        <div className="fixed inset-0 z-[100000] flex items-center justify-center bg-navy-950/80 p-3 sm:p-6 backdrop-blur-md">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="daily-pages-title"
+            className="flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-2xl"
+          >
+            <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 sm:px-7">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-50 text-violet-700">
+                  <Calendar className="h-5 w-5" />
+                </div>
+                <div>
+                  <h2 id="daily-pages-title" className="font-display text-base font-bold text-slate-900">
+                    Écrans quotidiens
+                  </h2>
+                  <p className="text-xs text-slate-500">{dailyPagesApp.nom}</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setDailyPagesApp(null)}
+                className="rounded-full p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                aria-label="Fermer"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="flex-1 space-y-5 overflow-y-auto p-5 sm:p-7">
+              <p className="rounded-xl border border-blue-100 bg-blue-50/70 p-3 text-xs leading-relaxed text-blue-900">
+                Le Jour 1 commence à la première ouverture du SDK sur chaque appareil. L’écran configuré s’affiche en plein écran une fois ce jour-là, puis le bouton « Continuer » retourne à l’application.
+              </p>
+
+              <div>
+                <div className="mb-2 flex items-center justify-between">
+                  <label className="text-xs font-bold text-slate-700">Jour de test</label>
+                  <span className="text-[11px] text-slate-500">
+                    {dailyPageDrafts.filter((page) => page.title.trim()).length} écran(s) configuré(s)
+                  </span>
+                </div>
+                <div className="grid grid-cols-5 gap-2 sm:grid-cols-8">
+                  {dailyPageDays.map((day) => {
+                    const configured = dailyPageDrafts.some((page) => page.day === day && page.title.trim());
+                    return (
+                      <button
+                        key={day}
+                        type="button"
+                        onClick={() => setSelectedDailyDay(day)}
+                        className={`relative rounded-xl border px-2 py-2 text-xs font-bold transition ${
+                          selectedDailyDay === day
+                            ? "border-violet-700 bg-violet-700 text-white shadow-sm"
+                            : configured
+                            ? "border-violet-200 bg-violet-50 text-violet-800 hover:bg-violet-100"
+                            : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                        }`}
+                      >
+                        J{day}
+                        {configured && <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-emerald-500" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="space-y-4 rounded-2xl border border-slate-200 p-4 sm:p-5">
+                <div>
+                  <label htmlFor="daily-page-title" className="mb-1.5 block text-xs font-semibold text-slate-700">
+                    Titre de la page · Jour {selectedDailyDay}
+                  </label>
+                  <input
+                    id="daily-page-title"
+                    type="text"
+                    maxLength={120}
+                    value={selectedDailyPage.title}
+                    onChange={(event) => updateSelectedDailyPage("title", event.target.value)}
+                    placeholder="Ex. Bienvenue dans votre espace testeur"
+                    className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-800 focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/15"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="daily-page-body" className="mb-1.5 block text-xs font-semibold text-slate-700">
+                    Texte et consignes
+                  </label>
+                  <textarea
+                    id="daily-page-body"
+                    rows={4}
+                    maxLength={2000}
+                    value={selectedDailyPage.body}
+                    onChange={(event) => updateSelectedDailyPage("body", event.target.value)}
+                    placeholder="Expliquez ce que le testeur doit consulter ou essayer aujourd’hui."
+                    className="w-full resize-y rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm leading-relaxed text-slate-800 focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/15"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-1.5 block text-xs font-semibold text-slate-700">Image de la page (facultative)</label>
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
+                    {selectedDailyPage.imageUrl ? (
+                      <div className="relative h-24 w-32 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
+                        <img
+                          src={getImageUrl(selectedDailyPage.imageUrl)}
+                          alt={`Aperçu de l’écran du Jour ${selectedDailyDay}`}
+                          className="h-full w-full object-cover"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => updateSelectedDailyPage("imageUrl", "")}
+                          title="Retirer l’image"
+                          className="absolute right-1 top-1 rounded-full bg-white/90 p-1 text-slate-600 shadow-sm hover:text-rose-600"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex h-24 w-32 shrink-0 items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50 text-slate-400">
+                        <ImageIcon className="h-7 w-7 stroke-1" />
+                      </div>
+                    )}
+                    <div className="min-w-0 flex-1 space-y-2">
+                      <input
+                        ref={dailyImageInputRef}
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp"
+                        onChange={handleDailyImageUpload}
+                        className="hidden"
+                      />
+                      <button
+                        type="button"
+                        disabled={uploadingDailyImage}
+                        onClick={() => dailyImageInputRef.current?.click()}
+                        className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-60"
+                      >
+                        {uploadingDailyImage ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                        {uploadingDailyImage ? "Import en cours…" : "Importer une image"}
+                      </button>
+                      <input
+                        type="url"
+                        value={selectedDailyPage.imageUrl}
+                        onChange={(event) => updateSelectedDailyPage("imageUrl", event.target.value)}
+                        placeholder="Ou collez une URL HTTPS"
+                        className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-slate-800 focus:border-violet-500 focus:outline-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="daily-page-button" className="mb-1.5 block text-xs font-semibold text-slate-700">
+                    Texte du bouton de retour
+                  </label>
+                  <input
+                    id="daily-page-button"
+                    type="text"
+                    maxLength={50}
+                    value={selectedDailyPage.buttonLabel}
+                    onChange={(event) => updateSelectedDailyPage("buttonLabel", event.target.value)}
+                    placeholder="Continuer"
+                    className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-800 focus:border-violet-500 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              {!selectedDailyPage.title && !selectedDailyPage.body && !selectedDailyPage.imageUrl && (
+                <p className="text-xs text-slate-500">Aucun écran n’est configuré pour ce jour. Le SDK laissera l’application s’ouvrir normalement.</p>
+              )}
+              {dailyPagesError && (
+                <p role="alert" className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-medium text-rose-700">
+                  {dailyPagesError}
+                </p>
+              )}
+            </div>
+
+            <div className="flex items-center justify-between gap-3 border-t border-slate-100 bg-slate-50/70 px-5 py-4 sm:px-7">
+              <button
+                type="button"
+                onClick={() => {
+                  setDailyPageDrafts((current) => current.filter((page) => page.day !== selectedDailyDay));
+                  setDailyPagesError("");
+                }}
+                className="rounded-xl px-3 py-2 text-xs font-semibold text-rose-600 transition hover:bg-rose-50"
+              >
+                Effacer ce jour
+              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setDailyPagesApp(null)}
+                  className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveDailyPages}
+                  disabled={savingDailyPages || uploadingDailyImage}
+                  className="inline-flex items-center gap-2 rounded-xl bg-violet-700 px-4 py-2.5 text-xs font-semibold text-white shadow-sm transition hover:bg-violet-800 disabled:opacity-60"
+                >
+                  {savingDailyPages && <Loader2 className="h-4 w-4 animate-spin" />}
+                  Enregistrer les jours
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>,
+        document.body
       )}
 
       {/* Modal Créer / Modifier Application */}

@@ -211,7 +211,6 @@ export default function DesktopDashboard({
             <span className="rounded-lg bg-white px-3 py-1 font-semibold text-navy-900 shadow-2xs">
               Cette semaine
             </span>
-            <span className="px-3 py-1 text-slate-400">Semaine dernière</span>
           </div>
         </div>
 

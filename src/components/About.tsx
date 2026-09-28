@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowRight, Sparkles } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { ScrollReveal } from './ScrollReveal';
 import { useNavigate } from 'react-router-dom';
 
@@ -26,30 +26,6 @@ export const About: React.FC = () => {
           textAlign: 'center',
         }}
       >
-        {/* Label */}
-        <ScrollReveal direction="down" distance={20} duration={0.7}>
-          <div
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              padding: '0.4rem 1.1rem',
-              borderRadius: '999px',
-              backgroundColor: '#FFF7ED',
-              border: '1px solid #FED7AA',
-              color: '#EA580C',
-              fontSize: '0.82rem',
-              fontWeight: 800,
-              textTransform: 'uppercase',
-              letterSpacing: '0.06em',
-              marginBottom: '1.5rem',
-            }}
-          >
-            <Sparkles size={14} />
-            <span>Notre Vision & Mission</span>
-          </div>
-        </ScrollReveal>
-
         {/* Big Heading */}
         <ScrollReveal direction="down" distance={25} duration={0.8} delay={80}>
           <h2
@@ -78,10 +54,9 @@ export const About: React.FC = () => {
               margin: '0 auto 2.5rem auto',
             }}
           >
-            <strong>SAMRE</strong> est la première plateforme d'accélération d'opportunités unifiée au Togo et en Afrique de l'Ouest.
+            <strong>SAMRE</strong> est la première plateforme d'accélération d'opportunités unifiée au Togo.
             Nous permettons aux <strong>étudiants et jeunes talents</strong> de décrocher des stages conventionnés et rémunérés en entreprise,
-            tout en apportant aux <strong>développeurs et éditeurs d'applications mobiles</strong> la cohorte de 20 testeurs réels certifiés
-            exigée pour franchir les 14 jours de Closed Testing Google Play Console.
+            tout en apportant aux <strong>développeurs et éditeurs d'applications mobiles</strong>
           </p>
         </ScrollReveal>
 

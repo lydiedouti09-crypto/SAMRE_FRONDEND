@@ -7,7 +7,6 @@ import {
   Bell,
   User,
   LogOut,
-  PanelLeftClose,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 
@@ -45,13 +44,6 @@ export default function DesktopSidebar() {
             <span className="text-[10px] text-slate-400 font-medium">Plateforme de test</span>
           </div>
         </Link>
-        <button
-          type="button"
-          className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition"
-          title="Réduire le menu"
-        >
-          <PanelLeftClose size={18} />
-        </button>
       </div>
 
       {/* Navigation principale */}

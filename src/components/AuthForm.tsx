@@ -292,9 +292,6 @@ export default function AuthForm({ mode = "login" }: { mode?: Mode }) {
               <span className="font-display text-2xl font-black tracking-wider text-white">
                 SAMRE
               </span>
-              <span className="text-[11px] text-slate-400">
-                Plateforme de test applicatif
-              </span>
             </div>
           </Link>
         </div>
@@ -327,37 +324,22 @@ export default function AuthForm({ mode = "login" }: { mode?: Mode }) {
               : "Connectez-vous pour continuer vos campagnes actives, soumettre vos codes de validation quotidienne et consulter vos statistiques."}
           </p>
 
-          <div className="mt-6 space-y-3">
-            <div className="flex items-center gap-3 text-xs text-slate-200">
-              <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand-orange text-white">
-                <CheckCircle2 size={13} />
-              </div>
-              <span>Protocoles de test guidés pas à pas</span>
-            </div>
-            <div className="flex items-center gap-3 text-xs text-slate-200">
-              <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand-orange text-white">
-                <CheckCircle2 size={13} />
-              </div>
-              <span>Suivi automatisé des étapes quotidiennes</span>
-            </div>
-            <div className="flex items-center gap-3 text-xs text-slate-200">
-              <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand-orange text-white">
-                <CheckCircle2 size={13} />
-              </div>
-              <span>Rémunération garantie pour chaque campagne validée</span>
-            </div>
-          </div>
         </div>
 
-        {/* Pied de page du panneau gauche */}
-        <div className="relative z-10 flex items-center justify-between border-t border-white/10 pt-4 text-[11px] text-slate-400">
-          <span>© 2026 SAMRE Global</span>
-          <span>Espace Officiel Testeurs & Admins</span>
-        </div>
       </div>
 
       {/* Colonne droite : Formulaire centré et spacieux adapté au PC & Mobile */}
       <div className="col-span-12 lg:col-span-7 xl:col-span-7 flex flex-col items-center justify-center p-4 sm:p-8 lg:p-12 min-h-screen">
+        <div className="w-full max-w-[480px] mb-4">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-slate-600 transition hover:bg-white hover:text-navy-950"
+          >
+            <ArrowLeft size={16} />
+            <span>Retour au site</span>
+          </Link>
+        </div>
+
         {/* En-tête mobile (visible uniquement sur mobile) */}
         <div className="mb-6 flex items-center gap-3 lg:hidden">
           <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white p-2 shadow-xs ring-1 ring-slate-200">
@@ -393,40 +375,6 @@ export default function AuthForm({ mode = "login" }: { mode?: Mode }) {
               SAMRE
             </span>
           </div>
-
-          {/* Onglets de sélection rapides Connexion / Inscription si non en mode mot de passe oublié */}
-          {!isForgotPassword && (
-            <div className="flex w-full rounded-2xl bg-slate-100/90 p-1 text-xs font-bold text-slate-500 mb-6">
-              <button
-                type="button"
-                onClick={() => {
-                  setActiveMode("login");
-                  setError(null);
-                }}
-                className={`flex-1 py-2.5 rounded-xl transition ${
-                  !isSignup
-                    ? "bg-white text-navy-950 shadow-2xs font-extrabold"
-                    : "hover:text-navy-900"
-                }`}
-              >
-                Se connecter
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setActiveMode("signup");
-                  setError(null);
-                }}
-                className={`flex-1 py-2.5 rounded-xl transition ${
-                  isSignup
-                    ? "bg-white text-navy-950 shadow-2xs font-extrabold"
-                    : "hover:text-navy-900"
-                }`}
-              >
-                Créer un compte
-              </button>
-            </div>
-          )}
 
           {/* Illustration sur mobile uniquement (sur PC elle est déjà dans le panneau gauche) */}
           <div className="my-2 flex items-center justify-center lg:hidden">

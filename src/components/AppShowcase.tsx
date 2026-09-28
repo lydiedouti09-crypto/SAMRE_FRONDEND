@@ -49,6 +49,34 @@ export const AppShowcase: React.FC = () => {
           margin-bottom: 5rem;
         }
 
+        .sc-main-grid.stage-mode {
+          grid-template-columns: 1fr 1fr;
+          gap: 2rem;
+        }
+
+        .sc-stage-image-wrapper {
+          display: flex;
+          width: 100%;
+          min-height: 360px;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .sc-stage-image {
+          display: block;
+          width: 100%;
+          max-width: 680px;
+          height: auto;
+          object-fit: contain;
+          filter: drop-shadow(0 24px 32px rgba(10, 28, 56, 0.16));
+          animation: sc-stage-image-in 0.75s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+
+        @keyframes sc-stage-image-in {
+          from { opacity: 0; transform: translateY(18px) scale(0.97); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
         /* 3D perspective smartphone container */
         .sc-device-wrapper {
           perspective: 1400px;
@@ -245,35 +273,25 @@ export const AppShowcase: React.FC = () => {
             grid-template-columns: 1fr;
             gap: 3rem;
           }
+          .sc-main-grid.stage-mode {
+            grid-template-columns: 1fr;
+            gap: 3rem;
+          }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .sc-stage-image {
+            animation: none;
+          }
         }
       `}</style>
 
       <div className="sc-container">
         {/* Main Grid: Storytelling + 3D Smartphone */}
-        <div className="sc-main-grid">
+        <div className={`sc-main-grid ${activeMode === 'stage' ? 'stage-mode' : ''}`}>
           {/* Left Column */}
           <ScrollReveal direction="left" distance={60} duration={0.85}>
             <div>
-              <div
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  padding: '0.4rem 1rem',
-                  borderRadius: '999px',
-                  backgroundColor: '#FFF7ED',
-                  border: '1px solid #FED7AA',
-                  color: '#EA580C',
-                  fontSize: '0.82rem',
-                  fontWeight: 700,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05em',
-                  marginBottom: '1.25rem',
-                }}
-              >
-                <span>Application & Closed Testing</span>
-              </div>
-
               <h2
                 style={{
                   fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif",
@@ -285,7 +303,7 @@ export const AppShowcase: React.FC = () => {
                   marginBottom: '1.5rem',
                 }}
               >
-                Une expérience mobile fluide : validez en 25s et décrochez votre opportunité
+                Une expérience mobile fluide : validez et décrochez votre opportunité
               </h2>
 
               <p
@@ -298,7 +316,7 @@ export const AppShowcase: React.FC = () => {
                 }}
               >
                 Que vous soyez <strong>développeur</strong> voulant franchir le test fermé de 14 jours de Google Play,
-                <strong> panéliste</strong> gagnant des revenus via T-Money / Flooz, ou <strong>étudiant</strong> postulant à des stages en entreprise,
+                <strong> panéliste</strong> gagnant des revenus via les moyen de paiement, ou <strong>étudiant</strong> postulant à des stages en entreprise,
                 SAMRE centralise tout sur une interface réactive et automatisée.
               </p>
 
@@ -310,7 +328,7 @@ export const AppShowcase: React.FC = () => {
                   onClick={() => setActiveMode('testing')}
                 >
                   <Smartphone size={18} />
-                  <span>Session Testeur (Google Play 25s)</span>
+                  <span>Session Testeur</span>
                 </button>
 
                 <button
@@ -319,41 +337,24 @@ export const AppShowcase: React.FC = () => {
                   onClick={() => setActiveMode('stage')}
                 >
                   <Briefcase size={18} />
-                  <span>Recherche de Stage & Emploi</span>
+                  <span>Recherche de Stage</span>
                 </button>
               </div>
 
-              {/* Quick stats highlight */}
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(3, 1fr)',
-                  gap: '1.25rem',
-                  padding: '1.5rem',
-                  backgroundColor: '#FFFFFF',
-                  borderRadius: '16px',
-                  border: '1px solid #E2E8F0',
-                  boxShadow: '0 4px 15px -3px rgba(0, 0, 0, 0.04)',
-                }}
-              >
-                <div>
-                  <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#0A1C38' }}>25 sec</div>
-                  <div style={{ fontSize: '0.78rem', color: '#64748B', marginTop: '2px' }}>Session de test requise</div>
-                </div>
-                <div>
-                  <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#10B981' }}>100%</div>
-                  <div style={{ fontSize: '0.78rem', color: '#64748B', marginTop: '2px' }}>Gains T-Money / Flooz</div>
-                </div>
-                <div>
-                  <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#F97316' }}>1 Clic</div>
-                  <div style={{ fontSize: '0.78rem', color: '#64748B', marginTop: '2px' }}>Postulation de stage</div>
-                </div>
-              </div>
             </div>
           </ScrollReveal>
 
           {/* Right Column: 3D High-Fidelity Smartphone */}
           <ScrollReveal direction="right" distance={60} duration={0.85} delay={100} style={{ width: '100%' }}>
+            {activeMode === 'stage' ? (
+              <div className="sc-stage-image-wrapper">
+                <img
+                  src="/samre2.png"
+                  alt="Trois écrans de l’application SAMRE : profil, accueil et offres de stage"
+                  className="sc-stage-image"
+                />
+              </div>
+            ) : (
             <div className="sc-device-wrapper">
               <div className="sc-shadow" />
               <div className="sc-device">
@@ -585,6 +586,7 @@ export const AppShowcase: React.FC = () => {
                 </div>
               </div>
             </div>
+            )}
           </ScrollReveal>
         </div>
 

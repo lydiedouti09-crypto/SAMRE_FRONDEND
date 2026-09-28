@@ -1,8 +1,25 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ArrowRight } from 'lucide-react';
 
 export const Hero: React.FC = () => {
   const [phoneTilt, setPhoneTilt] = useState({ x: 0, y: 0 });
+  const [scrollOffset, setScrollOffset] = useState(0);
+
+  useEffect(() => {
+    let frame = 0;
+    const updateOffset = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        setScrollOffset(Math.min(window.scrollY * 0.035, 18));
+      });
+    };
+
+    window.addEventListener('scroll', updateOffset, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', updateOffset);
+      cancelAnimationFrame(frame);
+    };
+  }, []);
 
   const handlePhoneMove = (event: React.MouseEvent<HTMLDivElement>) => {
     const bounds = event.currentTarget.getBoundingClientRect();
@@ -23,20 +40,7 @@ export const Hero: React.FC = () => {
             radial-gradient(ellipse 70% 80% at 8% 20%, rgba(255, 248, 238, 0.95) 0%, transparent 72%),
             linear-gradient(135deg, #ffffff 0%, #fffaf3 100%);
           overflow: hidden;
-          padding: 2.5rem 1.25rem 3.5rem;
-          border-bottom: 1px solid rgba(226, 232, 240, 0.7);
-        }
-
-        .hero-card {
-          position: relative;
-          max-width: 1320px;
-          margin: 0 auto;
-          padding: 3.5rem 2rem 2.5rem;
-          background: rgba(255, 255, 255, 0.9);
-          border: 1px solid rgba(226, 232, 240, 0.85);
-          border-radius: 32px;
-          box-shadow: 0 28px 70px rgba(15, 23, 42, 0.08);
-          overflow: hidden;
+          padding: 2rem 1.25rem 1rem;
         }
 
         /* Vagues graphiques légères et blanches en arrière-plan */
@@ -69,7 +73,7 @@ export const Hero: React.FC = () => {
           .hero-grid {
             grid-template-columns: 1.15fr 0.95fr;
             gap: 3.5rem;
-            transform: translateY(-2.25rem);
+            transform: translateY(-1.5rem);
           }
         }
 
@@ -158,21 +162,6 @@ export const Hero: React.FC = () => {
           background: #f8fafc;
         }
 
-        /* Carte Flottante Inférieure Gauche avec panélistes */
-        .hero-left-card {
-          margin-top: 2.5rem;
-          display: inline-flex;
-          align-items: center;
-          gap: 1rem;
-          padding: 0.85rem 1.25rem;
-          background: rgba(255, 255, 255, 0.7);
-          backdrop-filter: blur(14px);
-          border: 1px solid rgba(226, 232, 240, 0.9);
-          border-radius: 20px;
-          box-shadow: 0 8px 22px rgba(15, 23, 42, 0.06);
-          animation: hero-copy-item-in 0.7s 0.7s both cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
         /* ─── 2. Colonne Droite : Intégration Naturelle de la Vidéo du Smartphone ─── */
         .hero-video-wrapper {
           position: relative;
@@ -249,6 +238,20 @@ export const Hero: React.FC = () => {
           animation: hero-star-pulse 3s ease-in-out infinite;
         }
 
+        .hero-image-aura {
+          position: absolute;
+          top: 7%;
+          right: 1%;
+          width: 82%;
+          height: 86%;
+          border-radius: 50%;
+          background: radial-gradient(ellipse, rgba(242, 129, 29, 0.2) 0%, rgba(242, 129, 29, 0.08) 42%, transparent 72%);
+          filter: blur(18px);
+          animation: hero-aura-pulse 4.8s ease-in-out infinite;
+          pointer-events: none;
+          z-index: 0;
+        }
+
         @keyframes hero-orbit {
           0%, 100% { transform: translate(0, 0) rotate(-24deg); }
           50% { transform: translate(10px, -8px) rotate(12deg); }
@@ -268,22 +271,28 @@ export const Hero: React.FC = () => {
           50% { opacity: 0.9; transform: scale(1.1); }
         }
 
+        @keyframes hero-aura-pulse {
+          0%, 100% { opacity: 0.55; transform: scale(0.94); }
+          50% { opacity: 1; transform: scale(1.04); }
+        }
+
         .hero-video-frame {
           position: relative;
           width: 100%;
           max-width: 440px;
+          z-index: 1;
           border-radius: 0;
           overflow: hidden;
           box-shadow: none;
           border: 0;
           background: transparent;
           transition: transform 0.3s ease;
-          transform: rotateX(var(--phone-y, 0deg)) rotateY(var(--phone-x, 0deg));
+          transform: translate3d(0, var(--phone-scroll, 0px), 0) rotateX(var(--phone-y, 0deg)) rotateY(var(--phone-x, 0deg));
           transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .hero-video-frame:hover {
-          transform: translateY(-4px);
+          filter: drop-shadow(0 12px 18px rgba(10, 28, 56, 0.12));
         }
 
         .hero-video-media {
@@ -297,7 +306,7 @@ export const Hero: React.FC = () => {
         .hero-image-media {
           width: 100%;
           height: auto;
-          max-height: 620px;
+          max-height: 580px;
           object-fit: contain;
           display: block;
           animation: hero-image-float 5s ease-in-out infinite alternate;
@@ -325,12 +334,7 @@ export const Hero: React.FC = () => {
 
         @media (max-width: 1023px) {
           .hero-section {
-            padding: 1.25rem 0.75rem 2.5rem;
-            border-bottom: 1px solid rgba(226, 232, 240, 0.7);
-          }
-          .hero-card {
-            padding: 2.25rem 1rem 1.5rem;
-            border-radius: 24px;
+            padding: 1.25rem 0.75rem 0.75rem;
           }
           .hero-left {
             align-items: center;
@@ -343,11 +347,15 @@ export const Hero: React.FC = () => {
             margin-left: auto;
             margin-right: auto;
           }
-          .hero-left-card {
-            margin-top: 1.8rem;
-          }
           .hero-video-frame {
             max-width: 380px;
+          }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .hero-image-aura,
+          .hero-image-media {
+            animation: none;
           }
         }
       `}</style>
@@ -359,8 +367,7 @@ export const Hero: React.FC = () => {
         <path d="M-100 500 C350 400, 800 700, 1500 450" stroke="rgba(255,255,255,0.25)" strokeWidth="1" fill="none" />
       </svg>
 
-      <div className="hero-card">
-        <div className="hero-container">
+      <div className="hero-container">
         <div className="hero-grid">
 
           {/* ─── 1. COLONNE GAUCHE (TITRE, DESCRIPTION, BOUTONS, CARTE AVATARS) ─── */}
@@ -405,29 +412,6 @@ export const Hero: React.FC = () => {
               </a>
             </div>
 
-            {/* Carte Flottante Inférieure Gauche avec panélistes */}
-            <div className="hero-left-card">
-              <div className="flex -space-x-2 overflow-hidden">
-                <div className="inline-block h-8 w-8 rounded-full ring-2 ring-white bg-[#0a1c38] text-white flex items-center justify-center text-xs font-bold">
-                  S
-                </div>
-                <div className="inline-block h-8 w-8 rounded-full ring-2 ring-white bg-[#ea580c] text-white flex items-center justify-center text-xs font-bold">
-                  Z
-                </div>
-                <div className="inline-block h-8 w-8 rounded-full ring-2 ring-white bg-emerald-600 text-white flex items-center justify-center text-xs font-bold">
-                  +
-                </div>
-              </div>
-              <div>
-                <p className="text-xs font-bold text-white leading-tight">
-                  12 Panélistes Actifs Requis
-                </p>
-                <p className="text-[10px] text-white/90 font-medium flex items-center gap-1 mt-0.5">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-300 animate-pulse" />
-                  Prêts pour votre application Android
-                </p>
-              </div>
-            </div>
           </div>
 
           {/* ─── 2. COLONNE DROITE : INTÉGRATION NATURELLE DU SMARTPHONE & VIDÉO ─── */}
@@ -449,9 +433,14 @@ export const Hero: React.FC = () => {
               <circle className="hero-effect-star" cx="526" cy="237" r="3" style={{ animationDelay: '0.8s' }} />
               <circle className="hero-effect-star" cx="118" cy="535" r="3" style={{ animationDelay: '1.4s' }} />
             </svg>
+            <div className="hero-image-aura" aria-hidden="true" />
             <div
               className="hero-video-frame"
-              style={{ '--phone-x': `${phoneTilt.x}deg`, '--phone-y': `${phoneTilt.y}deg` } as React.CSSProperties}
+              style={{
+                '--phone-x': `${phoneTilt.x}deg`,
+                '--phone-y': `${phoneTilt.y}deg`,
+                '--phone-scroll': `${scrollOffset}px`,
+              } as React.CSSProperties}
             >
               <img
                 src="/ChatGPT%20Image%2028%20sept.%202026,%2000_26_33.png"
@@ -461,7 +450,6 @@ export const Hero: React.FC = () => {
             </div>
           </div>
 
-        </div>
         </div>
       </div>
     </section>

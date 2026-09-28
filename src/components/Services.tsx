@@ -10,7 +10,7 @@ const SAMRE_PILLARS = [
     image: '/Investisseuse sur ordinateur.png',
     bigNum: '+500',
     unit: ' offres',
-    legend: 'disponibles au Togo, Bénin, Côte d\'Ivoire et dans la sous-région',
+    legend: 'disponibles au Togo et au delà, avec indemnités de stage garanties',
     headline: 'Trouvez le stage idéal et démarrez votre carrière en entreprise.',
     description: 'Accédez à des opportunités exclusives auprès d\'entreprises partenaires (banques, startups, télécoms) avec indemnités de stage garanties et postulation en 1 clic.',
     infos: [
@@ -28,7 +28,7 @@ const SAMRE_PILLARS = [
     image: '/samre.jpg',
     bigNum: '14',
     unit: ' jours',
-    legend: 'conformité stricte garantie avec les règles Google Play Console',
+    legend: 'conformité stricte garantie avec les règles Google Play',
     headline: '20 testeurs réels certifiés pour valider votre application Android.',
     description: 'Finies les tracasseries et les rejets Google. Nous mobilisons 20 testeurs actifs avec session de 25s/jour, validation par codes uniques horodatés et feedbacks exploitables.',
     infos: [
@@ -46,12 +46,12 @@ const SAMRE_PILLARS = [
     image: '/samre2.png',
     bigNum: '100',
     unit: '%',
-    legend: 'rémunérées par Mobile Money (T-Money & Flooz)',
-    headline: 'Testez des applications mobiles et gagnez de l\'argent chaque jour.',
+    legend: 'rémunérées par Mobile Money assurément',
+    headline: 'Testez des applications mobiles et gagnez de l\'argent chaque a la fin de ta missions.',
     description: 'Rejoignez la communauté des panélistes SAMRE. Installez l\'application, testez pendant la durée requise, entrez votre code de validation quotidien et encaissez directement vos gains.',
     infos: [
-      { val: 'T-Money & Flooz', label: 'paiements instantanés' },
-      { val: '25 sec / jour', label: 'par application testée' },
+      { val: 'moyen de paiement', label: 'paiements instantanés' },
+      { val: 'juste quelque min / jour', label: 'par application testée' },
       { val: '0 F CFA', label: 'adhésion gratuite' },
     ],
     ctaText: 'Devenir testeur rémunéré',
@@ -299,26 +299,6 @@ export const Services: React.FC = () => {
             >
               {/* ── LEFT: Tab list ──────────────────────────────────── */}
               <div>
-                <div
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    padding: '0.35rem 0.85rem',
-                    borderRadius: '999px',
-                    backgroundColor: 'rgba(249, 115, 22, 0.15)',
-                    border: '1px solid rgba(249, 115, 22, 0.35)',
-                    color: '#FB923C',
-                    fontSize: '0.78rem',
-                    fontWeight: 700,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.06em',
-                    marginBottom: '1.25rem',
-                  }}
-                >
-                  <span>Solutions Intégrées</span>
-                </div>
-
                 <div
                   role="tablist"
                   aria-label="Piliers SAMRE"

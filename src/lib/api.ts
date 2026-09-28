@@ -713,6 +713,14 @@ export const adminApi = {
   }) => adminHttp.post<{ message: string; destinataires: number }>("/api/admin/notifications/send", data),
 };
 
+export type DailySdkPage = {
+  day: number;
+  title: string;
+  body: string;
+  imageUrl: string;
+  buttonLabel: string;
+};
+
 export type ApplicationItem = {
   id: number;
   nom: string;
@@ -727,6 +735,7 @@ export type ApplicationItem = {
   tokenIntegration: string;
   dureeJoursDefaut: number;
   nbMaxPanelistes: number;
+  dailyPages?: DailySdkPage[];
   statut: string;
   dateCreation: string;
   dateModification: string;
@@ -803,6 +812,11 @@ export const applicationsApi = {
     ),
   update: (id: number, data: Partial<ApplicationPayload>) =>
     adminHttp.put<{ message: string; id: number }>(`/api/admin/applications/${id}`, data),
+  updateDailyPages: (id: number, dailyPages: DailySdkPage[]) =>
+    adminHttp.put<{ message: string; dailyPages: DailySdkPage[] }>(
+      `/api/admin/applications/${id}/daily-pages`,
+      { dailyPages }
+    ),
   regenerateKey: (id: number) =>
     adminHttp.patch<{ message: string; apiKey: string }>(
       `/api/admin/applications/${id}/regenerate-key`
