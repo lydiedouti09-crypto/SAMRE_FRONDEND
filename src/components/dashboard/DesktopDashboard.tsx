@@ -69,16 +69,17 @@ export default function DesktopDashboard({
 
   const totalRemunerationEstimee = participations.reduce((acc, p) => {
     if (p.statut === "refusee" || p.statut === "abandonnee") return acc;
-    const rem = parseFloat(String(p.mission?.remuneration || 0));
-    return acc + (isNaN(rem) ? 0 : rem);
+    const dailyRate = parseFloat(String(p.mission?.remuneration || 0));
+    const totalDays = p.mission?.applicationEntity?.dureeJoursDefaut || p.etapesTotal || 14;
+    return p.statut === "remuneration_payee" || isNaN(dailyRate)
+      ? acc
+      : acc + dailyRate * totalDays;
   }, 0);
 
   const totalRemunerationGagnee = participations.reduce((acc, p) => {
-    if (p.statut === "terminee" || p.statut === "remuneration_payee") {
-      const rem = parseFloat(String(p.mission?.remuneration || 0));
-      return acc + (isNaN(rem) ? 0 : rem);
-    }
-    return acc;
+    const dailyRate = parseFloat(String(p.mission?.remuneration || 0));
+    const completedDays = Math.max(p.etapesCompletees || 0, new Set(p.joursValides || []).size);
+    return acc + (isNaN(dailyRate) ? 0 : dailyRate * completedDays);
   }, 0);
 
   return (
@@ -190,7 +191,7 @@ export default function DesktopDashboard({
               {active ? `Jour ${active.etapesCompletees + 1}` : "À jour"}
             </span>
             <span className="text-xs font-medium text-slate-500">
-              {active ? "sur 12 jours" : "Profil vérifié ✓"}
+              {active ? `sur ${active.mission.applicationEntity?.dureeJoursDefaut || 14} jours` : "Profil vérifié ✓"}
             </span>
           </div>
         </div>
@@ -373,7 +374,7 @@ export default function DesktopDashboard({
                       </span>{" "}
                       · Durée estimée :{" "}
                       <span className="font-medium text-slate-600">
-                        {active.mission?.dureEstime || "12 jours"}
+                        {active.mission?.dureEstime || "14 jours"}
                       </span>
                     </p>
                   </div>

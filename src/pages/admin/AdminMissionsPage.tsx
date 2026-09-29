@@ -96,7 +96,7 @@ function AdminMissionsContent() {
   const [image, setImage] = useState("");
   const [uploadingImage, setUploadingImage] = useState(false);
   const [lienApplication, setLienApplication] = useState("");
-  const [dureEstime, setDureEstime] = useState("12 jours");
+  const [dureEstime, setDureEstime] = useState("14 jours");
   const [dateDebut, setDateDebut] = useState("");
   const [dateFin, setDateFin] = useState("");
   const [remuneration, setRemuneration] = useState("5000");
@@ -203,10 +203,10 @@ function AdminMissionsContent() {
       setVersionApplication(app.version || "1.0.0");
       setImage(app.logo || "");
       setLienApplication(app.lienTelechargement || "");
-      setDureEstime(`${app.dureeJoursDefaut || 12} jours`);
+      setDureEstime(`${app.dureeJoursDefaut || 14} jours`);
       setNombreParticipantsSouhaites(app.nbMaxPanelistes || 12);
       setDescription(app.description || "Mission d'évaluation et de test sur application mobile.");
-      setObjectif("Tester les fonctionnalités clés et valider le cycle quotidien sur 12 jours.");
+      setObjectif("Tester les fonctionnalités clés et valider le cycle quotidien sur 14 jours.");
     } else {
       setSelectedAppId(null);
       setTitre("");
@@ -214,7 +214,7 @@ function AdminMissionsContent() {
       setVersionApplication("1.0.0");
       setImage("");
       setLienApplication("");
-      setDureEstime("12 jours");
+      setDureEstime("14 jours");
       setNombreParticipantsSouhaites(12);
       setDescription("");
       setObjectif("");
@@ -252,7 +252,7 @@ function AdminMissionsContent() {
     setVersionApplication(m.versionApplication || "1.0.0");
     setImage(m.image || "");
     setLienApplication(m.lienApplication || "");
-    setDureEstime(m.dureEstime || "12 jours");
+    setDureEstime(m.dureEstime || "14 jours");
     setDateDebut(m.dateDebut || "");
     setDateFin(m.dateFin || "");
     setRemuneration(m.remuneration || "0");
@@ -975,7 +975,7 @@ function AdminMissionsContent() {
                                   setApplication(found.nom);
                                   setVersionApplication(found.version || "1.0.0");
                                   setLienApplication(found.lienTelechargement || "");
-                                  setDureEstime(`${found.dureeJoursDefaut || 12} jours`);
+                                  setDureEstime(`${found.dureeJoursDefaut || 14} jours`);
                                   setNombreParticipantsSouhaites(found.nbMaxPanelistes || 12);
                                   if (found.logo) setImage(found.logo);
                                   if (!titre.trim()) setTitre(`Campagne de Test - ${found.nom}`);
@@ -1061,7 +1061,7 @@ function AdminMissionsContent() {
 
                       <div>
                         <label className="block text-xs font-bold text-slate-700 mb-1">
-                          Rémunération (FCFA)
+                          Rémunération par jour (FCFA)
                         </label>
                         <input
                           type="number"
@@ -1070,6 +1070,9 @@ function AdminMissionsContent() {
                           placeholder="Ex: 5000"
                           className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-xs outline-none focus:border-brand-orange"
                         />
+                        <p className="mt-1 text-[10px] text-slate-500">
+                          Le montant est acquis pour chaque journée validée.
+                        </p>
                       </div>
                     </div>
 

@@ -79,7 +79,7 @@ export default function AdminApplicationsPage() {
   const [lienTelechargement, setLienTelechargement] = useState("");
   const [developpeurNom, setDeveloppeurNom] = useState("");
   const [developpeurEmail, setDeveloppeurEmail] = useState("");
-  const [dureeJoursDefaut, setDureeJoursDefaut] = useState(12);
+  const [dureeJoursDefaut, setDureeJoursDefaut] = useState(14);
   const [nbMaxPanelistes, setNbMaxPanelistes] = useState(12);
   const [statut, setStatut] = useState("en_attente_integration");
   const [uploadingLogo, setUploadingLogo] = useState(false);
@@ -241,7 +241,7 @@ export default function AdminApplicationsPage() {
     setLienTelechargement("");
     setDeveloppeurNom("");
     setDeveloppeurEmail("");
-    setDureeJoursDefaut(12);
+    setDureeJoursDefaut(14);
     setNbMaxPanelistes(12);
     setStatut("en_attente_integration");
     setShowModal(true);
@@ -257,7 +257,7 @@ export default function AdminApplicationsPage() {
     setLienTelechargement(app.lienTelechargement || "");
     setDeveloppeurNom(app.developpeurNom || "");
     setDeveloppeurEmail(app.developpeurEmail || "");
-    setDureeJoursDefaut(app.dureeJoursDefaut || 12);
+    setDureeJoursDefaut(app.dureeJoursDefaut || 14);
     setNbMaxPanelistes(app.nbMaxPanelistes || 12);
     setStatut(app.statut || "active");
     setShowModal(true);
@@ -389,7 +389,7 @@ export default function AdminApplicationsPage() {
         return (
           <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-500/10 px-2.5 py-1 text-xs font-semibold text-blue-600 border border-blue-500/20">
             <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
-            En Test (12j)
+            En Test (14j)
           </span>
         );
       case "en_attente_integration":
@@ -437,7 +437,7 @@ export default function AdminApplicationsPage() {
     buttonLabel: "Continuer",
   };
   const dailyPageDays = dailyPagesApp
-    ? Array.from({ length: Math.max(1, Math.min(60, dailyPagesApp.dureeJoursDefaut || 12)) }, (_, index) => index + 1)
+    ? Array.from({ length: Math.max(1, Math.min(60, dailyPagesApp.dureeJoursDefaut || 14)) }, (_, index) => index + 1)
     : [];
 
   return (
@@ -454,7 +454,7 @@ export default function AdminApplicationsPage() {
                 Projets de Test (Applications à tester)
               </h1>
               <p className="text-sm text-slate-500">
-                Saisissez les informations de l&apos;application (durée 12 jours, 12 panélistes) et obtenez le lien unique à transmettre au développeur
+                Saisissez les informations de l&apos;application (durée 14 jours, 12 panélistes) et obtenez le lien unique à transmettre au développeur
               </p>
             </div>
           </div>
@@ -771,12 +771,12 @@ export default function AdminApplicationsPage() {
                           {getStatusBadge(app.statut)}
                         </td>
 
-                        {/* Paramètres de test : 12j / 12 testeurs */}
+                        {/* Paramètres de test : 14j / 12 testeurs */}
                         <td className="px-5 py-3.5 whitespace-nowrap">
                           <div className="flex items-center gap-2 text-slate-700 font-medium">
                             <span className="inline-flex items-center gap-1 text-[11px] bg-slate-50 border border-slate-200/60 px-2 py-0.5 rounded-lg text-slate-700">
                               <Clock className="h-3 w-3 text-slate-400" />
-                              {app.dureeJoursDefaut || 12} jours
+                              {app.dureeJoursDefaut || 14} jours
                             </span>
                             <span className="inline-flex items-center gap-1 text-[11px] bg-slate-50 border border-slate-200/60 px-2 py-0.5 rounded-lg text-slate-700">
                               <Users className="h-3 w-3 text-slate-400" />
@@ -982,7 +982,7 @@ export default function AdminApplicationsPage() {
                             </span>
                             <span className="text-slate-300">•</span>
                             <span className="text-[10px] text-slate-400">
-                              {app.dureeJoursDefaut || 12}j • {app.nbMaxPanelistes || 12} max
+                              {app.dureeJoursDefaut || 14}j • {app.nbMaxPanelistes || 12} max
                             </span>
                           </div>
                         </div>
@@ -1477,7 +1477,7 @@ export default function AdminApplicationsPage() {
                       min={1}
                       max={60}
                       value={dureeJoursDefaut}
-                      onChange={(e) => setDureeJoursDefaut(parseInt(e.target.value) || 12)}
+                      onChange={(e) => setDureeJoursDefaut(parseInt(e.target.value) || 14)}
                       className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-sm text-slate-800 focus:border-blue-500 focus:outline-none"
                     />
                   </div>

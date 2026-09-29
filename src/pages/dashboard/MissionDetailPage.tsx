@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link, { useParams, useRouter } from "@/lib/router";
 import {
   ArrowLeft,
@@ -8,7 +8,6 @@ import {
   ExternalLink,
   Copy,
   Check,
-  Smartphone,
   Star,
   MessageSquare,
   AlertCircle,
@@ -16,7 +15,6 @@ import {
   Clock,
   Sparkles,
   ChevronRight,
-  Users,
   Lock,
   ShieldCheck,
   RefreshCw,
@@ -53,6 +51,9 @@ export default function MissionDetailPage() {
 
   // Étape sélectionnée pour test & validation
   const [selectedEtape, setSelectedEtape] = useState<Etape | null>(null);
+  const selectedEtapeRef = useRef<Etape | null>(null);
+  const [unlockedDay, setUnlockedDay] = useState(1);
+  const unlockedDayRef = useRef(1);
   const [currentReference, setCurrentReference] = useState<Reference | null>(null);
   const [loadingRef, setLoadingRef] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -65,6 +66,7 @@ export default function MissionDetailPage() {
     valid: boolean;
     message: string;
   } | null>(null);
+  const [validationNotice, setValidationNotice] = useState<string | null>(null);
 
   // Simulateur de formulaire de l'application testée (Étape 4 du schéma)
   const [simPanelisteId, setSimPanelisteId] = useState("");
@@ -110,14 +112,15 @@ export default function MissionDetailPage() {
     { label: "💡 Suggestion", value: "Suggestion" },
   ];
 
-  async function loadAll(quiet = false) {
+  async function loadAll(quiet = false, showRefreshIndicator = false) {
     if (!quiet) setLoading(true);
-    else setRefreshing(true);
+    else if (showRefreshIndicator) setRefreshing(true);
     try {
-      const [m, parts, eta] = await Promise.all([
+      const [m, parts, eta, dailyCode] = await Promise.all([
         missionsApi.show(missionId),
         participationsApi.mine(),
         etapesApi.byMission(missionId).catch(() => [] as Etape[]),
+        referencesApi.getDailyCode().catch(() => null),
       ]);
       setMission(m);
       const userPart = parts.find((p) => p.mission?.id === missionId) ?? null;
@@ -126,18 +129,49 @@ export default function MissionDetailPage() {
       const sorted = eta.sort((a, b) => a.ordre - b.ordre);
       setEtapes(sorted);
 
-      // Auto-sélectionner l'étape en cours pour ce panéliste
-      if (userPart && sorted.length > 0) {
-        const completedCount = userPart.etapesCompletees || 0;
-        const currentEtape = sorted[completedCount] || sorted[sorted.length - 1];
-        setSelectedEtape(currentEtape);
-        await loadReferenceForEtape(currentEtape.id, userPart);
+      if (userPart) {
+        const totalDays = m.applicationEntity?.dureeJoursDefaut || 14;
+        const startDate = new Date(userPart.dateDebut || userPart.dateCreation || Date.now());
+        const today = new Date();
+        const startUtc = Date.UTC(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+        const todayUtc = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate());
+        const elapsedDays = Math.max(1, Math.floor((todayUtc - startUtc) / 86400000) + 1);
+        const fallbackDay = Math.min(totalDays, elapsedDays, (userPart.etapesCompletees || 0) + 1);
+        const allowedDay = dailyCode?.hasActiveMission && dailyCode.missionId === missionId
+          ? dailyCode.jour
+          : fallbackDay;
+        const previousUnlockedDay = unlockedDayRef.current;
+        const previousSelected = selectedEtapeRef.current;
+        const previousSelectedDay = previousSelected
+          ? previousSelected.jour || previousSelected.ordre
+          : 0;
+        const currentEtape = sorted.find((etape) => (etape.jour || etape.ordre) === allowedDay)
+          || sorted[Math.min(allowedDay - 1, sorted.length - 1)];
+
+        if (currentEtape) {
+          const shouldSelectCurrent = !quiet || !previousSelected
+            || previousSelectedDay > allowedDay
+            || (allowedDay > previousUnlockedDay && previousSelectedDay === previousUnlockedDay);
+          const nextSelected = shouldSelectCurrent
+            ? currentEtape
+            : sorted.find((etape) => etape.id === previousSelected.id) || currentEtape;
+          const selectionChanged = previousSelected?.id !== nextSelected.id;
+
+          unlockedDayRef.current = allowedDay;
+          setUnlockedDay(allowedDay);
+          selectedEtapeRef.current = nextSelected;
+          setSelectedEtape(nextSelected);
+          if (!quiet || selectionChanged) {
+            await loadReferenceForEtape(nextSelected.id, userPart);
+          }
+        }
       }
+
     } catch (e) {
       setError(e instanceof Error ? e.message : "Erreur de chargement de la mission.");
     } finally {
       setLoading(false);
-      setRefreshing(false);
+      if (showRefreshIndicator) setRefreshing(false);
     }
   }
 
@@ -177,6 +211,8 @@ export default function MissionDetailPage() {
       });
 
       if (res.success) {
+        const validatedDay = res.jour || selectedEtape?.jour || selectedEtape?.ordre || 1;
+        setValidationNotice(`Jour ${validatedDay} validé avec succès.`);
         setSimResult({
           success: true,
           message: res.message || "Félicitations ! Votre journée de test a été validée avec succès.",
@@ -184,6 +220,7 @@ export default function MissionDetailPage() {
           progression: res.progression,
         });
         await loadAll(true);
+        window.setTimeout(() => setValidationNotice(null), 4000);
       } else {
         setSimResult({
           success: false,
@@ -240,6 +277,8 @@ export default function MissionDetailPage() {
   }
 
   function handleSelectEtape(etape: Etape) {
+    if ((etape.jour || etape.ordre) > unlockedDay) return;
+    selectedEtapeRef.current = etape;
     setSelectedEtape(etape);
     setDailyComment("");
     setDailyCommentSent(false);
@@ -261,11 +300,14 @@ export default function MissionDetailPage() {
     try {
       const res = await referencesApi.validate(selectedEtape.id, inputCode.trim());
       if (res.valid) {
+        const validatedDay = selectedEtape.jour || selectedEtape.ordre;
+        setValidationNotice(`Jour ${validatedDay} validé avec succès.`);
         setValidationResult({
           valid: true,
           message: "Étape validée avec succès !",
         });
         await loadAll();
+        window.setTimeout(() => setValidationNotice(null), 4000);
       } else {
         setValidationResult({
           valid: false,
@@ -359,9 +401,14 @@ export default function MissionDetailPage() {
   const isCompleted =
     participation &&
     (participation.statut === "terminee" ||
-      participation.statut === "remuneration_en_attente" ||
       participation.progression === 100 ||
       (etapes.length > 0 && etapes.every((e) => e.statut === "validee")));
+  const dailyRate = Number(mission.remuneration || 0);
+  const validatedDayCount = Math.max(
+    participation?.etapesCompletees || 0,
+    new Set((participation?.joursValides || []).map(Number)).size
+  );
+  const earnedTotal = dailyRate * validatedDayCount;
 
   return (
     <div className="min-h-screen bg-[#F8F9FB] pb-20">
@@ -385,7 +432,7 @@ export default function MissionDetailPage() {
           </div>
           {participation && (
             <span className="shrink-0 rounded-full bg-orange-50 border border-orange-200/60 px-2.5 py-0.5 text-[10px] font-bold text-brand-orange">
-              Jour {selectedEtape?.ordre || (participation.etapesCompletees || 0) + 1}/12
+              Jour {selectedEtape?.ordre || (participation.etapesCompletees || 0) + 1}/{mission.applicationEntity?.dureeJoursDefaut || participation.etapesTotal || 14}
             </span>
           )}
         </div>
@@ -395,6 +442,13 @@ export default function MissionDetailPage() {
         <div className="mx-4 mt-3 flex items-center gap-2 rounded-xl border border-red-100 bg-red-50 px-3.5 py-2.5 text-xs text-red-700">
           <AlertCircle size={15} className="shrink-0" />
           <span>{error}</span>
+        </div>
+      )}
+
+      {validationNotice && (
+        <div role="status" className="mx-4 mt-3 flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3.5 py-2.5 text-xs font-semibold text-emerald-800">
+          <CheckCircle2 size={15} className="shrink-0" />
+          <span>{validationNotice}</span>
         </div>
       )}
 
@@ -427,25 +481,6 @@ export default function MissionDetailPage() {
                 Application : <span className="font-semibold text-navy-900">{mission.application}</span>
               </p>
 
-              <div className="mt-2.5 flex flex-wrap items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-bold text-emerald-700 border border-emerald-200/60">
-                  <Smartphone size={13} className="text-emerald-600" />
-                  <span>Android uniquement</span>
-                </span>
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-0.5 text-[11px] font-semibold text-amber-700 border border-amber-200/60">
-                  <Clock size={13} className="text-amber-500" />
-                  <span>{mission.dureEstime || `${mission.duree || 3} jours`}</span>
-                </span>
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-semibold text-slate-700 border border-slate-200/80">
-                  <Users size={13} className="text-slate-500" />
-                  <span>Objectif : {mission.nombreParticipantsSouhaites || 20} testeurs</span>
-                </span>
-                {mission.versionApplication && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-0.5 text-[11px] font-semibold text-blue-700 border border-blue-200/60">
-                    <span>v{mission.versionApplication}</span>
-                  </span>
-                )}
-              </div>
             </div>
           </div>
 
@@ -650,14 +685,14 @@ export default function MissionDetailPage() {
               </div>
             </section>
 
-            {/* 12 Jours - Suivi Quotidien Interactif (Habit Tracker Carousel) */}
+            {/* Suivi quotidien interactif */}
             {(() => {
+              const validatedDays = new Set((participation.joursValides || []).map(Number));
               const validatedStepsCount = Math.max(
                 participation.etapesCompletees || 0,
-                (participation.joursValides || []).length,
-                etapes.filter((e) => e.statut === "validee").length
+                validatedDays.size
               );
-              const totalStepsCount = participation.etapesTotal || etapes.length || 12;
+              const totalStepsCount = mission.applicationEntity?.dureeJoursDefaut || participation.etapesTotal || etapes.length || 14;
               const calculatedProgression = Math.min(100, Math.round((validatedStepsCount / Math.max(1, totalStepsCount)) * 100));
 
               return (
@@ -682,22 +717,29 @@ export default function MissionDetailPage() {
                     />
                   </div>
 
-                  {/* Carrousel horizontal fluide des 12 Jours */}
+                  <div className="mt-2 flex flex-wrap items-center justify-between gap-1 text-[11px] text-slate-500">
+                    <span>Tarif journalier : <strong className="text-slate-700">{dailyRate.toLocaleString("fr-FR")} FCFA</strong></span>
+                    <span>Montant acquis : <strong className="text-emerald-700">{earnedTotal.toLocaleString("fr-FR")} FCFA</strong></span>
+                  </div>
+
+                  {/* Carrousel horizontal des jours */}
                   <div className="mt-3.5 flex items-center gap-2 overflow-x-auto pb-1.5 scrollbar-none">
                     {etapes.map((etape, index) => {
-                      const isCompletedForUser =
-                        index < validatedStepsCount ||
-                        etape.statut === "validee" ||
-                        (participation.joursValides || []).includes(etape.ordre || etape.jour);
+                      const day = etape.jour || etape.ordre;
+                      const isCompletedForUser = index < validatedStepsCount
+                        || validatedDays.has(day);
                       const isCurrent = selectedEtape?.id === etape.id;
                       const isPast = isCompletedForUser;
+                      const isLocked = day > unlockedDay;
 
                       return (
                         <button
                           key={etape.id}
                           type="button"
                           onClick={() => handleSelectEtape(etape)}
-                          className={`flex h-12 min-w-12 flex-col items-center justify-center rounded-2xl text-[11px] font-bold transition active:scale-95 ${
+                          disabled={isLocked}
+                          aria-label={`Jour ${day}${isLocked ? ', verrouillé' : ''}`}
+                          className={`flex h-12 min-w-12 flex-col items-center justify-center rounded-2xl text-[11px] font-bold transition active:scale-95 disabled:cursor-not-allowed ${
                             isCurrent
                               ? "border-2 border-brand-orange bg-white text-brand-orange shadow-md scale-105"
                               : isPast
@@ -705,7 +747,7 @@ export default function MissionDetailPage() {
                               : "bg-slate-100/90 text-slate-400 hover:bg-slate-200/80"
                           }`}
                         >
-                          <span className="text-[9px] uppercase opacity-80">J{etape.ordre}</span>
+                          <span className="text-[9px] uppercase opacity-80">J{day}</span>
                           {isPast ? (
                             <Check size={14} strokeWidth={3} />
                           ) : isCurrent ? (
@@ -728,21 +770,25 @@ export default function MissionDetailPage() {
                   <span>{showAllStepsList ? "Masquer la liste complète" : "Afficher l'intitulé de toutes les étapes"}</span>
                   <ChevronRight size={13} className={`transform transition-transform ${showAllStepsList ? "rotate-90" : ""}`} />
                 </button>
-                <span className="text-[10px] text-slate-400">12 jours au total</span>
+                <span className="text-[10px] text-slate-400">{totalStepsCount} jours au total</span>
               </div>
 
               {showAllStepsList && (
                 <div className="mt-2 divide-y divide-slate-100 border-t border-slate-100 pt-1">
                   {etapes.map((etape, index) => {
-                    const isCompletedForUser = index < (participation.etapesCompletees || 0) || etape.statut === "validee";
+                    const day = etape.jour || etape.ordre;
+                    const isCompletedForUser = index < (participation.etapesCompletees || 0)
+                      || (participation.joursValides || []).includes(day);
                     const isCurrent = selectedEtape?.id === etape.id;
                     const isPast = isCompletedForUser;
+                    const isLocked = day > unlockedDay;
 
                     return (
                       <div
                         key={etape.id}
-                        onClick={() => handleSelectEtape(etape)}
-                        className={`flex items-center justify-between py-2 px-2 rounded-xl cursor-pointer transition ${
+                        onClick={() => !isLocked && handleSelectEtape(etape)}
+                        aria-disabled={isLocked}
+                        className={`flex items-center justify-between py-2 px-2 rounded-xl transition ${isLocked ? "cursor-not-allowed opacity-50" : "cursor-pointer"} ${
                           isCurrent ? "bg-orange-50/70 border border-orange-100" : "hover:bg-slate-50"
                         }`}
                       >
@@ -791,18 +837,18 @@ export default function MissionDetailPage() {
                           Étape 4 : Test quotidien
                         </span>
                         <span className="rounded-full bg-purple-50 text-purple-700 border border-purple-200/60 px-2.5 py-0.5 text-[10px] font-semibold">
-                          Boucle sur 12 jours
+                          Boucle sur {mission.applicationEntity?.dureeJoursDefaut || participation.etapesTotal || 14} jours
                         </span>
                       </div>
                       <h3 className="mt-1 font-display text-base font-bold text-navy-900">
-                        Jour {selectedEtape.ordre} / {participation.etapesTotal || etapes.length || 12} — {selectedEtape.titre}
+                        Jour {selectedEtape.ordre} / {mission.applicationEntity?.dureeJoursDefaut || participation.etapesTotal || etapes.length || 14} — {selectedEtape.titre}
                       </h3>
                     </div>
 
                     <div className="flex items-center gap-2">
                       <button
                         type="button"
-                        onClick={() => loadAll(true)}
+                        onClick={() => loadAll(true, true)}
                         disabled={refreshing}
                         className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-semibold text-slate-600 hover:bg-slate-50 transition"
                         title="Actualiser le statut de validation"
@@ -846,6 +892,9 @@ export default function MissionDetailPage() {
                           </h5>
                           <p className="mt-1 text-xs text-emerald-800 leading-relaxed">
                             Votre session de test pour aujourd&apos;hui a été bien validée et synchronisée. Votre progression est mise à jour. Rendez-vous demain pour le jour suivant.
+                          </p>
+                          <p className="mt-2 text-xs font-semibold text-emerald-900">
+                            Gain du jour : {dailyRate.toLocaleString("fr-FR")} FCFA · Total acquis : {earnedTotal.toLocaleString("fr-FR")} FCFA
                           </p>
                           <div className="mt-4 flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-emerald-200/60">
                             <span className="text-xs font-medium text-emerald-900">
@@ -910,30 +959,6 @@ export default function MissionDetailPage() {
                         </div>
                       </div>
 
-                      {/* Indicateur de synchronisation automatique en direct */}
-                      <div className="rounded-2xl border border-blue-200/80 bg-blue-50/50 p-4 shadow-2xs flex items-center gap-3.5">
-                        <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white shadow-sm shadow-blue-500/20">
-                          <Smartphone size={20} />
-                          <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-3 w-3 bg-blue-500"></span>
-                          </span>
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <h5 className="font-bold text-xs text-navy-900">
-                              Synchronisation automatique en direct
-                            </h5>
-                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full">
-                              <span className="h-1.5 w-1.5 rounded-full bg-blue-600 animate-pulse"></span>
-                              Écoute active
-                            </span>
-                          </div>
-                          <p className="mt-0.5 text-[11px] text-slate-600 leading-relaxed">
-                            Ouvrez <strong>{mission.application}</strong> sur votre téléphone, naviguez pendant au moins 25 secondes puis validez avec votre identifiant et votre code. Cette page se validera automatiquement !
-                          </p>
-                        </div>
-                      </div>
                     </div>
                   )}
 
@@ -977,7 +1002,7 @@ export default function MissionDetailPage() {
                       Merci pour votre feedback !
                     </h3>
                     <p className="mt-1 text-xs text-slate-500 max-w-sm mx-auto">
-                      Vos réponses ont été enregistrées avec succès. Votre participation à ce test est complète.
+                      Votre mission est validée et votre feedback est enregistré. Vous avez mérité {earnedTotal.toLocaleString("fr-FR")} FCFA.
                     </p>
                     <Link
                       href="/dashboard/missions"
@@ -989,9 +1014,15 @@ export default function MissionDetailPage() {
                   </div>
                 ) : (
                   <form onSubmit={handleSendFeedback} className="space-y-4">
+                    <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-emerald-900">
+                      <p className="text-xs font-bold">Mission validée</p>
+                      <p className="mt-1 text-xs">
+                        Vous avez validé {validatedDayCount} journée{validatedDayCount > 1 ? "s" : ""} et mérité {earnedTotal.toLocaleString("fr-FR")} FCFA.
+                      </p>
+                    </div>
                     <div className="border-b border-slate-100 pb-3">
                       <span className="rounded bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 uppercase">
-                        Mission terminée 🎉
+                        Mission terminée 
                       </span>
                       <h3 className="mt-1 font-display text-base font-bold text-navy-900">
                         Donnez votre feedback de testeur

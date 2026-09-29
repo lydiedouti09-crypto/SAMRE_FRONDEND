@@ -285,6 +285,7 @@ export type Mission = {
   applicationEntity?: {
     id: number;
     nom: string;
+    dureeJoursDefaut?: number;
     description?: string;
     logo?: string;
     plateforme?: string;
@@ -308,6 +309,7 @@ export type Participation = {
   progression: number;
   etapesCompletees: number;
   etapesTotal: number;
+  joursValides?: number[];
   contratAccepte: boolean;
   dateCreation?: string;
   dateDebut?: string;
@@ -404,6 +406,7 @@ export type DailyCodeInfo = {
   code: string;
   missionTitre?: string | null;
   application?: string | null;
+  missionId?: number | null;
   jour: number;
   statut: string;
   date: string;

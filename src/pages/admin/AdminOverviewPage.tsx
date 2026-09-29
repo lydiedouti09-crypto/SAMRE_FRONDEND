@@ -281,7 +281,7 @@ export default function AdminDashboardPage() {
                 Missions & Programme
               </h4>
               <p className="mt-1 text-[11px] text-slate-500 line-clamp-2">
-                Créer des missions Android, structurer le protocole de 12 jours et configurer les codes.
+                Créer des missions Android, structurer le protocole de 14 jours et configurer les codes.
               </p>
             </div>
             <div className="mt-4 flex items-center justify-between text-[11px] font-bold text-brand-orange pt-2 border-t border-slate-50">

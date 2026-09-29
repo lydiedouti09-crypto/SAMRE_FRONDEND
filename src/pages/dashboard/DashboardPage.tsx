@@ -87,16 +87,17 @@ export default function DashboardPage() {
 
   const totalRemunerationEstimee = participations.reduce((acc, p) => {
     if (p.statut === "refusee" || p.statut === "abandonnee") return acc;
-    const rem = parseFloat(String(p.mission?.remuneration || 0));
-    return acc + (isNaN(rem) ? 0 : rem);
+    const dailyRate = parseFloat(String(p.mission?.remuneration || 0));
+    const totalDays = p.mission?.applicationEntity?.dureeJoursDefaut || p.etapesTotal || 14;
+    return p.statut === "remuneration_payee" || isNaN(dailyRate)
+      ? acc
+      : acc + dailyRate * totalDays;
   }, 0);
 
   const totalRemunerationGagnee = participations.reduce((acc, p) => {
-    if (p.statut === "terminee" || p.statut === "remuneration_payee") {
-      const rem = parseFloat(String(p.mission?.remuneration || 0));
-      return acc + (isNaN(rem) ? 0 : rem);
-    }
-    return acc;
+    const dailyRate = parseFloat(String(p.mission?.remuneration || 0));
+    const completedDays = Math.max(p.etapesCompletees || 0, new Set(p.joursValides || []).size);
+    return acc + (isNaN(dailyRate) ? 0 : dailyRate * completedDays);
   }, 0);
 
   const unreadCount = notifications.filter((n) => !n.lu).length;
@@ -220,7 +221,7 @@ export default function DashboardPage() {
               {/* 1. Gains validés (Available) */}
               <div className="rounded-2xl border border-slate-100 bg-[#F8FAFC] p-3 shadow-sm">
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-medium text-slate-400">Validé</span>
+                  <span className="text-[10px] font-medium text-slate-400">Gagné</span>
                   <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
                     <Wallet size={13} />
                   </span>
@@ -433,14 +434,14 @@ export default function DashboardPage() {
                             {m.titre}
                           </h4>
                           <p className="text-[11px] text-slate-400 truncate">
-                            {m.application} · <span className="text-slate-500 font-medium">{m.dureEstime || "12j"}</span>
+                            {m.application} · <span className="text-slate-500 font-medium">{m.dureEstime || "14j"}</span>
                           </p>
                         </div>
                       </div>
 
                       <div className="shrink-0 text-right ml-2">
                         <span className="font-display text-xs font-bold text-emerald-600 block">
-                          +{parseFloat(String(m.remuneration || 0)).toLocaleString("fr-FR")} FCFA
+                          +{parseFloat(String(m.remuneration || 0)).toLocaleString("fr-FR")} FCFA/jour
                         </span>
                         <span className={`text-[10px] font-bold ${
                           isJoined ? "text-blue-600" : "text-slate-400"
