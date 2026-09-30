@@ -339,7 +339,7 @@ export const Header: React.FC<HeaderProps> = () => {
           </div>
         </nav>
 
-        {/* Boutons d'Action Droite (Connexion & Inscription) */}
+        {/* Boutons d'Action Droite (Connexion & Inscription style Campty) */}
         <div className="desktop-actions" style={{ alignItems: 'center', gap: '0.75rem' }}>
           <Link
             href="/connexion"
@@ -348,20 +348,20 @@ export const Header: React.FC<HeaderProps> = () => {
               display: 'inline-flex',
               alignItems: 'center',
               gap: '0.45rem',
-              padding: '0.65rem 1.3rem',
+              padding: '0.65rem 1.35rem',
               borderRadius: '999px',
               backgroundColor: '#0a1c38',
               color: '#ffffff',
               fontWeight: 700,
               fontSize: '0.88rem',
               textDecoration: 'none',
-              transition: 'all 0.2s ease',
+              transition: 'all 0.25s ease',
               boxShadow: '0 4px 14px rgba(10, 28, 56, 0.15)',
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.backgroundColor = '#f2811d';
               e.currentTarget.style.transform = 'translateY(-2px)';
-              e.currentTarget.style.boxShadow = '0 10px 26px rgba(242, 129, 29, 0.3)';
+              e.currentTarget.style.boxShadow = '0 10px 24px rgba(242, 129, 29, 0.3)';
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.backgroundColor = '#0a1c38';
@@ -369,8 +369,9 @@ export const Header: React.FC<HeaderProps> = () => {
               e.currentTarget.style.boxShadow = '0 4px 14px rgba(10, 28, 56, 0.15)';
             }}
           >
-            <span style={{ position: 'relative', zIndex: 1 }}>Se connecter</span>
+            <span>Se connecter</span>
           </Link>
+
         </div>
 
         {/* Toggle Menu Mobile */}

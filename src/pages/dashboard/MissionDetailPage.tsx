@@ -149,21 +149,19 @@ export default function MissionDetailPage() {
           || sorted[Math.min(allowedDay - 1, sorted.length - 1)];
 
         if (currentEtape) {
-          const shouldSelectCurrent = !quiet || !previousSelected
-            || previousSelectedDay > allowedDay
-            || (allowedDay > previousUnlockedDay && previousSelectedDay === previousUnlockedDay);
-          const nextSelected = shouldSelectCurrent
-            ? currentEtape
-            : sorted.find((etape) => etape.id === previousSelected.id) || currentEtape;
-          const selectionChanged = previousSelected?.id !== nextSelected.id;
+          // Si l'utilisateur est déjà sur une étape (ex: Jour 5), on la maintient
+          // pour qu'il voie immédiatement le message de validation réussie lors d'une synchronisation
+          const nextSelected = previousSelected
+            ? (sorted.find((etape) => etape.id === previousSelected.id) || currentEtape)
+            : currentEtape;
 
           unlockedDayRef.current = allowedDay;
           setUnlockedDay(allowedDay);
           selectedEtapeRef.current = nextSelected;
           setSelectedEtape(nextSelected);
-          if (!quiet || selectionChanged) {
-            await loadReferenceForEtape(nextSelected.id, userPart);
-          }
+
+          // Toujours synchroniser la référence (même en arrière-plan) pour détecter instantanément la validation
+          await loadReferenceForEtape(nextSelected.id, userPart, quiet);
         }
       }
 
@@ -175,11 +173,13 @@ export default function MissionDetailPage() {
     }
   }
 
-  async function loadReferenceForEtape(etapeId: number, userPart?: Participation | null) {
-    setLoadingRef(true);
-    setValidationResult(null);
-    setSimResult(null);
-    setInputCode("");
+  async function loadReferenceForEtape(etapeId: number, userPart?: Participation | null, quiet = false) {
+    if (!quiet) {
+      setLoadingRef(true);
+      setValidationResult(null);
+      setSimResult(null);
+      setInputCode("");
+    }
     try {
       const ref = await referencesApi.forEtape(etapeId);
       setCurrentReference(ref);
@@ -188,9 +188,9 @@ export default function MissionDetailPage() {
         setSimPanelisteId(ref.panelisteUid || userPart?.panelisteUid || participation?.panelisteUid || "");
       }
     } catch {
-      setCurrentReference(null);
+      if (!quiet) setCurrentReference(null);
     } finally {
-      setLoadingRef(false);
+      if (!quiet) setLoadingRef(false);
     }
   }
 
@@ -240,10 +240,10 @@ export default function MissionDetailPage() {
   useEffect(() => {
     if (!Number.isNaN(missionId)) {
       loadAll();
-      // Auto-rafraîchissement toutes les 4s pour détecter la validation mobile en direct
+      // Auto-rafraîchissement toutes les 2s pour détecter la validation mobile immédiatement
       const interval = setInterval(() => {
         loadAll(true);
-      }, 4000);
+      }, 2000);
       return () => clearInterval(interval);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

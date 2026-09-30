@@ -1,142 +1,16 @@
-import { useState, useEffect } from "react";
-import Link, { useRouter } from "@/lib/router";
-import Image from "@/components/ui/Image";
+import React, { useState, useEffect } from "react";
+import { useRouter } from "@/lib/router";
 import {
-  Mail,
-  Lock,
   Eye,
   EyeOff,
-  User,
-  Phone,
-  ArrowRight,
-  ArrowLeft,
   Loader2,
   CheckCircle2,
-  Sparkles,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { useAdminAuth } from "@/lib/admin-auth-context";
 import { authApi } from "@/lib/api";
 
 type Mode = "login" | "signup" | "forgot-password";
-
-/* ========================================================================= */
-/* ILLUSTRATIONS VECTORIELLES FIDÈLES AUX IMAGES 4 & 5 FOURNIES PAR L'UTILISATEUR */
-/* ========================================================================= */
-
-// 1. Illustration Sign In / Se connecter (Style Image 4 & 5)
-function SignInIllustration({ className = "h-40 w-auto" }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 240 180" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
-      {/* Halo d'arrière-plan doux */}
-      <ellipse cx="120" cy="155" rx="75" ry="12" fill="#FDE68A" fillOpacity="0.4" />
-      <circle cx="175" cy="55" r="4" fill="#F97316" />
-      <circle cx="65" cy="75" r="3" fill="#F97316" />
-      <path d="M190 70L194 74M194 70L190 74" stroke="#F97316" strokeWidth="2" strokeLinecap="round" />
-      <path d="M50 95L54 99M54 95L50 99" stroke="#F97316" strokeWidth="2" strokeLinecap="round" />
-
-      {/* Écran d'ordinateur / Dashboard stylisé */}
-      <rect x="75" y="60" width="70" height="50" rx="8" fill="#0F172A" />
-      <rect x="78" y="63" width="64" height="38" rx="5" fill="#FFFFFF" />
-      {/* Header écran */}
-      <rect x="82" y="67" width="14" height="4" rx="2" fill="#F97316" />
-      <circle cx="136" cy="69" r="1.5" fill="#CBD5E1" />
-      <circle cx="132" cy="69" r="1.5" fill="#CBD5E1" />
-      {/* Contenu écran (Dashboard barres) */}
-      <rect x="82" y="76" width="30" height="3" rx="1.5" fill="#E2E8F0" />
-      <rect x="82" y="82" width="22" height="3" rx="1.5" fill="#E2E8F0" />
-      <rect x="82" y="90" width="8" height="8" rx="2" fill="#F97316" />
-      <rect x="94" y="86" width="8" height="12" rx="2" fill="#0F172A" />
-      <rect x="106" y="80" width="8" height="18" rx="2" fill="#3B82F6" />
-      {/* Pied de l'écran */}
-      <path d="M104 110L100 125H120L116 110H104Z" fill="#0F172A" />
-      <rect x="92" y="125" width="36" height="4" rx="2" fill="#0F172A" />
-
-      {/* Personnage Testeur stylisé (Style Image 5) */}
-      {/* Tête */}
-      <circle cx="150" cy="58" r="17" fill="#C6865A" />
-      {/* Cheveux foncés / Casquette */}
-      <path d="M133 55C133 44 140 38 152 38C164 38 169 44 169 55C169 57 165 52 152 52C139 52 133 57 133 55Z" fill="#0F172A" />
-      {/* Visière casquette stylisée */}
-      <path d="M133 50C130 50 124 53 120 57C130 57 140 55 145 52L133 50Z" fill="#0F172A" />
-      {/* Visage profil */}
-      <circle cx="140" cy="58" r="2" fill="#0F172A" />
-      {/* Buste / Hoodie Bleu Nuit SAMRE */}
-      <path d="M125 120C125 96 135 84 150 84C165 84 175 96 175 120H125Z" fill="#0F172A" />
-      {/* Bras interagissant */}
-      <path d="M138 95L120 108" stroke="#0F172A" strokeWidth="8" strokeLinecap="round" />
-      <circle cx="118" cy="110" r="5" fill="#C6865A" />
-    </svg>
-  );
-}
-
-// 2. Illustration Sign Up / Créer un compte (Style Image 4 & 5)
-function SignUpIllustration({ className = "h-40 w-auto" }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 240 180" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
-      {/* Halo d'arrière-plan */}
-      <ellipse cx="120" cy="155" rx="75" ry="12" fill="#FFEDD5" fillOpacity="0.5" />
-      <circle cx="185" cy="50" r="3.5" fill="#F97316" />
-      <circle cx="55" cy="65" r="3" fill="#F97316" />
-      <path d="M185 85L189 89M189 85L185 89" stroke="#F97316" strokeWidth="2" strokeLinecap="round" />
-      <path d="M58 100L62 104M62 100L58 104" stroke="#F97316" strokeWidth="2" strokeLinecap="round" />
-
-      {/* Badge ID / Carte Testeur avec bouton plus (+) */}
-      <g transform="translate(48, 60)">
-        <rect x="0" y="0" width="38" height="26" rx="6" fill="#0F172A" />
-        <rect x="6" y="7" width="12" height="4" rx="2" fill="#FFFFFF" />
-        <rect x="6" y="14" width="22" height="3" rx="1.5" fill="#CBD5E1" />
-        <circle cx="28" cy="8" r="3" fill="#F97316" />
-      </g>
-      {/* Pastille badge '+' Orange */}
-      <circle cx="152" cy="72" r="10" fill="#F97316" />
-      <path d="M152 67V77M147 72H157" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" />
-
-      {/* Carte d'accès / Smartphone dans la main */}
-      <rect x="150" y="100" width="36" height="22" rx="5" fill="#FFFFFF" stroke="#0F172A" strokeWidth="2.5" />
-      <rect x="156" y="106" width="16" height="3" rx="1.5" fill="#CBD5E1" />
-      <rect x="156" y="112" width="10" height="3" rx="1.5" fill="#F97316" />
-
-      {/* Personnage Testeur stylisé (Style Image 5) */}
-      <circle cx="120" cy="56" r="18" fill="#C6865A" />
-      {/* Cheveux / Bonnet */}
-      <path d="M102 54C102 42 109 36 122 36C135 36 140 42 140 54C140 57 136 50 122 50C108 50 102 57 102 54Z" fill="#0F172A" />
-      <circle cx="114" cy="56" r="2" fill="#0F172A" />
-      <circle cx="126" cy="56" r="2" fill="#0F172A" />
-      {/* Sourire */}
-      <path d="M117 63C118.5 65.5 121.5 65.5 123 63" stroke="#0F172A" strokeWidth="2" strokeLinecap="round" />
-      {/* Buste / Haut Orange SAMRE */}
-      <path d="M92 125C92 98 104 86 120 86C136 86 148 98 148 125H92Z" fill="#0F172A" />
-    </svg>
-  );
-}
-
-// 3. Illustration Forgot Password / Mot de passe oublié (Style Image 4)
-function ForgotPasswordIllustration({ className = "h-40 w-auto" }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 240 180" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
-      <ellipse cx="120" cy="155" rx="75" ry="12" fill="#E0F2FE" fillOpacity="0.5" />
-      <circle cx="180" cy="50" r="3.5" fill="#F97316" />
-      <circle cx="50" cy="70" r="3" fill="#F97316" />
-      <path d="M185 80L189 84M189 80L185 84" stroke="#F97316" strokeWidth="2" strokeLinecap="round" />
-
-      {/* Ordinateur portable avec clé de récupération */}
-      <rect x="85" y="85" width="70" height="42" rx="6" fill="#0F172A" />
-      <rect x="88" y="88" width="64" height="34" rx="4" fill="#FFFFFF" />
-      {/* Symbole Cadenas au centre de l'écran */}
-      <rect x="114" y="103" width="12" height="10" rx="2.5" fill="#F97316" />
-      <path d="M117 103V99C117 97.5 118.5 96 120 96C121.5 96 123 97.5 123 99V103" stroke="#F97316" strokeWidth="2" fill="none" />
-      {/* Base du clavier */}
-      <path d="M75 127L82 127L158 127L165 127C168 127 169 129 166 131L156 135H84L74 131C71 129 72 127 75 127Z" fill="#CBD5E1" />
-
-      {/* Personnage penché sur le laptop */}
-      <circle cx="145" cy="55" r="16" fill="#C6865A" />
-      <path d="M130 52C130 40 137 34 148 34C159 34 164 40 164 52C164 55 160 48 148 48C136 48 130 55 130 52Z" fill="#0F172A" />
-      <circle cx="139" cy="55" r="2" fill="#0F172A" />
-      <path d="M128 115C128 92 138 82 152 82C166 82 174 92 174 115H128Z" fill="#0F172A" />
-    </svg>
-  );
-}
 
 export default function AuthForm({ mode = "login" }: { mode?: Mode }) {
   const router = useRouter();
@@ -151,6 +25,7 @@ export default function AuthForm({ mode = "login" }: { mode?: Mode }) {
   }, [mode]);
 
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
@@ -167,7 +42,7 @@ export default function AuthForm({ mode = "login" }: { mode?: Mode }) {
   const update = (field: string) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm((f) => ({ ...f, [field]: e.target.value }));
 
-  // Gestion de la saisie "Nom complet" pour séparer nom et prénom proprement
+  // Gestion de la saisie "Nom complet"
   const handleFullNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const full = e.target.value;
     const parts = full.trim().split(" ");
@@ -202,7 +77,7 @@ export default function AuthForm({ mode = "login" }: { mode?: Mode }) {
       const res = await authApi.forgotPassword(emailTrimmed);
       setSuccessMsg(
         res.message ||
-          "Un nouveau mot de passe a été envoyé à votre adresse email avec succès."
+        "Un nouveau mot de passe a été envoyé à votre adresse email avec succès."
       );
     } catch (err) {
       setError(
@@ -236,26 +111,24 @@ export default function AuthForm({ mode = "login" }: { mode?: Mode }) {
     setLoading(true);
     try {
       if (isSignup) {
-        // Enregistrement d'un nouveau panéliste
         await register({
           ...form,
           nom: form.nom || form.prenom,
         });
         router.push("/dashboard");
       } else {
-        // Tentative de connexion (Admin puis Testeur)
         try {
           await adminLogin(form.email, form.password);
           router.replace("/admin");
           return;
         } catch {
-          // Si ce n'est pas un admin, connexion en tant que testeur standard
+          // Tentative testeur standard
         }
 
         const loggedUser = await login(form.email, form.password);
         if (loggedUser?.role === "admin") {
           logout("/connexion");
-          setError("Impossible d'ouvrir la session administrateur ici.");
+          setError("Impossible de se connecter.");
           setLoading(false);
           return;
         }
@@ -267,381 +140,340 @@ export default function AuthForm({ mode = "login" }: { mode?: Mode }) {
     }
   }
 
-  return (
-    <div className="min-h-screen w-full bg-[#F4F7FC] lg:grid lg:grid-cols-12 font-sans antialiased text-slate-800">
-      {/* Panneau latéral gauche pour la version PC Desktop */}
-      <div className="hidden lg:flex lg:col-span-5 xl:col-span-5 bg-[#0A1C38] text-white flex-col justify-between p-10 xl:p-14 relative overflow-hidden border-r border-slate-800/80">
-        {/* Cercles d'ambiance en arrière-plan */}
-        <div className="pointer-events-none absolute -top-24 -left-24 h-96 w-96 rounded-full bg-brand-orange/10 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-24 -right-24 h-96 w-96 rounded-full bg-blue-600/10 blur-3xl" />
+  // Image 1 pour connexion, Image 2 pour inscription, Image 3 pour mot de passe oublié
+  const currentIllustration = isForgotPassword
+    ? "/undraw_forgot-password_nttj.png"
+    : isSignup
+      ? "/undraw_authentication_1evl.png"
+      : "/undraw_biometric-login_v832.png";
 
-        {/* Logo officiel SAMRE avec /logo.png */}
-        <div className="relative z-10">
-          <Link href="/" className="inline-flex items-center gap-3.5 group">
-            <div className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/10 p-2 backdrop-blur-xs ring-1 ring-white/15 transition group-hover:scale-105">
-              <Image
-                src="/logo.png"
-                alt="Samré Logo"
-                width={40}
-                height={40}
-                className="h-9 w-9 object-contain drop-shadow-xs"
-                priority
+  const illustrationAlt = isForgotPassword
+    ? "Illustration Mot de passe oublié SAMRE"
+    : isSignup
+      ? "Illustration Inscription SAMRE"
+      : "Illustration Connexion SAMRE";
+
+  return (
+    <div className="h-screen w-full bg-[#fdfdfd] relative overflow-hidden font-sans antialiased text-slate-800 flex items-center justify-center p-4">
+
+      {/* ─── TOUCHE SAMRÉ : HALOS D'AMBIANCE CHAUDE (ORANGE & BLEU NUIT) EN ARRIÈRE-PLAN ─── */}
+      <div className="pointer-events-none absolute -top-28 -left-28 h-[450px] w-[450px] rounded-full bg-gradient-to-br from-[#f2811d]/14 to-[#fed7aa]/20 blur-3xl" />
+      <div className="pointer-events-none absolute top-1/3 -right-28 h-[500px] w-[500px] rounded-full bg-gradient-to-bl from-[#38bdf8]/12 via-[#f2811d]/8 to-transparent blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-28 left-1/4 h-[400px] w-[400px] rounded-full bg-[#0a1c38]/6 blur-3xl" />
+
+      {/* ─── CONTENU PRINCIPAL : ADAPTÉ PC (2 COLONNES) ET MOBILE (1 COLONNE CENTRÉE) ─── */}
+      <main className="relative z-10 w-full max-w-[1100px] mx-auto px-2 sm:px-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+
+          {/* ═══════════════════════════════════════════════════════════════════════ */}
+          {/* PANNEAU GAUCHE PC : ILLUSTRATION FONDUE NATURELLEMENT DANS LE BLANC  */}
+          {/* (Visible sur PC / Masqué sur Mobile pour garder le format compact)   */}
+          {/* ═══════════════════════════════════════════════════════════════════════ */}
+          <div className="hidden lg:flex lg:col-span-6 items-center justify-center p-4">
+            <div className="relative w-full max-w-[460px] flex items-center justify-center">
+              <img
+                key={`pc-${currentIllustration}`}
+                src={currentIllustration}
+                alt={illustrationAlt}
+                className="w-full h-auto max-h-[390px] object-contain transition-transform duration-500 hover:scale-102"
+                style={{ mixBlendMode: "multiply" }}
               />
             </div>
-            <div className="flex flex-col">
-              <span className="font-display text-2xl font-black tracking-wider text-white">
-                SAMRE
-              </span>
-            </div>
-          </Link>
-        </div>
-
-        {/* Illustration & Texte d'engagement sur PC */}
-        <div className="relative z-10 my-auto py-8">
-          <div className="mb-6 flex justify-center">
-            {isForgotPassword ? (
-              <ForgotPasswordIllustration className="h-48 xl:h-56 w-auto drop-shadow-lg" />
-            ) : isSignup ? (
-              <SignUpIllustration className="h-48 xl:h-56 w-auto drop-shadow-lg" />
-            ) : (
-              <SignInIllustration className="h-48 xl:h-56 w-auto drop-shadow-lg" />
-            )}
           </div>
 
-          <h1 className="font-display text-2xl xl:text-3xl font-black text-white tracking-tight leading-snug">
-            {isForgotPassword
-              ? "Récupération sécurisée de votre accès testeur"
-              : isSignup
-              ? "Rejoignez le réseau d'élite des testeurs applicatifs"
-              : "Validez vos tests et suivez vos gains en direct"}
-          </h1>
+          {/* ═══════════════════════════════════════════════════════════════════════ */}
+          {/* PANNEAU DROIT (PC) / CARTE CENTRÉE (MOBILE)                           */}
+          {/* ═══════════════════════════════════════════════════════════════════════ */}
+          <div className="col-span-12 lg:col-span-6 flex justify-center items-center">
+            <div className="w-full max-w-[420px] bg-white rounded-[28px] p-5 sm:p-6 shadow-xl shadow-slate-200/70 border border-slate-100/90 relative">
 
-          <p className="mt-3 text-xs xl:text-sm text-slate-300 leading-relaxed">
-            {isForgotPassword
-              ? "Indiquez votre adresse email enregistrée pour recevoir un mot de passe temporaire ou vos consignes de réinitialisation."
-              : isSignup
-              ? "Accédez aux missions exclusives, validez les étapes prévues chaque jour et débloquez vos récompenses financières en toute transparence."
-              : "Connectez-vous pour continuer vos campagnes actives, soumettre vos codes de validation quotidienne et consulter vos statistiques."}
-          </p>
+              {/* 1. Illustration intégrée : Visible UNIQUEMENT sur mobile, masquée sur PC */}
+              <div className="flex lg:hidden flex-col items-center justify-center mb-3">
+                <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-white flex items-center justify-center p-2">
+                  {/* Aura douce orange & bleue */}
+                  <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-[#f2811d]/12 via-white to-blue-500/8 blur-md pointer-events-none" />
+                  <img
+                    key={`card-${currentIllustration}`}
+                    src={currentIllustration}
+                    alt={illustrationAlt}
+                    className="relative z-10 w-full h-full object-contain transition-transform duration-300 hover:scale-105"
+                    style={{ mixBlendMode: "multiply" }}
+                  />
+                </div>
+              </div>
 
-        </div>
+              {/* 2. Titre & Sous-titre */}
+              <div className="text-center mb-4">
+                <h2 className="font-display text-xl sm:text-2xl font-black text-[#0a1c38] tracking-tight">
+                  {isForgotPassword
+                    ? "Mot de passe oublié"
+                    : isSignup
+                      ? "Créez votre compte"
+                      : "Bienvenue sur samre"}
+                </h2>
+                <p className="mt-0.5 text-xs text-slate-500">
+                  {isForgotPassword
+                    ? "Entrez votre email pour réinitialiser votre accès."
+                    : isSignup
+                      ? "Inscrivez-vous pour commencer à utiliser la platforme"
+                      : "Connectez-vous à votre compte pour continuer."}
+                </p>
+              </div>
 
-      </div>
+              {/* Alerte Erreur */}
+              {error && (
+                <div className="mb-4 rounded-2xl border border-red-200 bg-red-50 p-3 text-xs font-semibold text-red-700 flex items-center gap-2">
+                  <span className="h-1.5 w-1.5 rounded-full bg-red-500 shrink-0" />
+                  <span>{error}</span>
+                </div>
+              )}
 
-      {/* Colonne droite : Formulaire centré et spacieux adapté au PC & Mobile */}
-      <div className="col-span-12 lg:col-span-7 xl:col-span-7 flex flex-col items-center justify-center p-4 sm:p-8 lg:p-12 min-h-screen">
-        <div className="w-full max-w-[480px] mb-4">
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-slate-600 transition hover:bg-white hover:text-navy-950"
-          >
-            <ArrowLeft size={16} />
-            <span>Retour au site</span>
-          </Link>
-        </div>
+              {/* ─── VUE MOT DE PASSE OUBLIÉ ─── */}
+              {isForgotPassword ? (
+                <div className="w-full">
+                  {successMsg ? (
+                    <div className="space-y-4 text-center py-2">
+                      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 shadow-xs">
+                        <CheckCircle2 size={30} />
+                      </div>
+                      <div className="rounded-2xl border border-emerald-200 bg-emerald-50/80 p-4 text-xs text-emerald-800">
+                        <p className="font-bold">{successMsg}</p>
+                        <p className="mt-1 text-[11px] text-emerald-700">
+                          Vérifiez votre boîte de réception ainsi que vos courriers indésirables.
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setActiveMode("login");
+                          setError(null);
+                          setSuccessMsg(null);
+                        }}
+                        className="flex w-full items-center justify-center rounded-full bg-[#0a1c38] py-3.5 text-xs font-bold text-white shadow-md transition hover:bg-[#122c54]"
+                      >
+                        <span>Retour à la connexion</span>
+                      </button>
+                    </div>
+                  ) : (
+                    <form onSubmit={handleForgotPassword} className="space-y-4 w-full">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1 pl-1">
+                          Email
+                        </label>
+                        <input
+                          type="email"
+                          required
+                          autoComplete="email"
+                          value={forgotEmail}
+                          onChange={(e) => setForgotEmail(e.target.value)}
+                          placeholder="Entrez votre adresse email"
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-800 text-xs sm:text-sm placeholder:text-slate-400 outline-none transition focus:border-[#f2811d] focus:ring-4 focus:ring-[#f2811d]/12 shadow-xs"
+                        />
+                      </div>
 
-        {/* En-tête mobile (visible uniquement sur mobile) */}
-        <div className="mb-6 flex items-center gap-3 lg:hidden">
-          <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white p-2 shadow-xs ring-1 ring-slate-200">
-            <Image
-              src="/logo.png"
-              alt="SAMRE Logo"
-              width={36}
-              height={36}
-              className="h-8 w-8 object-contain"
-              priority
-            />
-          </div>
-          <div className="flex flex-col">
-            <span className="font-display text-xl font-black tracking-wider text-navy-950">
-              SAMRE
-            </span>
-            <span className="text-[10px] text-slate-400">Plateforme de test</span>
-          </div>
-        </div>
+                      <button
+                        type="submit"
+                        disabled={loading}
+                        className="mt-2 flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#f2811d] to-[#ea580c] py-3 text-xs sm:text-sm font-bold text-white shadow-md shadow-[#f2811d]/25 transition hover:brightness-105 active:scale-[0.99] disabled:opacity-60"
+                      >
+                        {loading ? (
+                          <>
+                            <Loader2 size={16} className="animate-spin" />
+                            <span>Envoi en cours...</span>
+                          </>
+                        ) : (
+                          <span>Envoyer les instructions</span>
+                        )}
+                      </button>
 
-        {/* Carte Formulaire principale */}
-        <div className="w-full max-w-[480px] rounded-[32px] bg-white p-7 sm:p-10 shadow-xl shadow-slate-200/70 border border-slate-100 flex flex-col">
-          {/* Logo discret en haut de la carte sur PC */}
-          <div className="hidden lg:flex items-center justify-center gap-2 mb-4">
-            <Image
-              src="/logo.png"
-              alt="SAMRE Logo"
-              width={32}
-              height={32}
-              className="h-7 w-7 object-contain"
-            />
-            <span className="font-display text-base font-black tracking-wider text-navy-950">
-              SAMRE
-            </span>
-          </div>
-
-          {/* Illustration sur mobile uniquement (sur PC elle est déjà dans le panneau gauche) */}
-          <div className="my-2 flex items-center justify-center lg:hidden">
-            {isForgotPassword ? (
-              <ForgotPasswordIllustration className="h-28 w-auto" />
-            ) : isSignup ? (
-              <SignUpIllustration className="h-28 w-auto" />
-            ) : (
-              <SignInIllustration className="h-28 w-auto" />
-            )}
-          </div>
-
-          {/* Titre et sous-titre */}
-          <div className="text-center w-full mb-6">
-            <h2 className="font-display text-2xl font-black text-navy-950 tracking-tight">
-              {isForgotPassword
-                ? "Mot de passe oublié ?"
-                : isSignup
-                ? "Créer un compte"
-                : "Se connecter"}
-            </h2>
-            <p className="mt-1.5 text-xs text-slate-500 max-w-sm mx-auto leading-relaxed">
-              {isForgotPassword
-                ? "Entrez votre adresse e-mail pour recevoir vos instructions de réinitialisation."
-                : isSignup
-                ? "Rejoignez le panel SAMRE et commencez à tester des applications dès aujourd'hui."
-                : "Entrez vos identifiants pour accéder à votre espace testeur."}
-            </p>
-          </div>
-
-          {/* Alerte Erreur */}
-          {error && (
-            <div className="mb-5 w-full rounded-2xl border border-red-200 bg-red-50 p-3.5 text-xs font-semibold text-red-700">
-              {error}
-            </div>
-          )}
-
-          {/* ========================================================================= */}
-          {/* VUE MOT DE PASSE OUBLIÉ */}
-          {/* ========================================================================= */}
-          {isForgotPassword ? (
-            <div className="w-full">
-              {successMsg ? (
-                <div className="space-y-4 text-center py-2">
-                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-600">
-                    <CheckCircle2 size={26} />
-                  </div>
-                  <div className="rounded-2xl border border-emerald-200 bg-emerald-50/80 p-3.5 text-xs text-emerald-800">
-                    <p className="font-bold">{successMsg}</p>
-                    <p className="mt-1 text-[11px] text-emerald-700">
-                      Vérifiez votre boîte de réception ainsi que vos courriers indésirables.
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setActiveMode("login");
-                      setError(null);
-                      setSuccessMsg(null);
-                    }}
-                    className="flex w-full items-center justify-center rounded-2xl bg-navy-950 py-3.5 text-xs font-bold text-white shadow-md transition hover:bg-navy-900"
-                  >
-                    <span>Retour à la connexion</span>
-                  </button>
+                      <div className="pt-2 text-center">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setActiveMode("login");
+                            setError(null);
+                          }}
+                          className="text-xs font-semibold text-slate-500 hover:text-[#0a1c38] transition"
+                        >
+                          Retour à la connexion
+                        </button>
+                      </div>
+                    </form>
+                  )}
                 </div>
               ) : (
-                <form onSubmit={handleForgotPassword} className="space-y-3.5 w-full">
-                  <div>
-                    <div className="relative">
-                      <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
-                        <Mail size={17} />
-                      </div>
+                /* ─── FORMULAIRE CONNEXION & INSCRIPTION SANS LES BOUTONS GOOGLE/RESEAUX ─── */
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    handleSubmit();
+                  }}
+                  className="space-y-3 w-full"
+                >
+                  {/* Champ Nom complet (Inscription uniquement) */}
+                  {isSignup && (
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1 pl-1">
+                        Nom complet
+                      </label>
                       <input
-                        type="email"
+                        type="text"
                         required
-                        autoComplete="email"
-                        value={forgotEmail}
-                        onChange={(e) => setForgotEmail(e.target.value)}
-                        placeholder="vous@exemple.com"
-                        className="w-full rounded-2xl border border-slate-200 bg-slate-50/60 py-3 pl-10 pr-4 text-xs text-navy-950 placeholder:text-slate-400 outline-none transition focus:border-brand-orange focus:bg-white focus:ring-1 focus:ring-brand-orange"
+                        value={[form.prenom, form.nom].filter(Boolean).join(" ")}
+                        onChange={handleFullNameChange}
+                        placeholder="Entrez votre nom complet"
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-800 text-xs sm:text-sm placeholder:text-slate-400 outline-none transition focus:border-[#f2811d] focus:ring-4 focus:ring-[#f2811d]/12 shadow-xs"
                       />
+                    </div>
+                  )}
+
+                  {/* Champ Email */}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1 pl-1">
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      required
+                      autoComplete="email"
+                      value={form.email}
+                      onChange={update("email")}
+                      placeholder="Entrez votre adresse email"
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-800 text-xs sm:text-sm placeholder:text-slate-400 outline-none transition focus:border-[#f2811d] focus:ring-4 focus:ring-[#f2811d]/12 shadow-xs"
+                    />
+                  </div>
+
+                  {/* Champ Téléphone (Inscription uniquement - pour Mobile Money T-Money & Flooz) */}
+                  {isSignup && (
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1 pl-1 flex items-center justify-between">
+                        <span>Téléphone</span>
+                      </label>
+                      <input
+                        type="tel"
+                        required
+                        value={form.telephone}
+                        onChange={update("telephone")}
+                        placeholder="+228 90 00 00 00"
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-800 text-xs sm:text-sm placeholder:text-slate-400 outline-none transition focus:border-[#f2811d] focus:ring-4 focus:ring-[#f2811d]/12 shadow-xs"
+                      />
+                    </div>
+                  )}
+
+                  {/* Champ Mot de passe */}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1 pl-1">
+                      Mot de passe
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        required
+                        autoComplete={isSignup ? "new-password" : "current-password"}
+                        value={form.password}
+                        onChange={update("password")}
+                        placeholder={isSignup ? "Créez un mot de passe (6+ caractères)" : "Entrez votre mot de passe"}
+                        className="w-full px-3.5 py-2.5 pr-11 rounded-xl bg-white border border-slate-200 text-slate-800 text-xs sm:text-sm placeholder:text-slate-400 outline-none transition focus:border-[#f2811d] focus:ring-4 focus:ring-[#f2811d]/12 shadow-xs"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400 hover:text-slate-700 transition"
+                        aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                      >
+                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
                     </div>
                   </div>
 
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="flex w-full items-center justify-center gap-2 rounded-2xl bg-brand-orange py-3.5 text-xs font-bold text-white shadow-md shadow-brand-orange/25 transition hover:bg-orange-600 active:scale-98 disabled:opacity-60"
-                  >
-                    {loading ? (
-                      <>
-                        <Loader2 size={15} className="animate-spin" />
-                        <span>Envoi en cours...</span>
-                      </>
-                    ) : (
-                      <span>Envoyer les instructions</span>
-                    )}
-                  </button>
+                  {/* Ligne "Remember me" et "Forgot Password?" (Connexion uniquement) */}
+                  {!isSignup && (
+                    <div className="flex items-center justify-between pt-0.5 px-1">
+                      <label className="flex items-center gap-2 cursor-pointer select-none text-xs font-medium text-slate-600">
+                        <input
+                          type="checkbox"
+                          checked={rememberMe}
+                          onChange={(e) => setRememberMe(e.target.checked)}
+                          className="h-4 w-4 rounded border-slate-300 text-[#f2811d] focus:ring-[#f2811d]/20 accent-[#f2811d]"
+                        />
+                        <span>Se souvenir de moi</span>
+                      </label>
 
-                  <div className="pt-2 text-center">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setActiveMode("forgot-password");
+                          setError(null);
+                        }}
+                        className="text-xs font-bold text-[#f2811d] hover:text-[#ea580c] transition"
+                      >
+                        Mot de passe oublié?
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Bouton CTA plein avec touche SAMRÉ */}
+                  <div className="pt-1.5">
                     <button
-                      type="button"
-                      onClick={() => {
-                        setActiveMode("login");
-                        setError(null);
-                      }}
-                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-navy-950 transition"
+                      type="submit"
+                      disabled={loading}
+                      className={`w-full py-3 rounded-full font-bold text-xs sm:text-sm text-white shadow-md active:scale-[0.99] transition flex items-center justify-center gap-2 disabled:opacity-60 ${isSignup
+                        ? "bg-gradient-to-r from-[#f2811d] to-[#ea580c] shadow-[#f2811d]/25 hover:brightness-105"
+                        : "bg-[#0a1c38] hover:bg-[#122c54] shadow-[#0a1c38]/20"
+                        }`}
                     >
-                      <ArrowLeft size={13} />
-                      <span>Retour à la connexion</span>
+                      {loading ? (
+                        <>
+                          <Loader2 size={16} className="animate-spin" />
+                          <span>Chargement...</span>
+                        </>
+                      ) : (
+                        <span>{isSignup ? "Créer un compte" : "Se connecter"}</span>
+                      )}
                     </button>
+                  </div>
+
+                  {/* Footer avec lien d'inversion de mode (SANS LES TRUCS GOOGLE) */}
+                  <div className="pt-3 text-center text-xs text-slate-500 border-t border-slate-100 mt-3">
+                    {isSignup ? (
+                      <span>
+                        Vous avez déjà un compte?{" "}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setActiveMode("login");
+                            setError(null);
+                          }}
+                          className="font-bold text-[#0a1c38] hover:text-[#f2811d] transition underline ml-1"
+                        >
+                          Connectez-vous
+                        </button>
+                      </span>
+                    ) : (
+                      <span>
+                        Je n&apos;ai pas de compte?{" "}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setActiveMode("signup");
+                            setError(null);
+                          }}
+                          className="font-bold text-[#f2811d] hover:text-[#ea580c] transition underline ml-1"
+                        >
+                          Inscrivez-vous
+                        </button>
+                      </span>
+                    )}
                   </div>
                 </form>
               )}
+
             </div>
-          ) : (
-            /* ========================================================================= */
-            /* FORMULAIRE CONNEXION & INSCRIPTION (Fidèle à Image 4 & 5) */
-            /* ========================================================================= */
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleSubmit();
-              }}
-              className="space-y-3.5 w-full"
-            >
-              {/* Champ Nom complet (Seulement pour l'inscription) */}
-              {isSignup && (
-                <div>
-                  <div className="relative">
-                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
-                      <User size={17} />
-                    </div>
-                    <input
-                      type="text"
-                      required
-                      value={[form.prenom, form.nom].filter(Boolean).join(" ")}
-                      onChange={handleFullNameChange}
-                      placeholder="Nom complet"
-                      className="w-full rounded-2xl border border-slate-200 bg-slate-50/60 py-3 pl-10 pr-4 text-xs text-navy-950 placeholder:text-slate-400 outline-none transition focus:border-brand-orange focus:bg-white focus:ring-1 focus:ring-brand-orange"
-                    />
-                  </div>
-                </div>
-              )}
+          </div>
 
-              {/* Champ Adresse Email */}
-              <div>
-                <div className="relative">
-                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
-                    <Mail size={17} />
-                  </div>
-                  <input
-                    type="email"
-                    required
-                    autoComplete="email"
-                    value={form.email}
-                    onChange={update("email")}
-                    placeholder="vous@exemple.com"
-                    className="w-full rounded-2xl border border-slate-200 bg-slate-50/60 py-3 pl-10 pr-4 text-xs text-navy-950 placeholder:text-slate-400 outline-none transition focus:border-brand-orange focus:bg-white focus:ring-1 focus:ring-brand-orange"
-                  />
-                </div>
-              </div>
-
-              {/* Champ Mot de passe */}
-              <div>
-                <div className="relative">
-                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
-                    <Lock size={17} />
-                  </div>
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    required
-                    autoComplete={isSignup ? "new-password" : "current-password"}
-                    value={form.password}
-                    onChange={update("password")}
-                    placeholder={isSignup ? "8 caractères minimum" : "••••••••"}
-                    className="w-full rounded-2xl border border-slate-200 bg-slate-50/60 py-3 pl-10 pr-11 text-xs text-navy-950 placeholder:text-slate-400 outline-none transition focus:border-brand-orange focus:bg-white focus:ring-1 focus:ring-brand-orange"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400 hover:text-navy-900 transition"
-                  >
-                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
-                </div>
-              </div>
-
-              {/* Lien Mot de passe oublié (En mode connexion seulement) */}
-              {!isSignup && (
-                <div className="flex justify-end pt-0.5">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setActiveMode("forgot-password");
-                      setError(null);
-                    }}
-                    className="text-xs font-bold text-brand-orange hover:underline transition"
-                  >
-                    Mot de passe oublié ?
-                  </button>
-                </div>
-              )}
-
-              {/* Mention CGU en mode inscription */}
-              {isSignup && (
-                <p className="text-[11px] text-slate-400 leading-tight">
-                  En vous inscrivant, vous acceptez les Conditions d&apos;utilisation et la Politique de confidentialité.
-                </p>
-              )}
-
-              {/* Bouton d'action principal */}
-              <button
-                type="submit"
-                disabled={loading}
-                className={`mt-2 flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 text-xs font-bold text-white shadow-md transition active:scale-98 disabled:opacity-60 ${
-                  isSignup
-                    ? "bg-brand-orange shadow-brand-orange/25 hover:bg-orange-600"
-                    : "bg-navy-950 hover:bg-navy-900"
-                }`}
-              >
-                {loading ? (
-                  <>
-                    <Loader2 size={16} className="animate-spin" />
-                    <span>Chargement...</span>
-                  </>
-                ) : (
-                  <span>{isSignup ? "Créer mon compte" : "Se connecter"}</span>
-                )}
-              </button>
-
-              {/* Pied de carte : Inversion de mode */}
-              <div className="pt-3 text-center text-xs text-slate-500 border-t border-slate-100 mt-4">
-                {isSignup ? (
-                  <span>
-                    Déjà un compte ?{" "}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setActiveMode("login");
-                        setError(null);
-                      }}
-                      className="font-bold text-brand-orange hover:underline ml-1"
-                    >
-                      Se connecter
-                    </button>
-                  </span>
-                ) : (
-                  <span>
-                    Pas encore de compte ?{" "}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setActiveMode("signup");
-                        setError(null);
-                      }}
-                      className="font-bold text-brand-orange hover:underline ml-1"
-                    >
-                      Créer un compte
-                    </button>
-                  </span>
-                )}
-              </div>
-            </form>
-          )}
         </div>
-      </div>
+      </main>
+
     </div>
   );
 }
