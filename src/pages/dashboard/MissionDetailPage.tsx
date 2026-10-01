@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import Link, { useParams, useRouter } from "@/lib/router";
 import {
   ArrowLeft,
+  ArrowRight,
   Loader2,
   CheckCircle2,
   Circle,
@@ -22,6 +23,10 @@ import {
   Send,
   KeyRound,
   Flame,
+  X,
+  XCircle,
+  Trophy,
+  Award,
 } from "lucide-react";
 import {
   missionsApi,
@@ -85,6 +90,7 @@ export default function MissionDetailPage() {
   const [starting, setStarting] = useState(false);
 
   // Feedback Form State
+  const [showFeedbackView, setShowFeedbackView] = useState(false);
   const [note, setNote] = useState<number>(5);
   const [facilite, setFacilite] = useState<string>("Facile");
   const [pointsPositifs, setPointsPositifs] = useState("");
@@ -131,36 +137,34 @@ export default function MissionDetailPage() {
 
       if (userPart) {
         const totalDays = m.applicationEntity?.dureeJoursDefaut || 14;
-        const startDate = new Date(userPart.dateDebut || userPart.dateCreation || Date.now());
-        const today = new Date();
-        const startUtc = Date.UTC(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
-        const todayUtc = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate());
-        const elapsedDays = Math.max(1, Math.floor((todayUtc - startUtc) / 86400000) + 1);
-        const fallbackDay = Math.min(totalDays, elapsedDays, (userPart.etapesCompletees || 0) + 1);
-        const allowedDay = dailyCode?.hasActiveMission && dailyCode.missionId === missionId
-          ? dailyCode.jour
-          : fallbackDay;
-        const previousUnlockedDay = unlockedDayRef.current;
+        const validatedDays = new Set((userPart.joursValides || []).map(Number));
+        const validatedCount = Math.max(userPart.etapesCompletees || 0, validatedDays.size);
+        const allowedDay = Math.min(totalDays, validatedCount + 1);
+
         const previousSelected = selectedEtapeRef.current;
         const previousSelectedDay = previousSelected
           ? previousSelected.jour || previousSelected.ordre
           : 0;
+
         const currentEtape = sorted.find((etape) => (etape.jour || etape.ordre) === allowedDay)
           || sorted[Math.min(allowedDay - 1, sorted.length - 1)];
 
-        if (currentEtape) {
-          // Si l'utilisateur est déjà sur une étape (ex: Jour 5), on la maintient
-          // pour qu'il voie immédiatement le message de validation réussie lors d'une synchronisation
-          const nextSelected = previousSelected
-            ? (sorted.find((etape) => etape.id === previousSelected.id) || currentEtape)
-            : currentEtape;
+        // Si l'étape précédente était déjà validée, on passe directement à la nouvelle étape débloquée
+        const isPreviousValidated = previousSelectedDay > 0 && (
+          validatedDays.has(previousSelectedDay) || previousSelectedDay <= validatedCount
+        );
 
+        const nextSelected = (previousSelected && !isPreviousValidated)
+          ? (sorted.find((etape) => etape.id === previousSelected.id) || currentEtape)
+          : currentEtape;
+
+        if (nextSelected) {
           unlockedDayRef.current = allowedDay;
           setUnlockedDay(allowedDay);
           selectedEtapeRef.current = nextSelected;
           setSelectedEtape(nextSelected);
 
-          // Toujours synchroniser la référence (même en arrière-plan) pour détecter instantanément la validation
+          // Toujours synchroniser la référence pour charger le code du jour
           await loadReferenceForEtape(nextSelected.id, userPart, quiet);
         }
       }
@@ -179,16 +183,23 @@ export default function MissionDetailPage() {
       setValidationResult(null);
       setSimResult(null);
       setInputCode("");
+      setCurrentReference(null);
+      setSimCode("");
     }
     try {
       const ref = await referencesApi.forEtape(etapeId);
-      setCurrentReference(ref);
-      if (ref) {
-        setSimCode(ref.reference || "");
-        setSimPanelisteId(ref.panelisteUid || userPart?.panelisteUid || participation?.panelisteUid || "");
+      if (selectedEtapeRef.current?.id === etapeId) {
+        setCurrentReference(ref);
+        if (ref) {
+          setSimCode(ref.reference || "");
+          setSimPanelisteId(ref.panelisteUid || userPart?.panelisteUid || participation?.panelisteUid || "");
+        }
       }
     } catch {
-      if (!quiet) setCurrentReference(null);
+      if (selectedEtapeRef.current?.id === etapeId) {
+        setCurrentReference(null);
+        setSimCode("");
+      }
     } finally {
       if (!quiet) setLoadingRef(false);
     }
@@ -240,10 +251,10 @@ export default function MissionDetailPage() {
   useEffect(() => {
     if (!Number.isNaN(missionId)) {
       loadAll();
-      // Auto-rafraîchissement toutes les 2s pour détecter la validation mobile immédiatement
+      // Rafraîchissement périodique réactif toutes les 3.5s pour détecter instantanément la validation mobile
       const interval = setInterval(() => {
         loadAll(true);
-      }, 2000);
+      }, 3500);
       return () => clearInterval(interval);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -280,6 +291,8 @@ export default function MissionDetailPage() {
     if ((etape.jour || etape.ordre) > unlockedDay) return;
     selectedEtapeRef.current = etape;
     setSelectedEtape(etape);
+    setCurrentReference(null);
+    setSimCode("");
     setDailyComment("");
     setDailyCommentSent(false);
     loadReferenceForEtape(etape.id);
@@ -626,65 +639,6 @@ export default function MissionDetailPage() {
         {/* 5. Suivi de progression & Test actif (uniquement si en cours ou terminée) */}
         {participation && (participation.statut === "en_cours" || participation.statut === "contrat_accepte" || participation.statut === "terminee") && (
           <>
-            {/* Carte Identifiant Unique Panéliste & Téléchargement (Étape 3 du Protocole) */}
-            <section className="rounded-2xl border border-indigo-100 bg-gradient-to-br from-indigo-50/80 via-white to-blue-50/60 p-5 shadow-xs">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-900 flex items-center gap-1.5">
-                    <ShieldCheck size={16} className="text-indigo-600" />
-                    Votre Identifiant Unique Panéliste
-                  </span>
-                  <p className="mt-1 text-xs text-slate-600">
-                    Cet identifiant relie votre compte à cette application (<strong>{mission.application}</strong>). Vous devez le saisir chaque jour dans le formulaire de l&apos;application testée.
-                  </p>
-                  <div className="mt-3 flex items-center gap-2">
-                    <div className="rounded-xl bg-slate-900 px-4 py-2 font-mono text-sm font-bold text-amber-400 select-all shadow-inner tracking-wider">
-                      {participation.panelisteUid || "TST-ATTRIBUÉ"}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (participation.panelisteUid) {
-                          navigator.clipboard.writeText(participation.panelisteUid);
-                          setCopiedTesterId(true);
-                          setTimeout(() => setCopiedTesterId(false), 2500);
-                        }
-                      }}
-                      className="inline-flex items-center gap-1.5 rounded-xl bg-white border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition shadow-2xs"
-                    >
-                      {copiedTesterId ? (
-                        <>
-                          <Check size={14} className="text-emerald-600" />
-                          <span className="text-emerald-600">Copié !</span>
-                        </>
-                      ) : (
-                        <>
-                          <Copy size={14} />
-                          <span>Copier mon identifiant</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-                </div>
-
-                <div className="shrink-0 flex flex-col items-start sm:items-end">
-                  <span className="text-[11px] text-slate-500 mb-1.5 font-medium">
-                    Application à tester :
-                  </span>
-                  <a
-                    href={getApplicationPlayStoreUrl(mission)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-emerald-700 transition active:scale-98"
-                  >
-                    <Play size={14} fill="currentColor" />
-                    <span>Installer sur Google Play</span>
-                    <ExternalLink size={13} />
-                  </a>
-                </div>
-              </div>
-            </section>
-
             {/* Suivi quotidien interactif */}
             {(() => {
               const validatedDays = new Set((participation.joursValides || []).map(Number));
@@ -694,6 +648,7 @@ export default function MissionDetailPage() {
               );
               const totalStepsCount = mission.applicationEntity?.dureeJoursDefaut || participation.etapesTotal || etapes.length || 14;
               const calculatedProgression = Math.min(100, Math.round((validatedStepsCount / Math.max(1, totalStepsCount)) * 100));
+              const unlockedDay = Math.min(totalStepsCount, validatedStepsCount + 1);
 
               return (
                 <section className="rounded-3xl border border-slate-200/80 bg-white p-4 sm:p-5 shadow-xs">
@@ -724,40 +679,53 @@ export default function MissionDetailPage() {
 
                   {/* Carrousel horizontal des jours */}
                   <div className="mt-3.5 flex items-center gap-2 overflow-x-auto pb-1.5 scrollbar-none">
-                    {etapes.map((etape, index) => {
-                      const day = etape.jour || etape.ordre;
-                      const isCompletedForUser = index < validatedStepsCount
-                        || validatedDays.has(day);
-                      const isCurrent = selectedEtape?.id === etape.id;
-                      const isPast = isCompletedForUser;
-                      const isLocked = day > unlockedDay;
+                    {(() => {
+                      const startDate = new Date(participation.dateDebut || participation.dateCreation || Date.now());
+                      const now = new Date();
+                      const startUtc = Date.UTC(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+                      const nowUtc = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+                      const elapsedCalendarDays = Math.max(1, Math.floor((nowUtc - startUtc) / 86400000) + 1);
 
-                      return (
-                        <button
-                          key={etape.id}
-                          type="button"
-                          onClick={() => handleSelectEtape(etape)}
-                          disabled={isLocked}
-                          aria-label={`Jour ${day}${isLocked ? ', verrouillé' : ''}`}
-                          className={`flex h-12 min-w-12 flex-col items-center justify-center rounded-2xl text-[11px] font-bold transition active:scale-95 disabled:cursor-not-allowed ${
-                            isCurrent
-                              ? "border-2 border-brand-orange bg-white text-brand-orange shadow-md scale-105"
-                              : isPast
-                              ? "bg-emerald-500 text-white shadow-xs"
-                              : "bg-slate-100/90 text-slate-400 hover:bg-slate-200/80"
-                          }`}
-                        >
-                          <span className="text-[9px] uppercase opacity-80">J{day}</span>
-                          {isPast ? (
-                            <Check size={14} strokeWidth={3} />
-                          ) : isCurrent ? (
-                            <span className="h-2 w-2 rounded-full bg-brand-orange animate-pulse" />
-                          ) : (
-                            <Lock size={12} className="opacity-60" />
-                          )}
-                        </button>
-                      );
-                    })}
+                      return etapes.map((etape, index) => {
+                        const day = etape.jour || etape.ordre;
+                        const isCompletedForUser = index < validatedStepsCount
+                          || validatedDays.has(day);
+                        const isMissed = !isCompletedForUser && (day < elapsedCalendarDays);
+                        const isCurrent = selectedEtape?.id === etape.id;
+                        const isPast = isCompletedForUser;
+                        const isLocked = day > unlockedDay && !isMissed;
+
+                        return (
+                          <button
+                            key={etape.id}
+                            type="button"
+                            onClick={() => handleSelectEtape(etape)}
+                            disabled={isLocked}
+                            aria-label={`Jour ${day}${isPast ? ', validé' : isMissed ? ', non validé' : isLocked ? ', verrouillé' : ''}`}
+                            className={`flex h-12 min-w-12 flex-col items-center justify-center rounded-2xl text-[11px] font-bold transition active:scale-95 disabled:cursor-not-allowed ${
+                              isCurrent
+                                ? "border-2 border-brand-orange bg-white text-brand-orange shadow-md scale-105"
+                                : isPast
+                                ? "bg-emerald-500 text-white shadow-xs"
+                                : isMissed
+                                ? "bg-rose-500 text-white shadow-xs"
+                                : "bg-slate-100/90 text-slate-400 hover:bg-slate-200/80"
+                            }`}
+                          >
+                            <span className="text-[9px] uppercase opacity-80">J{day}</span>
+                            {isPast ? (
+                              <Check size={14} strokeWidth={3} />
+                            ) : isMissed ? (
+                              <X size={14} strokeWidth={3} />
+                            ) : isCurrent ? (
+                              <span className="h-2 w-2 rounded-full bg-brand-orange animate-pulse" />
+                            ) : (
+                              <Lock size={12} className="opacity-60" />
+                            )}
+                          </button>
+                        );
+                      });
+                    })()}
                   </div>
 
               {/* Bouton pour afficher/masquer la liste détaillée de tous les jours */}
@@ -775,47 +743,58 @@ export default function MissionDetailPage() {
 
               {showAllStepsList && (
                 <div className="mt-2 divide-y divide-slate-100 border-t border-slate-100 pt-1">
-                  {etapes.map((etape, index) => {
-                    const day = etape.jour || etape.ordre;
-                    const isCompletedForUser = index < (participation.etapesCompletees || 0)
-                      || (participation.joursValides || []).includes(day);
-                    const isCurrent = selectedEtape?.id === etape.id;
-                    const isPast = isCompletedForUser;
-                    const isLocked = day > unlockedDay;
+                  {(() => {
+                    const startDate = new Date(participation.dateDebut || participation.dateCreation || Date.now());
+                    const now = new Date();
+                    const startUtc = Date.UTC(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+                    const nowUtc = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+                    const elapsedCalendarDays = Math.max(1, Math.floor((nowUtc - startUtc) / 86400000) + 1);
 
-                    return (
-                      <div
-                        key={etape.id}
-                        onClick={() => !isLocked && handleSelectEtape(etape)}
-                        aria-disabled={isLocked}
-                        className={`flex items-center justify-between py-2 px-2 rounded-xl transition ${isLocked ? "cursor-not-allowed opacity-50" : "cursor-pointer"} ${
-                          isCurrent ? "bg-orange-50/70 border border-orange-100" : "hover:bg-slate-50"
-                        }`}
-                      >
-                        <div className="flex items-center gap-2 min-w-0">
-                          {isPast ? (
-                            <CheckCircle2 size={15} className="text-emerald-500 shrink-0" />
-                          ) : isCurrent ? (
-                            <span className="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-brand-orange text-[8px] font-bold text-white shrink-0">
-                              ●
-                            </span>
-                          ) : (
-                            <Circle size={15} className="text-slate-300 shrink-0" />
-                          )}
-                          <p className={`text-xs font-semibold truncate ${
-                            isCurrent ? "text-navy-900" : isPast ? "text-slate-700" : "text-slate-400"
+                    return etapes.map((etape, index) => {
+                      const day = etape.jour || etape.ordre;
+                      const isCompletedForUser = index < (participation.etapesCompletees || 0)
+                        || (participation.joursValides || []).includes(day);
+                      const isMissed = !isCompletedForUser && (day < elapsedCalendarDays);
+                      const isCurrent = selectedEtape?.id === etape.id;
+                      const isPast = isCompletedForUser;
+                      const isLocked = day > unlockedDay && !isMissed;
+
+                      return (
+                        <div
+                          key={etape.id}
+                          onClick={() => !isLocked && handleSelectEtape(etape)}
+                          aria-disabled={isLocked}
+                          className={`flex items-center justify-between py-2 px-2 rounded-xl transition ${isLocked ? "cursor-not-allowed opacity-50" : "cursor-pointer"} ${
+                            isCurrent ? "bg-orange-50/70 border border-orange-100" : "hover:bg-slate-50"
+                          }`}
+                        >
+                          <div className="flex items-center gap-2 min-w-0">
+                            {isPast ? (
+                              <CheckCircle2 size={15} className="text-emerald-500 shrink-0" />
+                            ) : isMissed ? (
+                              <XCircle size={15} className="text-rose-500 shrink-0" />
+                            ) : isCurrent ? (
+                              <span className="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-brand-orange text-[8px] font-bold text-white shrink-0">
+                                ●
+                              </span>
+                            ) : (
+                              <Circle size={15} className="text-slate-300 shrink-0" />
+                            )}
+                            <p className={`text-xs font-semibold truncate ${
+                              isCurrent ? "text-navy-900" : isPast ? "text-slate-700" : isMissed ? "text-rose-600 line-through" : "text-slate-400"
+                            }`}>
+                              Jour {etape.ordre} — {etape.titre}
+                            </p>
+                          </div>
+                          <span className={`text-[10px] font-bold shrink-0 ml-2 ${
+                            isPast ? "text-emerald-600" : isMissed ? "text-rose-600" : isCurrent ? "text-brand-orange" : "text-slate-400"
                           }`}>
-                            Jour {etape.ordre} — {etape.titre}
-                          </p>
+                            {isPast ? "✓ Validé" : isMissed ? "✗ Non validé" : isCurrent ? "● En cours" : "○ À venir"}
+                          </span>
                         </div>
-                        <span className={`text-[10px] font-bold shrink-0 ml-2 ${
-                          isPast ? "text-emerald-600" : isCurrent ? "text-brand-orange" : "text-slate-400"
-                        }`}>
-                          {isPast ? "✓ Validé" : isCurrent ? "● En cours" : "○ À venir"}
-                        </span>
-                      </div>
-                    );
-                  })}
+                      );
+                    });
+                  })()}
                 </div>
               )}
             </section>
@@ -824,8 +803,17 @@ export default function MissionDetailPage() {
 
             {/* 3. Bloc de validation de l'étape sélectionnée : Étape 4 du protocole */}
             {selectedEtape && !isCompleted && (() => {
-              const etapeIndex = etapes.findIndex((e) => e.id === selectedEtape.id);
-              const isDayValidated = etapeIndex < (participation.etapesCompletees || 0) || currentReference?.statut === "validee";
+              const selectedDay = selectedEtape.jour || selectedEtape.ordre;
+              const validatedDays = new Set((participation.joursValides || []).map(Number));
+              const validatedStepsCount = Math.max(
+                participation.etapesCompletees || 0,
+                validatedDays.size
+              );
+              const unlockedDay = validatedStepsCount + 1;
+              const isDayValidated = validatedDays.has(selectedDay)
+                || (currentReference?.etapeId === selectedEtape.id && currentReference?.statut === "validee")
+                || (currentReference?.jour === selectedDay && currentReference?.statut === "validee");
+              const isLocked = selectedDay > unlockedDay && !isDayValidated;
 
               return (
                 <section className="rounded-2xl border border-slate-100 bg-white p-5 shadow-xs space-y-4">
@@ -881,32 +869,52 @@ export default function MissionDetailPage() {
 
                   {/* État : Journée déjà validée */}
                   {isDayValidated ? (
-                    <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-5 text-emerald-900">
+                    <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-4 sm:p-5 text-emerald-900 shadow-2xs">
                       <div className="flex items-start gap-3.5">
                         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700 shadow-2xs">
                           <CheckCircle2 size={22} />
                         </div>
                         <div className="min-w-0 flex-1">
-                          <h5 className="font-bold text-sm text-emerald-950">
+                          <h5 className="font-bold text-sm sm:text-base text-emerald-950">
                             Jour {selectedEtape.ordre} validé avec succès !
                           </h5>
                           <p className="mt-1 text-xs text-emerald-800 leading-relaxed">
-                            Votre session de test pour aujourd&apos;hui a été bien validée et synchronisée. Votre progression est mise à jour. Rendez-vous demain pour le jour suivant.
+                            Votre session de test a été validée et synchronisée avec succès. Votre progression et vos gains sont enregistrés.
                           </p>
                           <p className="mt-2 text-xs font-semibold text-emerald-900">
                             Gain du jour : {dailyRate.toLocaleString("fr-FR")} FCFA · Total acquis : {earnedTotal.toLocaleString("fr-FR")} FCFA
                           </p>
-                          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-emerald-200/60">
-                            <span className="text-xs font-medium text-emerald-900">
-                              Code validé : <strong className="font-mono bg-white px-2 py-0.5 rounded border border-emerald-200 text-emerald-950">{currentReference?.reference || simCode}</strong>
+                          
+                          <div className="mt-4 pt-3 border-t border-emerald-200/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <span className="text-xs font-medium text-emerald-900 flex items-center gap-1.5 flex-wrap">
+                              <span>Code validé :</span>
+                              <strong className="font-mono bg-white px-2.5 py-1 rounded-lg border border-emerald-300 text-emerald-950 text-xs shadow-2xs">
+                                {(currentReference?.etapeId === selectedEtape.id ? currentReference?.reference : "") || (currentReference?.jour === selectedDay ? currentReference?.reference : "") || "Validé ✓"}
+                              </strong>
                             </span>
-                            <Link
-                              href="/dashboard/missions"
-                              className="inline-flex items-center gap-1.5 rounded-xl bg-navy-900 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-navy-800 transition active:scale-98"
-                            >
-                              <ArrowLeft size={13} />
-                              <span>Retourner à mes missions</span>
-                            </Link>
+
+                            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+                              {etapes.find((e) => (e.jour || e.ordre) === selectedDay + 1) && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const nextE = etapes.find((e) => (e.jour || e.ordre) === selectedDay + 1);
+                                    if (nextE) handleSelectEtape(nextE);
+                                  }}
+                                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-orange px-4 py-2.5 text-xs font-bold text-white shadow-xs hover:bg-orange-600 transition active:scale-98 w-full sm:w-auto"
+                                >
+                                  <span>Passer au Jour {selectedDay + 1}</span>
+                                  <ArrowRight size={14} />
+                                </button>
+                              )}
+                              <Link
+                                href="/dashboard/missions"
+                                className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-navy-900 px-4 py-2.5 text-xs font-bold text-white shadow-xs hover:bg-navy-800 transition active:scale-98 w-full sm:w-auto text-center"
+                              >
+                                <ArrowLeft size={14} />
+                                <span>Retourner aux missions</span>
+                              </Link>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -914,51 +922,122 @@ export default function MissionDetailPage() {
                   ) : (
                     /* État : En attente de validation (L'ESSENTIEL UNIQUE) */
                     <div className="space-y-4">
-                      {/* Carte Unique du Code du Jour */}
-                      <div className="rounded-2xl border border-amber-200 bg-gradient-to-br from-amber-50/80 via-white to-orange-50/40 p-5 shadow-2xs">
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                          <div>
-                            <span className="text-[11px] font-bold uppercase tracking-wider text-amber-900 flex items-center gap-1.5">
-                              <KeyRound size={15} className="text-amber-600" />
-                              Votre Code Unique du Jour (Jour {selectedEtape.ordre})
-                            </span>
-                            <p className="mt-1 text-xs text-slate-600">
-                              Saisissez ce code dans le bouton Samré de votre application pour valider la journée :
-                            </p>
-                            <div className="mt-3 flex items-center gap-3">
-                              <span className="font-mono text-xl sm:text-2xl font-black text-amber-950 tracking-widest bg-white px-4 py-2 rounded-xl border border-amber-300 shadow-inner select-all">
-                                {loadingRef ? "GÉNÉRATION..." : (currentReference?.reference || simCode || "7K9P-4MX2")}
-                              </span>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  const codeToCopy = currentReference?.reference || simCode;
-                                  if (codeToCopy) {
-                                    navigator.clipboard.writeText(codeToCopy);
-                                    setCopiedDailyCode(true);
-                                    setTimeout(() => setCopiedDailyCode(false), 2000);
-                                  }
-                                }}
-                                disabled={loadingRef}
-                                className="inline-flex items-center gap-1.5 rounded-xl bg-amber-500 px-3.5 py-2.5 text-xs font-bold text-white shadow-xs hover:bg-amber-600 transition active:scale-95 disabled:opacity-50"
-                              >
-                                {copiedDailyCode ? (
-                                  <>
-                                    <Check size={14} />
-                                    <span>Copié !</span>
-                                  </>
-                                ) : (
-                                  <>
-                                    <Copy size={14} />
-                                    <span>Copier le code</span>
-                                  </>
-                                )}
-                              </button>
+                      {/* Carte Double : Identifiant Testeur & Code du Jour */}
+                      {isLocked ? (
+                        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5 shadow-2xs">
+                          <div className="flex items-center gap-3 text-slate-700">
+                            <Clock size={20} className="text-slate-500" />
+                            <div>
+                              <p className="text-xs font-bold text-slate-800">
+                                Jour {selectedEtape.ordre} verrouillé
+                              </p>
+                              <p className="text-xs text-slate-500 mt-0.5">
+                                Vous venez de valider votre étape de test. Le code de cette étape sera accessible dans 5 minutes (mode test rapide).
+                              </p>
                             </div>
                           </div>
                         </div>
-                      </div>
+                      ) : (
+                        <div className="rounded-2xl border border-amber-200 bg-gradient-to-br from-amber-50/80 via-white to-orange-50/40 p-4 sm:p-5 shadow-2xs">
+                          <div>
+                            <div className="flex items-center justify-between gap-2 flex-wrap mb-1">
+                              <span className="text-[11px] font-bold uppercase tracking-wider text-amber-900 flex items-center gap-1.5">
+                                <KeyRound size={15} className="text-amber-600" />
+                                Informations de validation (Jour {selectedEtape.ordre})
+                              </span>
+                              <span className="text-[10px] font-semibold text-amber-800 bg-amber-100/70 px-2 py-0.5 rounded-full border border-amber-200">
+                                À copier dans l&apos;application testée
+                              </span>
+                            </div>
+                            <p className="text-xs text-slate-600 mb-4">
+                              Ouvrez l&apos;application sur votre téléphone, cliquez sur le bouton flottant Samré et saisissez ces 2 valeurs :
+                            </p>
 
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                              {/* 1. Identifiant Testeur */}
+                              <div className="rounded-xl border border-blue-200 bg-blue-50/50 p-3.5 flex flex-col justify-between gap-2">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-[10px] font-bold uppercase tracking-wider text-blue-900">
+                                    1. Identifiant Testeur
+                                  </span>
+                                  <span className="text-[9px] text-blue-600 font-medium">Permanent</span>
+                                </div>
+                                <div className="flex items-center justify-between gap-2">
+                                  <span className="font-mono text-base sm:text-lg font-black text-blue-950 tracking-wider bg-white px-3 py-1.5 rounded-lg border border-blue-200 shadow-inner select-all truncate">
+                                    {participation?.panelisteUid || currentReference?.panelisteUid || simPanelisteId || "TST-..."}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const uidToCopy = participation?.panelisteUid || currentReference?.panelisteUid || simPanelisteId;
+                                      if (uidToCopy) {
+                                        navigator.clipboard.writeText(uidToCopy);
+                                        setCopiedTesterId(true);
+                                        setTimeout(() => setCopiedTesterId(false), 2000);
+                                      }
+                                    }}
+                                    className="inline-flex items-center gap-1 rounded-lg bg-blue-600 px-3 py-2 text-xs font-bold text-white shadow-xs hover:bg-blue-700 transition active:scale-95 shrink-0"
+                                  >
+                                    {copiedTesterId ? (
+                                      <>
+                                        <Check size={13} />
+                                        <span>Copié !</span>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Copy size={13} />
+                                        <span>Copier l&apos;ID</span>
+                                      </>
+                                    )}
+                                  </button>
+                                </div>
+                              </div>
+
+                              {/* 2. Code Unique du Jour */}
+                              <div className="rounded-xl border border-amber-200 bg-amber-50/50 p-3.5 flex flex-col justify-between gap-2">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-[10px] font-bold uppercase tracking-wider text-amber-900">
+                                    2. Code Unique du Jour (Jour {selectedEtape.ordre})
+                                  </span>
+                                  <span className="text-[9px] text-amber-700 font-medium">Unique par étape</span>
+                                </div>
+                                <div className="flex items-center justify-between gap-2">
+                                  <span className="font-mono text-base sm:text-lg font-black text-amber-950 tracking-wider bg-white px-3 py-1.5 rounded-lg border border-amber-300 shadow-inner select-all truncate">
+                                    {loadingRef ? "GÉNÉRATION..." : (currentReference?.reference || simCode || "Indisponible")}
+                                  </span>
+                                  {(currentReference?.reference || simCode) && (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        const codeToCopy = currentReference?.reference || simCode;
+                                        if (codeToCopy) {
+                                          navigator.clipboard.writeText(codeToCopy);
+                                          setCopiedDailyCode(true);
+                                          setTimeout(() => setCopiedDailyCode(false), 2000);
+                                        }
+                                      }}
+                                      disabled={loadingRef}
+                                      className="inline-flex items-center gap-1 rounded-lg bg-amber-500 px-3 py-2 text-xs font-bold text-white shadow-xs hover:bg-amber-600 transition active:scale-95 disabled:opacity-50 shrink-0"
+                                    >
+                                      {copiedDailyCode ? (
+                                        <>
+                                          <Check size={13} />
+                                          <span>Copié !</span>
+                                        </>
+                                      ) : (
+                                        <>
+                                          <Copy size={13} />
+                                          <span>Copier le code</span>
+                                        </>
+                                      )}
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -990,174 +1069,220 @@ export default function MissionDetailPage() {
               );
             })()}
 
-            {/* 4. FEEDBACK À LA FIN (Demande explicite de l'utilisateur) */}
+            {/* 4. ÉCRAN DE FIN DE MISSION & RETOURS D'EXPÉRIENCE (FEEDBACK) */}
             {isCompleted && (
-              <section className="rounded-2xl border border-slate-100 bg-white p-5 shadow-xs">
+              <section className="space-y-4">
                 {feedbackSent ? (
-                  <div className="py-6 text-center">
-                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
-                      <CheckCircle size={26} />
+                  <div className="rounded-3xl border border-emerald-200 bg-gradient-to-br from-emerald-50/90 via-white to-green-50/40 p-6 sm:p-8 text-center shadow-xs">
+                    <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-600 shadow-inner">
+                      <Trophy size={32} className="text-amber-500 fill-amber-400" />
                     </div>
-                    <h3 className="mt-3 font-display text-base font-bold text-navy-900">
-                      Merci pour votre feedback !
+                    <h3 className="mt-4 font-display text-lg sm:text-xl font-extrabold text-navy-900">
+                      Félicitations ! Mission clôturée avec succès 🎉
                     </h3>
-                    <p className="mt-1 text-xs text-slate-500 max-w-sm mx-auto">
-                      Votre mission est validée et votre feedback est enregistré. Vous avez mérité {earnedTotal.toLocaleString("fr-FR")} FCFA.
+                    <p className="mt-1.5 text-xs sm:text-sm text-slate-600 max-w-md mx-auto">
+                      Vos <strong>{validatedDayCount} journées de test</strong> ainsi que vos précieux retours d&apos;expérience ont bien été enregistrés.
                     </p>
-                    <Link
-                      href="/dashboard/missions"
-                      className="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-navy-900 px-4 py-2 text-xs font-bold text-white shadow-xs"
-                    >
-                      <span>Retourner aux missions</span>
-                      <ChevronRight size={13} />
-                    </Link>
+                    <div className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-emerald-600 px-5 py-2.5 text-sm font-bold text-white shadow-xs">
+                      <span>Total des gains validés :</span>
+                      <strong className="font-mono text-base">{earnedTotal.toLocaleString("fr-FR")} FCFA</strong>
+                    </div>
+                    <div className="mt-6 flex justify-center">
+                      <Link
+                        href="/dashboard/missions"
+                        className="inline-flex items-center gap-2 rounded-xl bg-navy-900 px-5 py-2.5 text-xs font-bold text-white shadow-xs hover:bg-navy-800 transition active:scale-98"
+                      >
+                        <ArrowLeft size={14} />
+                        <span>Retourner à mes missions</span>
+                      </Link>
+                    </div>
+                  </div>
+                ) : !showFeedbackView ? (
+                  /* VUE 1 : RÉCAPITULATIF DE MISSION TERMINÉE AVEC APPEL AU FEEDBACK */
+                  <div className="rounded-3xl border border-amber-200 bg-gradient-to-br from-amber-50/90 via-white to-orange-50/50 p-6 sm:p-8 shadow-xs">
+                    <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5">
+                      <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-md">
+                        <Trophy size={32} />
+                      </div>
+                      <div className="min-w-0 flex-1 text-center sm:text-left">
+                        <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                          <span className="rounded-full bg-emerald-100 text-emerald-800 font-bold px-3 py-0.5 text-[11px]">
+                            ✓ 100% Validé
+                          </span>
+                          <span className="rounded-full bg-amber-100 text-amber-900 font-semibold px-3 py-0.5 text-[11px]">
+                            {validatedDayCount} / {validatedDayCount} journées complétées
+                          </span>
+                        </div>
+                        <h3 className="mt-2 font-display text-lg sm:text-xl font-black text-navy-900">
+                          Mission terminée avec succès !
+                        </h3>
+                        <p className="mt-1 text-xs sm:text-sm text-slate-600 leading-relaxed max-w-xl">
+                          Vous avez accompli l&apos;intégralité du protocole de test pour l&apos;application <strong>{mission.application}</strong>. Vos gains acquis s&apos;élèvent à :
+                        </p>
+                        <div className="mt-3.5 flex flex-wrap items-center justify-center sm:justify-start gap-3">
+                          <span className="font-mono text-xl sm:text-2xl font-black text-emerald-700 bg-emerald-50 border border-emerald-200 px-4 py-1.5 rounded-xl shadow-2xs">
+                            {earnedTotal.toLocaleString("fr-FR")} FCFA
+                          </span>
+                        </div>
+
+                        {/* Bouton d'action principal vers le Feedback */}
+                        <div className="mt-6 pt-5 border-t border-amber-200/70 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                          <button
+                            type="button"
+                            onClick={() => setShowFeedbackView(true)}
+                            className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-orange px-6 py-3 text-xs font-bold text-white shadow-md hover:bg-orange-600 transition active:scale-98"
+                          >
+                            <MessageSquare size={16} />
+                            <span>Donner mon feedback de testeur</span>
+                            <ArrowRight size={15} />
+                          </button>
+                          <Link
+                            href="/dashboard/missions"
+                            className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-navy-900 px-4 py-3 text-xs font-bold text-white shadow-xs hover:bg-navy-800 transition active:scale-98 text-center"
+                          >
+                            <ArrowLeft size={14} />
+                            <span>Retourner aux missions</span>
+                          </Link>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 ) : (
-                  <form onSubmit={handleSendFeedback} className="space-y-4">
-                    <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-emerald-900">
-                      <p className="text-xs font-bold">Mission validée</p>
-                      <p className="mt-1 text-xs">
-                        Vous avez validé {validatedDayCount} journée{validatedDayCount > 1 ? "s" : ""} et mérité {earnedTotal.toLocaleString("fr-FR")} FCFA.
-                      </p>
-                    </div>
-                    <div className="border-b border-slate-100 pb-3">
-                      <span className="rounded bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 uppercase">
-                        Mission terminée 
+                  /* VUE 2 : PAGE / FORMULAIRE DE RETOURS (FEEDBACK) */
+                  <div className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-xs">
+                    <div className="mb-5 flex items-center justify-between gap-3 pb-4 border-b border-slate-100">
+                      <button
+                        type="button"
+                        onClick={() => setShowFeedbackView(false)}
+                        className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-navy-900 transition"
+                      >
+                        <ArrowLeft size={14} />
+                        <span>Revenir au récapitulatif</span>
+                      </button>
+                      <span className="rounded-full bg-brand-orange/10 px-3 py-1 text-[11px] font-bold text-brand-orange uppercase">
+                        Étape finale : Retours d&apos;expérience
                       </span>
-                      <h3 className="mt-1 font-display text-base font-bold text-navy-900">
-                        Donnez votre feedback de testeur
-                      </h3>
-                      <p className="text-xs text-slate-500">
-                        Votre retour d&apos;expérience permet aux équipes d&apos;améliorer l&apos;application.
-                      </p>
                     </div>
 
-                    {/* Note globale (1 à 5 étoiles) */}
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                        Note globale de l&apos;application :
-                      </label>
-                      <div className="flex items-center gap-2">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <button
-                            key={star}
-                            type="button"
-                            onClick={() => setNote(star)}
-                            className="p-1 text-amber-400 hover:scale-110 transition"
-                          >
-                            <Star
-                              size={22}
-                              fill={star <= note ? "currentColor" : "none"}
-                              stroke="currentColor"
-                            />
-                          </button>
-                        ))}
-                        <span className="text-xs font-bold text-navy-900 ml-2">{note} / 5</span>
+                    <form onSubmit={handleSendFeedback} className="space-y-4 max-w-2xl">
+                      <div>
+                        <h3 className="font-display text-base sm:text-lg font-bold text-navy-900">
+                          Votre avis sur l&apos;application testée ({mission.application})
+                        </h3>
+                        <p className="mt-0.5 text-xs text-slate-500">
+                          Vos retours permettent aux développeurs d&apos;améliorer la qualité et l&apos;ergonomie de l&apos;application.
+                        </p>
                       </div>
-                    </div>
 
-                    {/* Facilité d'utilisation */}
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                        Facilité d&apos;utilisation :
-                      </label>
-                      <div className="grid grid-cols-4 gap-2">
-                        {["Très facile", "Facile", "Moyenne", "Difficile"].map((level) => (
-                          <button
-                            key={level}
-                            type="button"
-                            onClick={() => setFacilite(level)}
-                            className={`rounded-xl py-1.5 text-xs font-medium border transition ${
-                              facilite === level
-                                ? "bg-navy-900 text-white border-navy-900"
-                                : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
-                            }`}
-                          >
-                            {level}
-                          </button>
-                        ))}
+                      {/* Note globale (1 à 5 étoiles) */}
+                      <div className="rounded-2xl bg-slate-50 p-4 border border-slate-100">
+                        <label className="block text-xs font-bold text-navy-900 mb-2">
+                          Note globale de l&apos;application :
+                        </label>
+                        <div className="flex items-center gap-2">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <button
+                              key={star}
+                              type="button"
+                              onClick={() => setNote(star)}
+                              className="p-1 text-amber-400 hover:scale-115 transition"
+                            >
+                              <Star
+                                size={26}
+                                fill={star <= note ? "currentColor" : "none"}
+                                stroke="currentColor"
+                              />
+                            </button>
+                          ))}
+                          <span className="text-sm font-black text-navy-900 ml-3">{note} / 5 étoiles</span>
+                        </div>
                       </div>
-                    </div>
 
-                    {/* Points positifs */}
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">
-                        Points positifs :
-                      </label>
-                      <textarea
-                        rows={2}
-                        value={pointsPositifs}
-                        onChange={(e) => setPointsPositifs(e.target.value)}
-                        placeholder="Ce qui a bien fonctionné, les aspects agréables..."
-                        className="w-full rounded-xl border border-slate-200 p-2.5 text-xs text-navy-900 focus:border-brand-orange focus:outline-none focus:ring-1 focus:ring-brand-orange"
-                      />
-                    </div>
+                      {/* Facilité d'utilisation */}
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                          Facilité d&apos;utilisation globale :
+                        </label>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                          {["Très facile", "Facile", "Moyenne", "Difficile"].map((level) => (
+                            <button
+                              key={level}
+                              type="button"
+                              onClick={() => setFacilite(level)}
+                              className={`rounded-xl py-2 text-xs font-bold border transition ${
+                                facilite === level
+                                  ? "bg-navy-900 text-white border-navy-900 shadow-xs"
+                                  : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
+                              }`}
+                            >
+                              {level}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
 
-                    {/* Problèmes rencontrés */}
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">
-                        Problèmes rencontrés :
-                      </label>
-                      <textarea
-                        rows={2}
-                        value={problemes}
-                        onChange={(e) => setProblemes(e.target.value)}
-                        placeholder="Bugs, plantages, lenteurs constatées..."
-                        className="w-full rounded-xl border border-slate-200 p-2.5 text-xs text-navy-900 focus:border-brand-orange focus:outline-none focus:ring-1 focus:ring-brand-orange"
-                      />
-                    </div>
+                      {/* Points positifs */}
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-700 mb-1">
+                          Points forts & éléments appréciés :
+                        </label>
+                        <textarea
+                          rows={2}
+                          value={pointsPositifs}
+                          onChange={(e) => setPointsPositifs(e.target.value)}
+                          placeholder="Ce qui a bien fonctionné, fluidité, design, fonctionnalités..."
+                          className="w-full rounded-xl border border-slate-200 p-3 text-xs text-navy-900 focus:border-brand-orange focus:outline-none focus:ring-1 focus:ring-brand-orange"
+                        />
+                      </div>
 
-                    {/* Difficultés */}
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">
-                        Difficultés ou incompréhensions :
-                      </label>
-                      <textarea
-                        rows={2}
-                        value={difficultes}
-                        onChange={(e) => setDifficultes(e.target.value)}
-                        placeholder="Textes peu clairs, étapes difficiles à trouver..."
-                        className="w-full rounded-xl border border-slate-200 p-2.5 text-xs text-navy-900 focus:border-brand-orange focus:outline-none focus:ring-1 focus:ring-brand-orange"
-                      />
-                    </div>
+                      {/* Problèmes rencontrés */}
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-700 mb-1">
+                          Bugs ou problèmes rencontrés :
+                        </label>
+                        <textarea
+                          rows={2}
+                          value={problemes}
+                          onChange={(e) => setProblemes(e.target.value)}
+                          placeholder="Bugs visuels, plantages, lenteurs, erreurs..."
+                          className="w-full rounded-xl border border-slate-200 p-3 text-xs text-navy-900 focus:border-brand-orange focus:outline-none focus:ring-1 focus:ring-brand-orange"
+                        />
+                      </div>
 
-                    {/* Suggestions d'amélioration */}
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">
-                        Suggestions d&apos;amélioration :
-                      </label>
-                      <textarea
-                        rows={2}
-                        value={ameliorations}
-                        onChange={(e) => setAmeliorations(e.target.value)}
-                        placeholder="Fonctionnalités souhaitées, modifications recommandées..."
-                        className="w-full rounded-xl border border-slate-200 p-2.5 text-xs text-navy-900 focus:border-brand-orange focus:outline-none focus:ring-1 focus:ring-brand-orange"
-                      />
-                    </div>
+                      {/* Suggestions d'amélioration */}
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-700 mb-1">
+                          Suggestions d&apos;amélioration :
+                        </label>
+                        <textarea
+                          rows={2}
+                          value={ameliorations}
+                          onChange={(e) => setAmeliorations(e.target.value)}
+                          placeholder="Idées de nouvelles fonctionnalités, ajustements souhaités..."
+                          className="w-full rounded-xl border border-slate-200 p-3 text-xs text-navy-900 focus:border-brand-orange focus:outline-none focus:ring-1 focus:ring-brand-orange"
+                        />
+                      </div>
 
-                    {/* Commentaire général */}
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">
-                        Commentaire général :
-                      </label>
-                      <textarea
-                        rows={2}
-                        value={commentaires}
-                        onChange={(e) => setCommentaires(e.target.value)}
-                        placeholder="Remarques supplémentaires..."
-                        className="w-full rounded-xl border border-slate-200 p-2.5 text-xs text-navy-900 focus:border-brand-orange focus:outline-none focus:ring-1 focus:ring-brand-orange"
-                      />
-                    </div>
-
-                    <button
-                      type="submit"
-                      disabled={sendingFeedback}
-                      className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-orange py-2.5 text-xs font-bold text-white shadow-xs transition hover:bg-orange-600 disabled:opacity-50"
-                    >
-                      {sendingFeedback && <Loader2 size={15} className="animate-spin" />}
-                      <span>Envoyer mon feedback</span>
-                    </button>
-                  </form>
+                      <div className="pt-3 flex flex-col sm:flex-row gap-2.5">
+                        <button
+                          type="submit"
+                          disabled={sendingFeedback}
+                          className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-brand-orange py-3 text-xs font-bold text-white shadow-xs transition hover:bg-orange-600 disabled:opacity-50 active:scale-98"
+                        >
+                          {sendingFeedback && <Loader2 size={15} className="animate-spin" />}
+                          <span>Soumettre mon feedback final</span>
+                          <ArrowRight size={14} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setShowFeedbackView(false)}
+                          className="rounded-xl border border-slate-200 px-4 py-3 text-xs font-bold text-slate-600 hover:bg-slate-50 transition"
+                        >
+                          Annuler
+                        </button>
+                      </div>
+                    </form>
+                  </div>
                 )}
               </section>
             )}

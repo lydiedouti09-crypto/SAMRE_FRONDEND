@@ -80,7 +80,7 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
     return me;
   };
 
-  const adminLogout = (redirectTo: string = "/admin/login") => {
+  const adminLogout = (redirectTo: string = "/connexion") => {
     clearAdminToken();
     setAdminUser(null);
     navigate(redirectTo, { replace: true });
@@ -121,7 +121,7 @@ export function useAdminAuth(): AdminAuthContextValue {
       },
       adminLogout: () => {
         clearAdminToken();
-        window.location.href = "/admin/login";
+        window.location.href = "/connexion";
       },
       refreshAdmin: async () => {},
     };

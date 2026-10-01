@@ -30,21 +30,11 @@ function AdminLayoutInner() {
   const router = useRouter();
   const { adminUser, adminLoading, adminLogout } = useAdminAuth();
 
-  const isLoginPage =
-    pathname === "/admin/login" ||
-    pathname === "/admin/login/" ||
-    pathname.startsWith("/admin/login");
-
   useEffect(() => {
-    if (isLoginPage) return;
     if (!adminLoading && (!adminUser || adminUser.role !== "admin")) {
-      router.replace("/admin/login");
+      router.replace("/connexion");
     }
-  }, [adminUser, adminLoading, router, isLoginPage]);
-
-  if (isLoginPage) {
-    return <Outlet />;
-  }
+  }, [adminUser, adminLoading, router]);
 
   if (adminLoading) {
     return (

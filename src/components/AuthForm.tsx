@@ -7,15 +7,13 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
-import { useAdminAuth } from "@/lib/admin-auth-context";
-import { authApi } from "@/lib/api";
+import { authApi, getToken, setAdminToken } from "@/lib/api";
 
 type Mode = "login" | "signup" | "forgot-password";
 
 export default function AuthForm({ mode = "login" }: { mode?: Mode }) {
   const router = useRouter();
-  const { login, register, logout } = useAuth();
-  const { adminLogin } = useAdminAuth();
+  const { login, register } = useAuth();
   const [activeMode, setActiveMode] = useState<Mode>(mode);
   const isSignup = activeMode === "signup";
   const isForgotPassword = activeMode === "forgot-password";
@@ -117,19 +115,11 @@ export default function AuthForm({ mode = "login" }: { mode?: Mode }) {
         });
         router.push("/dashboard");
       } else {
-        try {
-          await adminLogin(form.email, form.password);
-          router.replace("/admin");
-          return;
-        } catch {
-          // Tentative testeur standard
-        }
-
         const loggedUser = await login(form.email, form.password);
         if (loggedUser?.role === "admin") {
-          logout("/connexion");
-          setError("Impossible de se connecter.");
-          setLoading(false);
+          // Si un administrateur se connecte via cette page, on configure son token admin et on le redirige vers l'administration
+          setAdminToken(getToken() || "");
+          router.replace("/admin");
           return;
         }
         router.push("/dashboard");
