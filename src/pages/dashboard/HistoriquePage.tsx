@@ -14,7 +14,69 @@ import {
   Sparkles,
   TrendingUp,
 } from "lucide-react";
-import { participationsApi, type Participation } from "@/lib/api";
+import {
+  participationsApi,
+  getImageUrl,
+  type Participation,
+} from "@/lib/api";
+
+function getAppBadgeStyle(appName: string) {
+  const name = (appName || "").toLowerCase();
+  if (name.includes("wave")) {
+    return {
+      gradient: "from-sky-500 to-cyan-600",
+      textColor: "text-sky-700",
+      bgColor: "bg-sky-50 border-sky-200/70",
+      letter: "W",
+    };
+  }
+  if (name.includes("djamo")) {
+    return {
+      gradient: "from-indigo-600 to-blue-700",
+      textColor: "text-indigo-700",
+      bgColor: "bg-indigo-50 border-indigo-200/70",
+      letter: "D",
+    };
+  }
+  if (name.includes("orange")) {
+    return {
+      gradient: "from-amber-500 to-orange-600",
+      textColor: "text-orange-700",
+      bgColor: "bg-orange-50 border-orange-200/70",
+      letter: "O",
+    };
+  }
+  if (name.includes("zou")) {
+    return {
+      gradient: "from-emerald-600 to-teal-600",
+      textColor: "text-emerald-700",
+      bgColor: "bg-emerald-50 border-emerald-200/70",
+      letter: "Z",
+    };
+  }
+  if (name.includes("zogbe")) {
+    return {
+      gradient: "from-orange-500 to-amber-600",
+      textColor: "text-orange-700",
+      bgColor: "bg-orange-50 border-orange-200/70",
+      letter: "Z",
+    };
+  }
+  if (name.includes("samre") || name.includes("samré")) {
+    return {
+      gradient: "from-navy-900 to-slate-800",
+      textColor: "text-navy-900",
+      bgColor: "bg-slate-100 border-slate-200",
+      letter: "S",
+    };
+  }
+  return {
+    gradient: "from-blue-600 to-indigo-600",
+    textColor: "text-blue-700",
+    bgColor: "bg-blue-50 border-blue-200/70",
+    letter: (appName || "A").charAt(0).toUpperCase(),
+  };
+}
 
 const STATUT_CONFIG: Record<
   string,
@@ -170,6 +232,9 @@ export default function HistoriquePage() {
               const appName = p.mission?.application || p.mission?.titre || "Application";
               const platform = p.mission?.platforme || "Android";
 
+              const appImage = p.mission?.image || p.mission?.applicationEntity?.logo;
+              const badge = getAppBadgeStyle(appName);
+
               return (
                 <div
                   key={p.id}
@@ -178,9 +243,25 @@ export default function HistoriquePage() {
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     {/* Colonne gauche : Application et Titre */}
                     <div className="flex items-start gap-3.5 min-w-0">
-                      <div className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-navy-900 to-slate-800 text-white shadow-xs">
-                        <Smartphone size={22} className="text-amber-400" />
-                        <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-brand-orange text-[9px] font-black text-white ring-2 ring-white">
+                      <div
+                        className="relative flex h-12 w-12 min-w-[48px] max-w-[48px] shrink-0 items-center justify-center rounded-2xl bg-white border border-slate-200/80 p-1 shadow-xs overflow-hidden"
+                        style={{ width: "48px", height: "48px", minWidth: "48px", maxWidth: "48px" }}
+                      >
+                        {appImage ? (
+                          <img
+                            src={getImageUrl(appImage)}
+                            alt={appName}
+                            className="h-full w-full object-contain rounded-xl"
+                            style={{ width: "100%", height: "100%", maxWidth: "44px", maxHeight: "44px", objectFit: "contain" }}
+                          />
+                        ) : (
+                          <div
+                            className={`flex h-full w-full items-center justify-center rounded-xl bg-gradient-to-br ${badge.gradient} text-white font-bold text-base shadow-2xs`}
+                          >
+                            {badge.letter}
+                          </div>
+                        )}
+                        <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-brand-orange text-[9px] font-black text-white ring-2 ring-white shadow-xs">
                           ✓
                         </span>
                       </div>
