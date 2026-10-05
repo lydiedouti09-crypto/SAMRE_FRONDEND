@@ -35,23 +35,21 @@ export const Hero: React.FC = () => {
         .hero-section {
           position: relative;
           background: #ffffff;
-          background: 
-            radial-gradient(ellipse 65% 55% at 85% 42%, rgba(242, 129, 29, 0.12) 0%, transparent 68%),
-            radial-gradient(circle at 10% 25%, rgba(10, 28, 56, 0.04) 0%, transparent 50%),
-            radial-gradient(circle at 45% 85%, rgba(56, 189, 248, 0.05) 0%, transparent 55%),
-            linear-gradient(180deg, #ffffff 0%, #fafafc 100%);
           overflow: hidden;
-          padding-top: 3.5rem;
-          padding-bottom: 2.5rem;
+          padding-top: 1.25rem;
+          padding-bottom: 0;
+          margin-bottom: 0;
+          border: none;
+          border-top: none;
         }
 
         .hero-container {
           position: relative;
           z-index: 2;
           width: 100%;
-          max-width: 1280px;
+          max-width: 1240px;
           margin: 0 auto;
-          padding: 0 1.75rem;
+          padding: 0 1.5rem;
         }
 
         /* ─── Disposition 2 Colonnes Harmonieuse (Style Campty) ─── */
@@ -60,7 +58,8 @@ export const Hero: React.FC = () => {
           grid-template-columns: 1fr;
           gap: 2.5rem;
           align-items: center;
-          margin-bottom: 4rem;
+          margin-bottom: 0;
+          padding-bottom: 0;
         }
 
         @media (min-width: 1024px) {
@@ -104,7 +103,7 @@ export const Hero: React.FC = () => {
           margin: 0 0 1.4rem 0;
         }
 
-        /* Conteneur avec soulignement feutre/pinceau orange comme "A Good Way!" sur Campty */
+        /* Conteneur avec soulignement feutre/pinceau orange animé */
         .hero-brush-wrap {
           position: relative;
           display: inline-block;
@@ -117,9 +116,52 @@ export const Hero: React.FC = () => {
           left: -4%;
           bottom: -8px;
           width: 108%;
-          height: 16px;
+          height: 18px;
           pointer-events: none;
           z-index: -1;
+          overflow: visible;
+        }
+
+        .hero-brush-path {
+          stroke: #f2811d;
+          stroke-width: 4.8;
+          stroke-linecap: round;
+          stroke-linejoin: round;
+          stroke-dasharray: 450;
+          stroke-dashoffset: 450;
+          animation: 
+            hero-brush-draw 1.6s 0.35s cubic-bezier(0.65, 0, 0.35, 1) forwards,
+            hero-brush-glow 3.5s 2s ease-in-out infinite alternate;
+          filter: drop-shadow(0 2px 8px rgba(242, 129, 29, 0.45));
+        }
+
+        @keyframes hero-brush-draw {
+          0% {
+            stroke-dashoffset: 450;
+            opacity: 0;
+          }
+          10% {
+            opacity: 1;
+          }
+          100% {
+            stroke-dashoffset: 0;
+            opacity: 1;
+          }
+        }
+
+        @keyframes hero-brush-glow {
+          0% {
+            filter: drop-shadow(0 2px 6px rgba(242, 129, 29, 0.4));
+            stroke: #f2811d;
+          }
+          50% {
+            filter: drop-shadow(0 4px 14px rgba(242, 129, 29, 0.8));
+            stroke: #fb923c;
+          }
+          100% {
+            filter: drop-shadow(0 2px 6px rgba(242, 129, 29, 0.4));
+            stroke: #f2811d;
+          }
         }
 
         .hero-desc {
@@ -207,21 +249,57 @@ export const Hero: React.FC = () => {
           align-items: center;
           width: 100%;
           perspective: 1200px;
+          margin-bottom: -1.5rem;
           animation: hero-phone-in 1s 0.25s both cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        /* Lueur radiale douce derrière la main */
+        /* Lueur radiale douce et dynamique derrière le smartphone */
         .hero-image-aura {
           position: absolute;
-          top: 8%;
-          right: 2%;
-          width: 90%;
-          height: 90%;
+          top: 2%;
+          right: -2%;
+          width: 104%;
+          height: 104%;
           border-radius: 50%;
-          background: radial-gradient(circle, rgba(242, 129, 29, 0.16) 0%, rgba(242, 129, 29, 0.05) 45%, transparent 72%);
-          filter: blur(28px);
+          background: radial-gradient(circle, rgba(242, 129, 29, 0.22) 0%, rgba(56, 189, 248, 0.14) 42%, transparent 72%);
+          filter: blur(34px);
           pointer-events: none;
           z-index: 0;
+          animation: hero-aura-pulse 5.5s ease-in-out infinite alternate;
+        }
+
+        @keyframes hero-aura-pulse {
+          0% {
+            transform: scale(0.92);
+            opacity: 0.55;
+          }
+          100% {
+            transform: scale(1.1);
+            opacity: 0.95;
+          }
+        }
+
+        /* Cadre du smartphone avec lévitation fluide */
+        .hero-video-frame {
+          position: relative;
+          z-index: 2;
+          width: 100%;
+          max-width: 480px;
+          transform-style: preserve-3d;
+          animation: hero-phone-float 4.8s ease-in-out infinite alternate;
+          filter: drop-shadow(0 20px 40px rgba(10, 28, 56, 0.14));
+        }
+
+        @keyframes hero-phone-float {
+          0% {
+            transform: translateY(0px) rotate(0deg);
+          }
+          50% {
+            transform: translateY(-8px) rotate(0.6deg);
+          }
+          100% {
+            transform: translateY(-14px) rotate(-0.5deg);
+          }
         }
 
         /* Doodles vectoriels flottants autour du smartphone (exactement comme sur Campty) */
@@ -243,6 +321,7 @@ export const Hero: React.FC = () => {
           stroke-linejoin: round;
           opacity: 0.75;
           animation: hero-doodle-pulse 6s ease-in-out infinite alternate;
+          filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.4));
         }
 
         .hero-doodle-orange {
@@ -250,9 +329,9 @@ export const Hero: React.FC = () => {
           stroke: #f2811d;
           stroke-width: 2;
           stroke-linecap: round;
-          stroke-dasharray: 6 10;
-          opacity: 0.6;
+          opacity: 0.75;
           animation: hero-doodle-dash 10s linear infinite;
+          filter: drop-shadow(0 0 6px rgba(242, 129, 29, 0.4));
         }
 
         /* Petit nuage décoratif flottant en haut à droite du téléphone comme sur Campty */
@@ -516,9 +595,10 @@ export const Hero: React.FC = () => {
                 {/* Coup de pinceau / soulignement feutre orange comme sur Campty */}
                 <svg className="hero-brush-svg" viewBox="0 0 280 20" fill="none" preserveAspectRatio="none">
                   <path
+                    className="hero-brush-path"
                     d="M4 14 C65 4, 185 3, 276 9 C195 18, 95 17, 16 17.5"
                     stroke="#f2811d"
-                    strokeWidth="4.2"
+                    strokeWidth="4.5"
                     strokeLinecap="round"
                     strokeLinejoin="round"
                   />
@@ -530,56 +610,59 @@ export const Hero: React.FC = () => {
               Samre connecte les étudiants aux meilleures opportunités de stage et aide les éditeurs d’applications à réaliser leurs tests sur Google Play grâce à un panel réel et rémunéré.
             </p>
 
-            <div className="hero-actions-row">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', alignItems: 'flex-start', marginBottom: '1rem' }}>
               <a href="/inscription" className="hero-btn-dark">
                 <span>Commencer maintenant</span>
                 <ArrowRight size={17} />
               </a>
 
-              {/* Bouton Google Play */}
-              <a
-                href="https://play.google.com/store/apps/details?id=com.samre.app"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hero-btn-store"
-                title="Télécharger l'application Samre sur Google Play"
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                  <path d="M3.609 1.814C3.253 2.19 3 2.793 3 3.593v16.814c0 .8.253 1.403.609 1.779l.092.088 9.42-9.42v-.222L3.701 1.726l-.092.088z" fill="#00D2FF" />
-                  <path d="M16.275 15.997l-3.154-3.154v-.222l3.154-3.154.07.04 3.738 2.124c1.068.606 1.068 1.6 0 2.207l-3.738 2.124-.07.035z" fill="#FFD200" />
-                  <path d="M16.345 15.962L13.12 12.737 3.609 22.247c.353.376.945.422 1.623.036l11.113-6.321" fill="#FF3A44" />
-                  <path d="M16.345 8.038L5.232 1.717c-.678-.386-1.27-.34-1.623.036l9.512 9.51 3.224-3.225" fill="#00E676" />
-                </svg>
-                <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'left', lineHeight: 1 }}>
-                  <span style={{ fontSize: '8px', textTransform: 'uppercase', fontWeight: 700, color: '#64748b', letterSpacing: '0.05em' }}>
-                    Télécharger sur
-                  </span>
-                  <span style={{ fontSize: '12px', fontWeight: 800, color: '#0a1c38', marginTop: '2px' }}>
-                    Google Play
-                  </span>
-                </div>
-              </a>
+              {/* Boutons Téléchargement Stores sous le CTA */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', flexWrap: 'wrap' }}>
+                {/* Bouton Google Play */}
+                <a
+                  href="https://play.google.com/store/apps/details?id=com.samre.app"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hero-btn-store"
+                  title="Télécharger l'application Samre sur Google Play"
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <path d="M3.609 1.814C3.253 2.19 3 2.793 3 3.593v16.814c0 .8.253 1.403.609 1.779l.092.088 9.42-9.42v-.222L3.701 1.726l-.092.088z" fill="#00D2FF" />
+                    <path d="M16.275 15.997l-3.154-3.154v-.222l3.154-3.154.07.04 3.738 2.124c1.068.606 1.068 1.6 0 2.207l-3.738 2.124-.07.035z" fill="#FFD200" />
+                    <path d="M16.345 15.962L13.12 12.737 3.609 22.247c.353.376.945.422 1.623.036l11.113-6.321" fill="#FF3A44" />
+                    <path d="M16.345 8.038L5.232 1.717c-.678-.386-1.27-.34-1.623.036l9.512 9.51 3.224-3.225" fill="#00E676" />
+                  </svg>
+                  <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'left', lineHeight: 1 }}>
+                    <span style={{ fontSize: '8px', textTransform: 'uppercase', fontWeight: 700, color: '#64748b', letterSpacing: '0.05em' }}>
+                      Télécharger sur
+                    </span>
+                    <span style={{ fontSize: '12px', fontWeight: 800, color: '#0a1c38', marginTop: '2px' }}>
+                      Google Play
+                    </span>
+                  </div>
+                </a>
 
-              {/* Bouton App Store */}
-              <a
-                href="https://apps.apple.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hero-btn-store"
-                title="Télécharger l'application Samre sur l'App Store"
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style={{ color: '#0a1c38' }}>
-                  <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.85c.66-.82 1.11-1.96.99-3.1-.96.04-2.12.64-2.8 1.43-.6.69-1.12 1.83-.98 2.94 1.07.08 2.13-.45 2.79-1.27z"/>
-                </svg>
-                <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'left', lineHeight: 1 }}>
-                  <span style={{ fontSize: '8px', textTransform: 'uppercase', fontWeight: 700, color: '#64748b', letterSpacing: '0.05em' }}>
-                    Télécharger sur
-                  </span>
-                  <span style={{ fontSize: '12px', fontWeight: 800, color: '#0a1c38', marginTop: '2px' }}>
-                    App Store
-                  </span>
-                </div>
-              </a>
+                {/* Bouton App Store */}
+                <a
+                  href="https://apps.apple.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hero-btn-store"
+                  title="Télécharger l'application Samre sur l'App Store"
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style={{ color: '#0a1c38' }}>
+                    <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.85c.66-.82 1.11-1.96.99-3.1-.96.04-2.12.64-2.8 1.43-.6.69-1.12 1.83-.98 2.94 1.07.08 2.13-.45 2.79-1.27z"/>
+                  </svg>
+                  <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'left', lineHeight: 1 }}>
+                    <span style={{ fontSize: '8px', textTransform: 'uppercase', fontWeight: 700, color: '#64748b', letterSpacing: '0.05em' }}>
+                      Télécharger sur
+                    </span>
+                    <span style={{ fontSize: '12px', fontWeight: 800, color: '#0a1c38', marginTop: '2px' }}>
+                      App Store
+                    </span>
+                  </div>
+                </a>
+              </div>
             </div>
           </div>
 

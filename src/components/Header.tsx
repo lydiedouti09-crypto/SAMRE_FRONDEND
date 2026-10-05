@@ -142,14 +142,13 @@ export const Header: React.FC<HeaderProps> = () => {
         right: 0,
         zIndex: 100,
         width: '100%',
-        backgroundColor: isScrolled ? 'rgba(255, 255, 255, 0.92)' : '#ffffff',
-        borderBottom: isScrolled ? '1px solid rgba(226, 232, 240, 0.7)' : '1px solid rgba(226, 232, 240, 0.9)',
-        boxShadow: isScrolled ? '0 10px 30px rgba(10, 28, 56, 0.1)' : '0 2px 12px rgba(10, 28, 56, 0.04)',
-        backdropFilter: isScrolled ? 'blur(14px)' : 'none',
-        transition: 'background-color 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease',
+        backgroundColor: '#ffffff',
+        border: 'none',
+        borderBottom: 'none',
+        boxShadow: 'none',
       }}
     >
-      {/* Barre Principale de Navigation Compacte et Harmonisée */}
+      {/* Barre Principale de Navigation Parfaitement Alignée */}
       <div
         className="container"
         style={{
@@ -157,9 +156,9 @@ export const Header: React.FC<HeaderProps> = () => {
           justifyContent: 'space-between',
           alignItems: 'center',
           height: '76px',
-          maxWidth: '1040px',
+          maxWidth: '1240px',
           margin: '0 auto',
-          padding: '0 1.25rem',
+          padding: '0 1.5rem',
         }}
       >
         {/* Logo SAMRE officiel */}
@@ -170,200 +169,193 @@ export const Header: React.FC<HeaderProps> = () => {
           <SamreLogo size={54} showTagline={false} />
         </Link>
 
-        {/* Liens Centraux Desktop */}
-        <nav
-          className="desktop-menu"
-          style={{ alignItems: 'center', gap: '1.25rem' }}
-        >
-          {primaryNavItems.map((item) => (
-            <a
-              key={item.id}
-              href={item.href}
-              onClick={() => handleNavClick(item.id)}
-              style={{
-                fontWeight: activeLink === item.id ? 700 : 500,
-                fontSize: '0.92rem',
-                color: activeLink === item.id ? '#f97316' : '#334155',
-                padding: '0.5rem 0',
-                position: 'relative',
-                textDecoration: 'none',
-                transition: 'color 0.15s ease',
-                whiteSpace: 'nowrap',
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = '#f97316')}
-              onMouseLeave={(e) =>
-                (e.currentTarget.style.color = activeLink === item.id ? '#f97316' : '#334155')
-              }
+        {/* Côté Droit : Liens de Navigation et Bouton Connexion regroupés (Image 1) */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '2.25rem' }}>
+          {/* Liens Centraux Desktop (Style MAJUSCULE Épuré & Moderne) */}
+          <nav
+            className="desktop-menu"
+            style={{ alignItems: 'center', gap: '1.75rem' }}
+          >
+            {primaryNavItems.map((item) => (
+              <a
+                key={item.id}
+                href={item.href}
+                onClick={() => handleNavClick(item.id)}
+                style={{
+                  fontWeight: activeLink === item.id ? 800 : 700,
+                  fontSize: '0.84rem',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.06em',
+                  color: activeLink === item.id ? '#f97316' : '#1e293b',
+                  padding: '0.6rem 0',
+                  position: 'relative',
+                  textDecoration: 'none',
+                  transition: 'color 0.2s ease',
+                  whiteSpace: 'nowrap',
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = '#f97316')}
+                onMouseLeave={(e) =>
+                  (e.currentTarget.style.color = activeLink === item.id ? '#f97316' : '#1e293b')
+                }
+              >
+                <span>{item.label}</span>
+              </a>
+            ))}
+
+            {/* Menu Déroulant Découvrir */}
+            <div
+              ref={dropdownRef}
+              style={{ position: 'relative' }}
+              onMouseEnter={handleMouseEnter}
+              onMouseLeave={handleMouseLeave}
             >
-              <span>{item.label}</span>
-              {activeLink === item.id && (
-                <span
+              <button
+                type="button"
+                onClick={() => setDropdownOpen(!dropdownOpen)}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  background: isDropdownItemActive ? '#fff7ed' : 'transparent',
+                  border: isDropdownItemActive ? '1px solid #fed7aa' : '1px solid transparent',
+                  borderRadius: '999px',
+                  padding: '0.4rem 0.75rem',
+                  fontWeight: isDropdownItemActive ? 800 : 700,
+                  fontSize: '0.84rem',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.06em',
+                  color: isDropdownItemActive ? '#ea580c' : '#1e293b',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                  whiteSpace: 'nowrap',
+                }}
+                onMouseEnter={(e) => {
+                  if (!isDropdownItemActive) e.currentTarget.style.color = '#f97316';
+                }}
+                onMouseLeave={(e) => {
+                  if (!isDropdownItemActive) e.currentTarget.style.color = '#1e293b';
+                }}
+                aria-expanded={dropdownOpen}
+                aria-haspopup="true"
+              >
+                <span>Découvrir</span>
+                <ChevronDown
+                  size={14}
                   style={{
-                    position: 'absolute',
-                    bottom: '0px',
-                    left: '0',
-                    right: '0',
-                    height: '2px',
-                    background: '#f97316',
-                    borderRadius: '2px',
+                    transform: dropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                    transition: 'transform 0.2s ease',
                   }}
                 />
-              )}
-            </a>
-          ))}
+              </button>
 
-          {/* Menu Déroulant Découvrir */}
-          <div
-            ref={dropdownRef}
-            style={{ position: 'relative' }}
-            onMouseEnter={handleMouseEnter}
-            onMouseLeave={handleMouseLeave}
-          >
-            <button
-              type="button"
-              onClick={() => setDropdownOpen(!dropdownOpen)}
+              {dropdownOpen && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: 'calc(100% + 8px)',
+                    left: '-20px',
+                    width: '320px',
+                    backgroundColor: '#ffffff',
+                    borderRadius: '16px',
+                    padding: '0.5rem',
+                    boxShadow: '0 20px 40px -8px rgba(15, 23, 42, 0.12)',
+                    border: '1px solid #f1f5f9',
+                    zIndex: 200,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.25rem',
+                  }}
+                >
+                  {dropdownItems.map((subItem) => {
+                    const Icon = subItem.icon;
+                    const isCurrent = activeLink === subItem.id;
+                    return (
+                      <a
+                        key={subItem.id}
+                        href={subItem.href}
+                        onClick={() => {
+                          handleNavClick(subItem.id);
+                          setDropdownOpen(false);
+                        }}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.75rem',
+                          padding: '0.65rem 0.85rem',
+                          borderRadius: '12px',
+                          textDecoration: 'none',
+                          backgroundColor: isCurrent ? '#fff7ed' : 'transparent',
+                          transition: 'background-color 0.15s ease',
+                        }}
+                        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f8fafc')}
+                        onMouseLeave={(e) =>
+                          (e.currentTarget.style.backgroundColor = isCurrent ? '#fff7ed' : 'transparent')
+                        }
+                      >
+                        <div
+                          style={{
+                            width: '34px',
+                            height: '34px',
+                            borderRadius: '10px',
+                            backgroundColor: isCurrent ? '#ffedd5' : '#fff7ed',
+                            color: '#f97316',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0,
+                          }}
+                        >
+                          <Icon size={18} />
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                          <span style={{ fontWeight: 700, fontSize: '0.9rem', color: '#0a1c38' }}>
+                            {subItem.label}
+                          </span>
+                          <span style={{ fontSize: '0.76rem', color: '#64748b' }}>
+                            {subItem.description}
+                          </span>
+                        </div>
+                      </a>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </nav>
+
+          {/* Bouton Connexion */}
+          <div className="desktop-actions" style={{ alignItems: 'center' }}>
+            <Link
+              href="/connexion"
+              className="desktop-login-link"
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '0.35rem',
-                background: isDropdownItemActive ? '#fff7ed' : 'transparent',
-                border: isDropdownItemActive ? '1px solid #fed7aa' : '1px solid transparent',
+                gap: '0.45rem',
+                padding: '0.65rem 1.35rem',
                 borderRadius: '999px',
-                padding: '0.4rem 0.75rem',
-                fontWeight: isDropdownItemActive ? 700 : 500,
-                fontSize: '0.92rem',
-                color: isDropdownItemActive ? '#ea580c' : '#334155',
-                cursor: 'pointer',
-                transition: 'all 0.15s ease',
-                whiteSpace: 'nowrap',
+                backgroundColor: '#0a1c38',
+                color: '#ffffff',
+                fontWeight: 700,
+                fontSize: '0.88rem',
+                textDecoration: 'none',
+                transition: 'all 0.25s ease',
+                boxShadow: '0 4px 14px rgba(10, 28, 56, 0.15)',
               }}
               onMouseEnter={(e) => {
-                if (!isDropdownItemActive) e.currentTarget.style.color = '#f97316';
+                e.currentTarget.style.backgroundColor = '#f2811d';
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 10px 24px rgba(242, 129, 29, 0.3)';
               }}
               onMouseLeave={(e) => {
-                if (!isDropdownItemActive) e.currentTarget.style.color = '#334155';
+                e.currentTarget.style.backgroundColor = '#0a1c38';
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 4px 14px rgba(10, 28, 56, 0.15)';
               }}
-              aria-expanded={dropdownOpen}
-              aria-haspopup="true"
             >
-              <span>Découvrir</span>
-              <ChevronDown
-                size={15}
-                style={{
-                  transform: dropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-                  transition: 'transform 0.2s ease',
-                }}
-              />
-            </button>
-
-            {dropdownOpen && (
-              <div
-                style={{
-                  position: 'absolute',
-                  top: 'calc(100% + 8px)',
-                  left: '-20px',
-                  width: '320px',
-                  backgroundColor: '#ffffff',
-                  borderRadius: '16px',
-                  padding: '0.5rem',
-                  boxShadow: '0 20px 40px -8px rgba(15, 23, 42, 0.12)',
-                  border: '1px solid #f1f5f9',
-                  zIndex: 200,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '0.25rem',
-                }}
-              >
-                {dropdownItems.map((subItem) => {
-                  const Icon = subItem.icon;
-                  const isCurrent = activeLink === subItem.id;
-                  return (
-                    <a
-                      key={subItem.id}
-                      href={subItem.href}
-                      onClick={() => {
-                        handleNavClick(subItem.id);
-                        setDropdownOpen(false);
-                      }}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.75rem',
-                        padding: '0.65rem 0.85rem',
-                        borderRadius: '12px',
-                        textDecoration: 'none',
-                        backgroundColor: isCurrent ? '#fff7ed' : 'transparent',
-                        transition: 'background-color 0.15s ease',
-                      }}
-                      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f8fafc')}
-                      onMouseLeave={(e) =>
-                        (e.currentTarget.style.backgroundColor = isCurrent ? '#fff7ed' : 'transparent')
-                      }
-                    >
-                      <div
-                        style={{
-                          width: '34px',
-                          height: '34px',
-                          borderRadius: '10px',
-                          backgroundColor: isCurrent ? '#ffedd5' : '#fff7ed',
-                          color: '#f97316',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          flexShrink: 0,
-                        }}
-                      >
-                        <Icon size={18} />
-                      </div>
-                      <div style={{ display: 'flex', flexDirection: 'column' }}>
-                        <span style={{ fontWeight: 700, fontSize: '0.9rem', color: '#0a1c38' }}>
-                          {subItem.label}
-                        </span>
-                        <span style={{ fontSize: '0.76rem', color: '#64748b' }}>
-                          {subItem.description}
-                        </span>
-                      </div>
-                    </a>
-                  );
-                })}
-              </div>
-            )}
+              <span>Se connecter</span>
+            </Link>
           </div>
-        </nav>
-
-        {/* Boutons d'Action Droite (Connexion & Inscription style Campty) */}
-        <div className="desktop-actions" style={{ alignItems: 'center', gap: '0.75rem' }}>
-          <Link
-            href="/connexion"
-            className="desktop-login-link"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.45rem',
-              padding: '0.65rem 1.35rem',
-              borderRadius: '999px',
-              backgroundColor: '#0a1c38',
-              color: '#ffffff',
-              fontWeight: 700,
-              fontSize: '0.88rem',
-              textDecoration: 'none',
-              transition: 'all 0.25s ease',
-              boxShadow: '0 4px 14px rgba(10, 28, 56, 0.15)',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#f2811d';
-              e.currentTarget.style.transform = 'translateY(-2px)';
-              e.currentTarget.style.boxShadow = '0 10px 24px rgba(242, 129, 29, 0.3)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = '#0a1c38';
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 4px 14px rgba(10, 28, 56, 0.15)';
-            }}
-          >
-            <span>Se connecter</span>
-          </Link>
-
         </div>
 
         {/* Toggle Menu Mobile */}
