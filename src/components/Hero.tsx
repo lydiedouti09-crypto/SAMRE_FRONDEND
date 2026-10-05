@@ -162,20 +162,22 @@ export const Hero: React.FC = () => {
           color: #ffffff;
         }
 
-        /* Bouton Google Play Blanc Épuré */
+        /* Boutons Stores Blanc Épuré (Google Play & App Store) */
+        .hero-btn-store,
         .hero-btn-googleplay {
           display: inline-flex;
           align-items: center;
           gap: 0.75rem;
           background: #ffffff;
           border: 1px solid #e2e8f0;
-          padding: 0.68rem 1.45rem;
+          padding: 0.68rem 1.35rem;
           border-radius: 9999px;
           text-decoration: none;
           box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
           transition: all 0.25s ease;
         }
 
+        .hero-btn-store:hover,
         .hero-btn-googleplay:hover {
           transform: translateY(-2px);
           border-color: #cbd5e1;
@@ -525,7 +527,7 @@ export const Hero: React.FC = () => {
             </h1>
 
             <p className="hero-desc">
-              Samré connecte les étudiants aux meilleures offres de stage en entreprise, et résout les 14 jours obligatoires de tests Google Play pour les développeurs grâce à un panel réel et rémunéré.
+              Samre connecte les étudiants aux meilleures opportunités de stage et aide les éditeurs d’applications à réaliser leurs tests sur Google Play grâce à un panel réel et rémunéré.
             </p>
 
             <div className="hero-actions-row">
@@ -539,8 +541,8 @@ export const Hero: React.FC = () => {
                 href="https://play.google.com/store/apps/details?id=com.samre.app"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="hero-btn-googleplay"
-                title="Télécharger l'application Samré sur Google Play"
+                className="hero-btn-store"
+                title="Télécharger l'application Samre sur Google Play"
               >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                   <path d="M3.609 1.814C3.253 2.19 3 2.793 3 3.593v16.814c0 .8.253 1.403.609 1.779l.092.088 9.42-9.42v-.222L3.701 1.726l-.092.088z" fill="#00D2FF" />
@@ -554,6 +556,27 @@ export const Hero: React.FC = () => {
                   </span>
                   <span style={{ fontSize: '12px', fontWeight: 800, color: '#0a1c38', marginTop: '2px' }}>
                     Google Play
+                  </span>
+                </div>
+              </a>
+
+              {/* Bouton App Store */}
+              <a
+                href="https://apps.apple.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hero-btn-store"
+                title="Télécharger l'application Samre sur l'App Store"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style={{ color: '#0a1c38' }}>
+                  <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.85c.66-.82 1.11-1.96.99-3.1-.96.04-2.12.64-2.8 1.43-.6.69-1.12 1.83-.98 2.94 1.07.08 2.13-.45 2.79-1.27z"/>
+                </svg>
+                <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'left', lineHeight: 1 }}>
+                  <span style={{ fontSize: '8px', textTransform: 'uppercase', fontWeight: 700, color: '#64748b', letterSpacing: '0.05em' }}>
+                    Télécharger sur
+                  </span>
+                  <span style={{ fontSize: '12px', fontWeight: 800, color: '#0a1c38', marginTop: '2px' }}>
+                    App Store
                   </span>
                 </div>
               </a>

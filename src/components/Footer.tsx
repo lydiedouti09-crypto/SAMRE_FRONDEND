@@ -30,9 +30,16 @@ export const Footer: React.FC = () => {
           {/* Identity */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
             <img
-              src="/logo.png"
+              src="/ChatGPT Image 5 oct. 2026, 12_23_50.png"
               alt="Logo SAMRE"
-              style={{ height: '42px', width: 'auto', objectFit: 'contain' }}
+              style={{
+                height: '46px',
+                width: 'auto',
+                objectFit: 'contain',
+                borderRadius: '12px',
+                backgroundColor: '#ffffff',
+                padding: '3px',
+              }}
             />
             <div>
               <div style={{ fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif", fontWeight: 800, fontSize: '1.25rem', color: '#FFFFFF' }}>

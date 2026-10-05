@@ -149,7 +149,7 @@ export const Header: React.FC<HeaderProps> = () => {
         transition: 'background-color 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease',
       }}
     >
-      {/* Barre Principale de Navigation Pleine Largeur */}
+      {/* Barre Principale de Navigation Compacte et Harmonisée */}
       <div
         className="container"
         style={{
@@ -157,23 +157,23 @@ export const Header: React.FC<HeaderProps> = () => {
           justifyContent: 'space-between',
           alignItems: 'center',
           height: '76px',
-          maxWidth: '1320px',
+          maxWidth: '1040px',
           margin: '0 auto',
-          padding: '0 1.75rem',
+          padding: '0 1.25rem',
         }}
       >
         {/* Logo SAMRE officiel */}
         <Link
           href="#hero"
-          style={{ textDecoration: 'none', flexShrink: 0, marginLeft: '1.25rem' }}
+          style={{ textDecoration: 'none', flexShrink: 0 }}
         >
-          <SamreLogo size={44} showTagline={false} />
+          <SamreLogo size={54} showTagline={false} />
         </Link>
 
         {/* Liens Centraux Desktop */}
         <nav
           className="desktop-menu"
-          style={{ alignItems: 'center', gap: 'clamp(0.8rem, 1.4vw, 1.6rem)' }}
+          style={{ alignItems: 'center', gap: '1.25rem' }}
         >
           {primaryNavItems.map((item) => (
             <a
