@@ -340,6 +340,7 @@ export type Reference = {
   panelisteUid?: string;
   jour?: number;
   apiKey?: string;
+  etapeId?: number;
 };
 
 export type NotificationItem = {

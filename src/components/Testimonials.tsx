@@ -235,7 +235,7 @@ export const Testimonials: React.FC = () => {
                       border: `1px solid ${t.badgeColor}30`,
                     }}
                   >
-                    {t.badge}
+                    {t.role}
                   </span>
                   <Quote size={20} color="#CBD5E1" />
                 </div>

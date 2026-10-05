@@ -307,7 +307,7 @@ export default function AdminApplicationsPage() {
     }
   };
 
-  const handleCopy = (text: string, id: number) => {
+  const handleCopy = (text: string, id: number, _type?: string) => {
     navigator.clipboard.writeText(text);
     setCopiedLink(id);
     setTimeout(() => setCopiedLink(null), 2500);
