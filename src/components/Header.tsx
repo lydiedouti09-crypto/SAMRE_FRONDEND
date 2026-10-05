@@ -24,7 +24,6 @@ const ALL_SECTION_IDS = [
   'testing-mobile',
   'agences',
   'apropos',
-  'temoignages',
   'faq',
 ];
 
@@ -111,13 +110,6 @@ export const Header: React.FC<HeaderProps> = () => {
       description: 'Gagnez des revenus en testant des apps 25s/jour',
       icon: Smartphone,
       href: '#testing-mobile',
-    },
-    {
-      id: 'temoignages',
-      label: 'Témoignages & Réussites',
-      description: 'Retours d\'expérience de nos stagiaires et devs',
-      icon: MessageSquare,
-      href: '#temoignages',
     },
     {
       id: 'faq',

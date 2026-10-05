@@ -4,7 +4,6 @@ import Hero from '@/components/Hero';
 import Services from '@/components/Services';
 import AppShowcase from '@/components/AppShowcase';
 import About from '@/components/About';
-import Testimonials from '@/components/Testimonials';
 import Faq from '@/components/Faq';
 import Footer from '@/components/Footer';
 import StatsBand from '@/components/StatsBand';
@@ -34,10 +33,7 @@ export default function HomePage() {
         {/* 5. À Propos & Vision SAMRE */}
         <About />
 
-        {/* 6. Témoignages & Preuve Sociale */}
-        <Testimonials />
-
-        {/* 7. Foire Aux Questions */}
+        {/* 6. Foire Aux Questions */}
         <Faq />
       </main>
 
