@@ -28,7 +28,7 @@ import {
   Settings,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
-import { profileApi, participationsApi, type User, type Participation } from "@/lib/api";
+import { profileApi, participationsApi, getImageUrl, type User, type Participation } from "@/lib/api";
 
 const PAYS_LIST = [
   "Côte d'Ivoire",
@@ -283,7 +283,7 @@ export default function ProfilPage() {
                 </div>
               ) : currentPhoto ? (
                 <img
-                  src={currentPhoto}
+                  src={getImageUrl(currentPhoto)}
                   alt={fullName}
                   className="h-24 w-24 rounded-full object-cover border-4 border-white shadow-lg bg-white"
                 />
@@ -392,7 +392,7 @@ export default function ProfilPage() {
                 </div>
               ) : currentPhoto ? (
                 <img
-                  src={currentPhoto}
+                  src={getImageUrl(currentPhoto)}
                   alt={fullName}
                   className="h-24 w-24 rounded-full object-cover border-4 border-slate-50 shadow-md bg-white"
                 />

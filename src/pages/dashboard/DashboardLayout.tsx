@@ -3,6 +3,7 @@ import BottomNav from "@/components/dashboard/BottomNav";
 import DesktopSidebar from "@/components/dashboard/DesktopSidebar";
 import { Outlet } from "react-router-dom";
 import { useAuth } from "@/lib/auth-context";
+import { getImageUrl } from "@/lib/api";
 import Link, { usePathname } from "@/lib/router";
 
 export default function DashboardLayout() {
@@ -52,7 +53,7 @@ export default function DashboardLayout() {
               </div>
               {user?.photo ? (
                 <img
-                  src={user.photo}
+                  src={getImageUrl(user.photo)}
                   alt={userDisplayName}
                   className="h-10 w-10 rounded-full object-cover ring-2 ring-brand-orange/30 shadow-xs group-hover:ring-brand-orange transition"
                 />

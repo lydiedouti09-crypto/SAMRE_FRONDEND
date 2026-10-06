@@ -33,10 +33,30 @@ export function clearAdminToken() {
   localStorage.removeItem(ADMIN_TOKEN_KEY);
 }
 
+export function sanitizeUrl(url?: string | null, fallback: string = "#"): string {
+  if (!url || typeof url !== "string") return fallback;
+  const trimmed = url.trim();
+  // Protection contre XSS via protocoles dangereux (javascript:, vbscript:, data:, file:)
+  if (/^(javascript|vbscript|data|file):/i.test(trimmed)) {
+    return fallback;
+  }
+  return trimmed;
+}
+
+export function sanitizeText(input?: string | null): string {
+  if (!input || typeof input !== "string") return "";
+  return input
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 export function getImageUrl(path?: string | null): string {
   if (!path || path.trim() === "") return "";
   if (path.startsWith("http://") || path.startsWith("https://") || path.startsWith("data:")) {
-    return path;
+    return sanitizeUrl(path, "");
   }
   const baseUrl = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
   return `${baseUrl.replace(/\/+$/, "")}/${path.replace(/^\/+/, "")}`;
@@ -50,13 +70,16 @@ export function getApplicationPlayStoreUrl(mission?: Mission | null): string {
     mission.applicationEntity?.lienTelechargement;
   if (raw && typeof raw === "string" && raw.trim().length > 0) {
     const trimmed = raw.trim();
+    if (/^(javascript|vbscript|data|file):/i.test(trimmed)) {
+      return "https://play.google.com/store/apps";
+    }
     if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
-      return trimmed;
+      return sanitizeUrl(trimmed, "https://play.google.com/store/apps");
     }
     if (trimmed.includes(".") && !trimmed.includes(" ")) {
       return `https://play.google.com/store/apps/details?id=${encodeURIComponent(trimmed)}`;
     }
-    return `https://${trimmed}`;
+    return sanitizeUrl(`https://${trimmed}`, "https://play.google.com/store/apps");
   }
   const query = mission.application || mission.titre || "application";
   return `https://play.google.com/store/search?q=${encodeURIComponent(query)}&c=apps`;
@@ -155,7 +178,11 @@ async function request<T>(
     headers.Authorization = `Bearer ${token}`;
   }
 
-  const res = await fetch(`${API_URL}${path}`, { ...options, headers });
+  const res = await fetch(`${API_URL}${path}`, {
+    credentials: "include",
+    ...options,
+    headers,
+  });
 
   if (res.status === 401) {
     clearToken();
@@ -193,7 +220,11 @@ async function adminRequest<T>(
     headers.Authorization = `Bearer ${adminToken}`;
   }
 
-  const res = await fetch(`${API_URL}${path}`, { ...options, headers });
+  const res = await fetch(`${API_URL}${path}`, {
+    credentials: "include",
+    ...options,
+    headers,
+  });
 
   if (res.status === 401) {
     clearAdminToken();

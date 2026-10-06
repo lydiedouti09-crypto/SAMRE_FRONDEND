@@ -9,6 +9,7 @@ import {
   LogOut,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
+import { getImageUrl } from "@/lib/api";
 
 const links = [
   { href: "/dashboard", label: "Tableau de Bord", icon: LayoutDashboard, exact: true },
@@ -80,7 +81,7 @@ export default function DesktopSidebar() {
           >
             {user?.photo ? (
               <img
-                src={user.photo}
+                src={getImageUrl(user.photo)}
                 alt={user.prenom || "Profil"}
                 className="h-8 w-8 rounded-full object-cover ring-1 ring-slate-200 shrink-0"
               />
