@@ -1,17 +1,11 @@
 import { useEffect, useState } from "react";
 import Link from "@/lib/router";
 import {
-  Search,
-  CheckCircle2,
-  Clock,
-  Layers,
-  ArrowRight,
   Loader2,
-  Sparkles,
-  Smartphone,
-  Globe,
-  ExternalLink,
-  Users,
+  ChevronRight,
+  Search,
+  ArrowRight,
+  Briefcase,
 } from "lucide-react";
 import {
   missionsApi,
@@ -21,57 +15,48 @@ import {
   type Participation,
 } from "@/lib/api";
 
-const STATUT_LABELS: Record<string, string> = {
-  en_attente: "Candidature en attente",
-  acceptee: "Candidature acceptée",
-  refusee: "Candidature non retenue",
-  inscrite: "Inscrite",
-  contrat_accepte: "Contrat accepté",
-  en_cours: "En cours de test",
-  terminee: "Terminée",
-  abandonnee: "Abandonnée",
-};
-
 // Couleurs de badges et gradients selon l'application
 function getAppBadgeStyle(appName: string) {
   const name = appName.toLowerCase();
   if (name.includes("wave")) {
     return {
       gradient: "from-sky-500 to-cyan-600",
-      textColor: "text-sky-700",
-      bgColor: "bg-sky-50 border-sky-200/70",
       letter: "W",
+      tagColor: "bg-cyan-100 text-cyan-800",
     };
   }
   if (name.includes("djamo")) {
     return {
       gradient: "from-indigo-600 to-blue-700",
-      textColor: "text-indigo-700",
-      bgColor: "bg-indigo-50 border-indigo-200/70",
       letter: "D",
+      tagColor: "bg-indigo-100 text-indigo-800",
     };
   }
   if (name.includes("orange")) {
     return {
       gradient: "from-amber-500 to-orange-600",
-      textColor: "text-orange-700",
-      bgColor: "bg-orange-50 border-orange-200/70",
       letter: "O",
+      tagColor: "bg-orange-100 text-orange-800",
     };
   }
-  if (name.includes("samre") || name.includes("samré")) {
+  if (name.includes("flypoint")) {
     return {
-      gradient: "from-navy-900 to-slate-800",
-      textColor: "text-navy-900",
-      bgColor: "bg-slate-100 border-slate-200",
-      letter: "S",
+      gradient: "from-purple-600 to-indigo-600",
+      letter: "F",
+      tagColor: "bg-purple-100 text-purple-700",
+    };
+  }
+  if (name.includes("zogbe")) {
+    return {
+      gradient: "from-sky-600 to-blue-700",
+      letter: "Z",
+      tagColor: "bg-purple-100 text-purple-700",
     };
   }
   return {
-    gradient: "from-violet-600 to-indigo-600",
-    textColor: "text-violet-700",
-    bgColor: "bg-violet-50 border-violet-200/70",
+    gradient: "from-slate-700 to-slate-900",
     letter: appName.charAt(0).toUpperCase() || "A",
+    tagColor: "bg-slate-100 text-slate-700",
   };
 }
 
@@ -91,91 +76,284 @@ function getMissionCategory(m?: Mission): string {
 }
 
 export default function MissionsPage() {
-  const [tab, setTab] = useState<"available" | "mine">("available");
+  const [tab, setTab] = useState<"available" | "mine">("mine");
   const [participations, setParticipations] = useState<Participation[]>([]);
   const [missions, setMissions] = useState<Mission[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
-  const [platformFilter, setPlatformFilter] = useState<string>("Tous");
-  const [statusFilter, setStatusFilter] = useState<string>("Tous");
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     Promise.all([participationsApi.mine(), missionsApi.list()])
       .then(([p, m]) => {
-        setParticipations(p);
-        setMissions(m);
+        setParticipations(p || []);
+        setMissions(m || []);
+        // Si l'utilisateur n'a pas de participation, afficher 'available' par défaut
+        if (p && p.length === 0) {
+          setTab("available");
+        }
       })
       .catch(() => null)
       .finally(() => setLoading(false));
   }, []);
 
   const joinedIds = new Set(participations.map((p) => p.mission?.id));
-  const available = missions.filter((m) => !joinedIds.has(m.id));
+  const available = missions.filter((m) => !joinedIds.has(m.id) && m.statut !== "terminee");
 
-  const filterAvailable = (m?: Mission) => {
-    if (!m) return false;
-    const matchSearch =
-      m.titre.toLowerCase().includes(search.toLowerCase()) ||
-      m.application.toLowerCase().includes(search.toLowerCase()) ||
-      (m.description || "").toLowerCase().includes(search.toLowerCase());
+  const filteredAvailable = available.filter((m) => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    return (
+      m.titre.toLowerCase().includes(q) ||
+      (m.application && m.application.toLowerCase().includes(q))
+    );
+  });
 
-    const platform = (m.platforme || "Android").toLowerCase();
-    const matchPlatform =
-      platformFilter === "Tous" ||
-      (platformFilter === "Android" && (platform.includes("android") || !m.platforme)) ||
-      (platformFilter === "iOS" && platform.includes("ios")) ||
-      (platformFilter === "Web" && platform.includes("web"));
-
-    return matchSearch && matchPlatform;
-  };
-
-  const filterMine = (p: Participation) => {
-    if (!p.mission) return false;
-    const matchSearch =
-      p.mission.titre.toLowerCase().includes(search.toLowerCase()) ||
-      p.mission.application.toLowerCase().includes(search.toLowerCase()) ||
-      (p.mission.description || "").toLowerCase().includes(search.toLowerCase());
-
-    const matchStatus =
-      statusFilter === "Tous" ||
-      (statusFilter === "En cours" && p.statut !== "terminee" && p.statut !== "abandonnee") ||
-      (statusFilter === "Terminées" && (p.statut === "terminee" || p.statut === "remuneration_en_attente"));
-
-    return matchSearch && matchStatus;
-  };
-
-  const filteredAvailable = available.filter(filterAvailable);
-  const filteredMine = participations.filter(filterMine);
+  const filteredParticipations = participations.filter((p) => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    const m = p.mission;
+    return (
+      m?.titre.toLowerCase().includes(q) ||
+      (m?.application && m.application.toLowerCase().includes(q))
+    );
+  });
 
   return (
-    <div className="min-h-screen bg-[#F7F9FC] px-4 pt-5 pb-24 lg:px-8">
-      <div className="max-w-6xl mx-auto space-y-6">
-        {/* En-tête avec navigation d'onglets épurée */}
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+    <div className="min-h-screen bg-[#F8FAFC] pb-28 text-slate-800">
+      {/* ═══════════════════════════════════════════════════════════════════════ */}
+      {/* 1. VUE MOBILE (Uniquement sur écrans mobiles < lg)                      */}
+      {/* ═══════════════════════════════════════════════════════════════════════ */}
+      <div className="lg:hidden px-4 pt-4 space-y-5 max-w-md mx-auto">
+        <div className="pt-1">
+          <h1 className="font-display text-2xl font-extrabold tracking-tight text-[#0F172A] leading-tight">
+            Mes missions
+          </h1>
+          <p className="text-xs font-medium text-slate-500 mt-1 leading-snug">
+            Découvrez toutes les applications disponibles et choisissez celle qui vous convient.
+          </p>
+        </div>
+
+        {/* Onglets Pilules Mobile */}
+        <div className="flex items-center gap-2 p-1.5 bg-slate-200/60 rounded-2xl w-full">
+          <button
+            onClick={() => setTab("available")}
+            className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs transition-all ${
+              tab === "available"
+                ? "bg-white text-navy-900 font-extrabold shadow-xs"
+                : "text-slate-600 hover:text-slate-900 font-semibold"
+            }`}
+          >
+            <span>Disponibles</span>
+            <span
+              className={`flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[10px] font-black ${
+                tab === "available"
+                  ? "bg-brand-orange text-white"
+                  : "bg-slate-300/80 text-slate-700"
+              }`}
+            >
+              {available.length}
+            </span>
+          </button>
+
+          <button
+            onClick={() => setTab("mine")}
+            className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs transition-all ${
+              tab === "mine"
+                ? "bg-white text-navy-900 font-extrabold shadow-xs"
+                : "text-slate-600 hover:text-slate-900 font-semibold"
+            }`}
+          >
+            <span>En cours</span>
+            <span
+              className={`flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[10px] font-black ${
+                tab === "mine"
+                  ? "bg-brand-orange text-white"
+                  : "bg-slate-300/80 text-slate-700"
+              }`}
+            >
+              {participations.length}
+            </span>
+          </button>
+        </div>
+
+        {/* Cartes Mobile Squircle */}
+        {loading ? (
+          <div className="flex min-h-[200px] flex-col items-center justify-center gap-2">
+            <Loader2 size={24} className="animate-spin text-brand-orange" />
+            <p className="text-xs text-slate-400">Chargement des missions...</p>
+          </div>
+        ) : tab === "available" ? (
+          available.length === 0 ? (
+            <div className="rounded-[22px] border border-slate-100 bg-white p-8 text-center shadow-2xs">
+              <p className="text-xs font-semibold text-slate-500">
+                Aucune application disponible pour le moment.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3.5">
+              {available.map((m) => {
+                const badge = getAppBadgeStyle(m.application || m.titre);
+                const duration = m.dureEstime ? `${m.dureEstime} jours` : "14 jours";
+                const appName = m.application || m.titre;
+
+                return (
+                  <Link
+                    key={m.id}
+                    href={`/dashboard/missions/${m.id}`}
+                    className="flex items-center justify-between gap-3.5 rounded-[22px] bg-white p-4 shadow-[0_4px_16px_rgba(0,0,0,0.03)] border border-slate-100/90 transition active:scale-98 hover:shadow-md"
+                  >
+                    <div className="flex items-center gap-3.5 min-w-0 flex-1">
+                      <div className="relative flex h-14 w-14 min-w-[56px] shrink-0 items-center justify-center rounded-2xl bg-white border border-slate-100 p-1 shadow-2xs overflow-hidden">
+                        {m.image ? (
+                          <img
+                            src={getImageUrl(m.image)}
+                            alt={appName}
+                            className="h-full w-full object-contain rounded-xl"
+                          />
+                        ) : (
+                          <div className={`flex h-full w-full items-center justify-center rounded-xl bg-gradient-to-br ${badge.gradient} text-white font-extrabold text-lg`}>
+                            {badge.letter}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="min-w-0 flex-1 space-y-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3 className="font-display text-[14px] font-extrabold text-[#0F172A] leading-tight truncate">
+                            {appName}
+                          </h3>
+                          <span className="inline-flex items-center gap-1 rounded-full bg-[#E6FBF5] px-2 py-0.5 text-[10px] font-bold text-[#0D9488] border border-[#99F6E4]/50">
+                            <span>✓</span>
+                            <span>Disponible</span>
+                          </span>
+                        </div>
+
+                        <p className="text-[11px] font-medium text-slate-400 truncate">
+                          {getMissionCategory(m)}
+                        </p>
+
+                        <div className="flex items-center gap-1 text-[11px] font-semibold text-slate-400">
+                          <span>📅</span>
+                          <span>{duration}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <ChevronRight size={18} className="text-slate-300 shrink-0" />
+                  </Link>
+                );
+              })}
+            </div>
+          )
+        ) : (
+          participations.length === 0 ? (
+            <div className="rounded-[22px] border border-slate-100 bg-white p-8 text-center shadow-2xs">
+              <p className="text-xs font-semibold text-slate-500">
+                Vous n&apos;avez aucune mission en cours.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3.5">
+              {participations.map((p) => {
+                const m = p.mission;
+                if (!m) return null;
+                const badge = getAppBadgeStyle(m.application || m.titre);
+                const currentDay = (p.etapesCompletees || 0) + 1;
+                const totalDays = p.etapesTotal || (m.dureEstime ? parseInt(String(m.dureEstime)) || 14 : 14);
+                const appName = m.application || m.titre;
+
+                return (
+                  <Link
+                    key={p.id}
+                    href={`/dashboard/missions/${m.id}`}
+                    className="flex items-center justify-between gap-3.5 rounded-[22px] bg-white p-4 shadow-[0_4px_16px_rgba(0,0,0,0.03)] border border-slate-100/90 transition active:scale-98 hover:shadow-md"
+                  >
+                    <div className="flex items-center gap-3.5 min-w-0 flex-1">
+                      <div className="relative flex h-14 w-14 min-w-[56px] shrink-0 items-center justify-center rounded-2xl bg-white border border-slate-100 p-1 shadow-2xs overflow-hidden">
+                        {m.image ? (
+                          <img
+                            src={getImageUrl(m.image)}
+                            alt={appName}
+                            className="h-full w-full object-contain rounded-xl"
+                          />
+                        ) : (
+                          <div className={`flex h-full w-full items-center justify-center rounded-xl bg-gradient-to-br ${badge.gradient} text-white font-extrabold text-lg`}>
+                            {badge.letter}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="min-w-0 flex-1 space-y-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3 className="font-display text-[14px] font-extrabold text-[#0F172A] leading-tight truncate">
+                            {appName}
+                          </h3>
+                          <span className="inline-flex items-center gap-1 rounded-full bg-[#E6FBF5] px-2 py-0.5 text-[10px] font-bold text-[#0D9488] border border-[#99F6E4]/50">
+                            <span>✓</span>
+                            <span>En cours</span>
+                          </span>
+                          <span className="text-[11px] font-bold text-slate-700">
+                            Jour {currentDay} / {totalDays}
+                          </span>
+                        </div>
+
+                        <p className="text-[11px] font-medium text-slate-400 truncate">
+                          {getMissionCategory(m)}
+                        </p>
+
+                        <div className="flex items-center gap-1 text-[11px] font-semibold text-slate-400">
+                          <span>📅</span>
+                          <span>{m.dureEstime ? `${m.dureEstime} jours` : "14 jours"}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <ChevronRight size={18} className="text-slate-300 shrink-0" />
+                  </Link>
+                );
+              })}
+            </div>
+          )
+        )}
+      </div>
+
+      {/* ═══════════════════════════════════════════════════════════════════════ */}
+      {/* 2. VUE DESKTOP (Harmonisée avec la page Historique)                     */}
+      {/* ═══════════════════════════════════════════════════════════════════════ */}
+      <div className="hidden lg:block max-w-6xl mx-auto px-8 pt-8 pb-16">
+        {/* Header Desktop (Titre à gauche avec icône comme Historique, Onglets à droite) */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-navy-900">
-              Missions de test
-            </h1>
-            <p className="mt-0.5 text-xs text-slate-500">
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-orange/10 text-brand-orange">
+                <Briefcase size={20} />
+              </div>
+              <h1 className="font-display text-xl font-bold tracking-tight text-navy-950">
+                Missions de test
+              </h1>
+            </div>
+            <p className="mt-1 text-xs text-slate-500">
               Explorez les applications partenaires, suivez les scénarios et validez chaque étape.
             </p>
           </div>
 
-          {/* Onglets pilules modernes */}
-          <div className="inline-flex rounded-xl bg-slate-200/70 p-1 self-start md:self-auto">
+          {/* Onglets Desktop style Image 1 */}
+          <div className="flex items-center gap-2 bg-slate-100/90 p-1.5 rounded-2xl border border-slate-200/60">
             <button
               onClick={() => setTab("available")}
-              className={`flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-bold transition-all ${tab === "available"
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                tab === "available"
                   ? "bg-white text-navy-900 shadow-xs"
-                  : "text-slate-600 hover:text-navy-900"
-                }`}
+                  : "text-slate-600 hover:text-slate-900"
+              }`}
             >
               <span>Missions disponibles</span>
               <span
-                className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${tab === "available"
+                className={`flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[11px] font-black ${
+                  tab === "available"
                     ? "bg-brand-orange text-white"
-                    : "bg-slate-300/70 text-slate-700"
-                  }`}
+                    : "bg-slate-200 text-slate-600"
+                }`}
               >
                 {available.length}
               </span>
@@ -183,17 +361,19 @@ export default function MissionsPage() {
 
             <button
               onClick={() => setTab("mine")}
-              className={`flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-bold transition-all ${tab === "mine"
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                tab === "mine"
                   ? "bg-white text-navy-900 shadow-xs"
-                  : "text-slate-600 hover:text-navy-900"
-                }`}
+                  : "text-slate-600 hover:text-slate-900"
+              }`}
             >
               <span>Mes missions</span>
               <span
-                className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${tab === "mine"
+                className={`flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[11px] font-black ${
+                  tab === "mine"
                     ? "bg-brand-orange text-white"
-                    : "bg-slate-300/70 text-slate-700"
-                  }`}
+                    : "bg-slate-200 text-slate-600"
+                }`}
               >
                 {participations.length}
               </span>
@@ -201,166 +381,104 @@ export default function MissionsPage() {
           </div>
         </div>
 
-        {/* Barre de recherche et filtres modernes */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 rounded-2xl border border-slate-200/70 bg-white p-3 shadow-2xs">
-          <div className="relative flex-1 max-w-md">
-            <Search
-              size={15}
-              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
-            />
+        {/* Barre de Recherche Desktop (SANS les catégories entourées en bleu) */}
+        <div className="mb-8">
+          <div className="relative w-full max-w-xl">
+            <Search size={17} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Rechercher une mission, une application..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-xl bg-slate-50/70 py-2 pl-9 pr-3 text-xs text-navy-900 placeholder:text-slate-400 focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-brand-orange transition"
+              className="w-full rounded-2xl border border-slate-200 bg-white py-3 pl-11 pr-4 text-xs font-medium text-slate-800 placeholder:text-slate-400 shadow-xs focus:border-brand-orange focus:outline-none focus:ring-1 focus:ring-brand-orange"
             />
-          </div>
-
-          {/* Filtres utiles (Support pour disponibles / Statut pour mes missions) */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
-            {tab === "available" ? (
-              ["Tous"].map((plat) => (
-                <button
-                  key={plat}
-                  onClick={() => setPlatformFilter(plat)}
-                  className={`rounded-lg px-3 py-1.5 text-xs font-semibold whitespace-nowrap transition ${platformFilter === plat
-                      ? "bg-navy-900 text-white shadow-xs"
-                      : "bg-slate-50 text-slate-600 hover:bg-slate-100"
-                    }`}
-                >
-                  {plat === "Tous" ? "Tous les supports" : plat}
-                </button>
-              ))
-            ) : (
-              ["Tous", "En cours", "Terminées"].map((st) => (
-                <button
-                  key={st}
-                  onClick={() => setStatusFilter(st)}
-                  className={`rounded-lg px-3 py-1.5 text-xs font-semibold whitespace-nowrap transition ${statusFilter === st
-                      ? "bg-navy-900 text-white shadow-xs"
-                      : "bg-slate-50 text-slate-600 hover:bg-slate-100"
-                    }`}
-                >
-                  {st === "Tous" ? "Toutes mes missions" : st}
-                </button>
-              ))
-            )}
           </div>
         </div>
 
-        {/* Contenu principal */}
+        {/* Grille de Cartes 2 colonnes Desktop (comme Image 1) */}
         {loading ? (
-          <div className="flex min-h-[300px] items-center justify-center rounded-2xl border border-slate-100 bg-white">
-            <div className="flex flex-col items-center gap-2">
-              <Loader2 size={24} className="animate-spin text-brand-orange" />
-              <p className="text-xs text-slate-400">Chargement des missions...</p>
-            </div>
+          <div className="flex min-h-[300px] flex-col items-center justify-center gap-2">
+            <Loader2 size={28} className="animate-spin text-brand-orange" />
+            <p className="text-xs text-slate-400">Chargement des missions...</p>
           </div>
         ) : tab === "available" ? (
           filteredAvailable.length === 0 ? (
-            <div className="rounded-2xl border border-slate-200/70 bg-white p-12 text-center shadow-2xs">
-              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-50 text-brand-orange mb-3">
-                <Smartphone size={22} />
-              </div>
-              <h3 className="text-sm font-bold text-navy-900">
-                Aucune mission disponible pour le moment
-              </h3>
-              <p className="mt-1 text-xs text-slate-400 max-w-sm mx-auto">
-                {search
-                  ? "Aucune mission ne correspond à vos critères de recherche."
-                  : "Vous avez déjà rejoint toutes les missions actuellement ouvertes au test."}
+            <div className="rounded-3xl border border-slate-100 bg-white p-14 text-center shadow-xs">
+              <p className="text-sm font-semibold text-slate-500">
+                {searchQuery ? "Aucune mission ne correspond à votre recherche." : "Aucune mission disponible pour le moment."}
               </p>
             </div>
           ) : (
-            /* Grille de cartes missions au design SaaS épuré */
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4.5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {filteredAvailable.map((m) => {
-                const badge = getAppBadgeStyle(m.application);
+                const badge = getAppBadgeStyle(m.application || m.titre);
+                const appName = m.application || m.titre;
+                const totalSteps = m.dureEstime ? parseInt(String(m.dureEstime)) || 14 : 14;
+
                 return (
                   <div
                     key={m.id}
-                    className="group relative flex flex-col justify-between rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs transition-all duration-200 hover:-translate-y-0.5 hover:border-brand-orange/40 hover:shadow-md"
+                    className="flex flex-col justify-between rounded-2xl bg-white p-6 shadow-xs border border-slate-100 hover:shadow-md transition"
                   >
                     <div>
-                      {/* Ligne du haut : Logo stylé & Badges */}
-                      <div className="flex items-start justify-between gap-3">
+                      {/* En-tête de carte */}
+                      <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-3">
-                          <div
-                            className="relative flex h-12 w-12 min-w-[48px] max-w-[48px] shrink-0 items-center justify-center rounded-2xl bg-white border border-slate-200/80 p-1.5 shadow-xs overflow-hidden"
-                            style={{ width: "48px", height: "48px", minWidth: "48px", maxWidth: "48px" }}
-                          >
+                          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white border border-slate-200 p-1 shadow-2xs overflow-hidden">
                             {m.image ? (
                               <img
                                 src={getImageUrl(m.image)}
-                                alt={m.application}
-                                className="h-full w-full object-contain rounded-xl"
-                                style={{ width: "100%", height: "100%", maxWidth: "44px", maxHeight: "44px", objectFit: "contain" }}
+                                alt={appName}
+                                className="h-full w-full object-contain rounded-lg"
                               />
                             ) : (
-                              <div
-                                className={`flex h-full w-full items-center justify-center rounded-xl bg-gradient-to-br ${badge.gradient} text-white font-bold text-base`}
-                              >
+                              <div className={`flex h-full w-full items-center justify-center rounded-lg bg-gradient-to-br ${badge.gradient} text-white font-extrabold text-sm`}>
                                 {badge.letter}
                               </div>
                             )}
                           </div>
-                          <div>
-                            <span
-                              className={`inline-block rounded-md border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${badge.bgColor} ${badge.textColor}`}
-                            >
-                              {m.application}
-                            </span>
-                            <div className="flex items-center gap-1.5 mt-0.5">
-                              <span className="text-[11px] font-medium text-slate-500">
-                                {getMissionCategory(m)}
-                              </span>
-                            </div>
-                          </div>
+
+                          <span className={`px-2.5 py-1 rounded-lg text-xs font-extrabold uppercase ${badge.tagColor}`}>
+                            {appName}
+                          </span>
                         </div>
 
-                        {/* Tag de statut discret */}
-                        <span className="flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-600 border border-emerald-200/60">
-                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                          <span>Ouvert</span>
+                        <span className="rounded-full bg-emerald-50 border border-emerald-200/60 px-3 py-1 text-xs font-bold text-emerald-600">
+                          Disponible
                         </span>
                       </div>
 
-                      {/* Titre & Description */}
-                      <h3 className="mt-3.5 text-sm font-bold text-navy-900 group-hover:text-brand-orange transition line-clamp-1">
-                        {m.titre}
+                      {/* Titre */}
+                      <h3 className="font-display text-base font-extrabold text-[#0F172A] mt-1 mb-4">
+                        Tester l&apos;application {appName}
                       </h3>
-                      <p className="mt-1.5 text-xs text-slate-500 line-clamp-2 leading-relaxed">
-                        {m.description || "Participez au test utilisateur de cette application."}
-                      </p>
 
-                      {/* Métriques / Badges d'information */}
-                      <div className="mt-4 flex flex-wrap items-center gap-2">
-                        <span className="inline-flex items-center gap-1 rounded-lg bg-slate-50 px-2.5 py-1 text-[11px] font-semibold text-slate-600 border border-slate-100">
-                          <Clock size={12} className="text-slate-400" />
-                          <span>{m.dureEstime || "3 jours"}</span>
-                        </span>
-
-                        <span className="inline-flex items-center gap-1 rounded-lg bg-slate-50 px-2.5 py-1 text-[11px] font-semibold text-slate-600 border border-slate-100">
-                          <Users size={12} className="text-slate-400" />
-                          <span>{m.nombreParticipantsSouhaites || 20} testeurs</span>
-                        </span>
-
-                        <span className="inline-flex items-center gap-1 rounded-lg bg-slate-50 px-2.5 py-1 text-[11px] font-semibold text-slate-600 border border-slate-100">
-                          <Layers size={12} className="text-slate-400" />
-                          <span>{m.etapes?.length ? `${m.etapes.length} étapes` : "3 étapes"}</span>
-                        </span>
+                      {/* Bloc de progression */}
+                      <div className="space-y-2 bg-slate-50/70 p-3.5 rounded-xl border border-slate-100">
+                        <div className="flex items-center justify-between text-xs font-bold text-slate-700">
+                          <span>Progression du test</span>
+                          <span>0%</span>
+                        </div>
+                        <div className="h-2 w-full rounded-full bg-slate-200/70 overflow-hidden">
+                          <div className="h-full bg-brand-orange rounded-full" style={{ width: "0%" }} />
+                        </div>
+                        <p className="text-[11px] font-medium text-slate-500">
+                          0 sur {totalSteps} étapes validées
+                        </p>
                       </div>
                     </div>
 
-                    {/* Bouton d'action élégant */}
-                    <div className="mt-5 pt-3.5 border-t border-slate-100">
+                    {/* Pied de carte */}
+                    <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between">
+                      <span className="text-xs font-medium text-slate-400">
+                        Nouvelle opportunité
+                      </span>
                       <Link
                         href={`/dashboard/missions/${m.id}`}
-                        className="flex w-full items-center justify-center gap-2 rounded-xl bg-navy-900 py-2.5 text-xs font-bold text-white transition-all group-hover:bg-brand-orange shadow-xs"
+                        className="inline-flex items-center gap-1.5 rounded-xl bg-[#F97316] hover:bg-[#EA580C] px-4 py-2.5 text-xs font-extrabold text-white shadow-xs transition"
                       >
-                        <span>Participer au test</span>
-                        <ArrowRight size={14} className="transition group-hover:translate-x-1" />
+                        <span>Démarrer le test</span>
+                        <ArrowRight size={14} />
                       </Link>
                     </div>
                   </div>
@@ -369,134 +487,90 @@ export default function MissionsPage() {
             </div>
           )
         ) : (
-          /* Vue Mes missions en cours */
-          filteredMine.length === 0 ? (
-            <div className="rounded-2xl border border-slate-200/70 bg-white p-12 text-center shadow-2xs">
-              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-50 text-slate-400 mb-3">
-                <CheckCircle2 size={22} />
-              </div>
-              <h3 className="text-sm font-bold text-navy-900">
-                Vous n&apos;avez aucune mission active
-              </h3>
-              <p className="mt-1 text-xs text-slate-400 max-w-sm mx-auto">
-                Sélectionnez une mission parmi les tests disponibles pour commencer dès maintenant.
+          filteredParticipations.length === 0 ? (
+            <div className="rounded-3xl border border-slate-100 bg-white p-14 text-center shadow-xs">
+              <p className="text-sm font-semibold text-slate-500">
+                {searchQuery ? "Aucune mission en cours ne correspond à votre recherche." : "Vous n'avez aucune mission en cours actuellement."}
               </p>
-              <button
-                onClick={() => setTab("available")}
-                className="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-brand-orange px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-brand-orange/90 transition"
-              >
-                <span>Explorer les missions disponibles</span>
-                <ArrowRight size={14} />
-              </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {filteredMine.map((p) => {
-                const badge = getAppBadgeStyle(p.mission?.application || "");
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {filteredParticipations.map((p) => {
+                const m = p.mission;
+                if (!m) return null;
+                const badge = getAppBadgeStyle(m.application || m.titre);
+                const appName = m.application || m.titre;
+                const completed = p.etapesCompletees || 0;
+                const totalSteps = p.etapesTotal || (m.dureEstime ? parseInt(String(m.dureEstime)) || 14 : 14);
+                const progressPct = Math.min(100, Math.round((completed / totalSteps) * 100));
+
                 return (
                   <div
                     key={p.id}
-                    className="flex flex-col justify-between rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs transition hover:border-slate-300"
+                    className="flex flex-col justify-between rounded-2xl bg-white p-6 shadow-xs border border-slate-100 hover:shadow-md transition"
                   >
                     <div>
-                      <div className="flex items-start justify-between gap-3">
+                      {/* En-tête de carte */}
+                      <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-3">
-                          <div
-                            className="relative flex h-12 w-12 min-w-[48px] max-w-[48px] shrink-0 items-center justify-center rounded-2xl bg-white border border-slate-200/80 p-1.5 shadow-xs overflow-hidden"
-                            style={{ width: "48px", height: "48px", minWidth: "48px", maxWidth: "48px" }}
-                          >
-                            {p.mission?.image ? (
+                          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white border border-slate-200 p-1 shadow-2xs overflow-hidden">
+                            {m.image ? (
                               <img
-                                src={getImageUrl(p.mission.image)}
-                                alt={p.mission.application}
-                                className="h-full w-full object-contain rounded-xl"
-                                style={{ width: "100%", height: "100%", maxWidth: "44px", maxHeight: "44px", objectFit: "contain" }}
+                                src={getImageUrl(m.image)}
+                                alt={appName}
+                                className="h-full w-full object-contain rounded-lg"
                               />
                             ) : (
-                              <div
-                                className={`flex h-full w-full items-center justify-center rounded-xl bg-gradient-to-br ${badge.gradient} text-white font-bold text-base`}
-                              >
+                              <div className={`flex h-full w-full items-center justify-center rounded-lg bg-gradient-to-br ${badge.gradient} text-white font-extrabold text-sm`}>
                                 {badge.letter}
                               </div>
                             )}
                           </div>
-                          <div>
-                            <span
-                              className={`inline-block rounded-md border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${badge.bgColor} ${badge.textColor}`}
-                            >
-                              {p.mission?.application}
-                            </span>
-                            <h3 className="mt-0.5 text-sm font-bold text-navy-900 line-clamp-1">
-                              {p.mission?.titre}
-                            </h3>
-                          </div>
+
+                          <span className={`px-2.5 py-1 rounded-lg text-xs font-extrabold uppercase ${badge.tagColor}`}>
+                            {appName}
+                          </span>
                         </div>
 
-                        <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold border whitespace-nowrap ${p.statut === "en_attente"
-                            ? "bg-amber-50 text-amber-700 border-amber-200/60"
-                            : p.statut === "acceptee"
-                              ? "bg-emerald-50 text-emerald-700 border-emerald-200/60"
-                              : p.statut === "refusee"
-                                ? "bg-rose-50 text-rose-700 border-rose-200/60"
-                                : "bg-blue-50 text-blue-600 border-blue-200/60"
-                          }`}>
-                          {STATUT_LABELS[p.statut] ?? p.statut}
+                        <span className="rounded-full bg-blue-50 border border-blue-200/60 px-3 py-1 text-xs font-bold text-blue-600">
+                          En cours de test
                         </span>
                       </div>
 
-                      {/* Jauge de progression stylée */}
-                      {(() => {
-                        const completedSteps = Math.max(p.etapesCompletees || 0, (p.joursValides || []).length);
-                        const totalSteps = p.etapesTotal || p.mission?.etapes?.length || 12;
-                        const progressPercent = Math.min(100, Math.max(p.progression || 0, Math.round((completedSteps / Math.max(1, totalSteps)) * 100)));
+                      {/* Titre */}
+                      <h3 className="font-display text-base font-extrabold text-[#0F172A] mt-1 mb-4">
+                        Tester l&apos;application {appName}
+                      </h3>
 
-                        return (
-                          <div className="mt-4 rounded-xl bg-slate-50 p-3 border border-slate-100">
-                            <div className="flex items-center justify-between text-xs font-semibold mb-1.5">
-                              <span className="text-slate-600">Progression du test</span>
-                              <span className="font-bold text-navy-900">{progressPercent}%</span>
-                            </div>
-                            <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200/70">
-                              <div
-                                className="h-full rounded-full bg-gradient-to-r from-brand-orange to-amber-500 transition-all duration-500"
-                                style={{ width: `${progressPercent}%` }}
-                              />
-                            </div>
-                            <p className="mt-2 text-[11px] text-slate-500">
-                              {completedSteps} sur {totalSteps} {completedSteps > 1 ? "étapes validées" : "étape validée"}
-                            </p>
-                          </div>
-                        );
-                      })()}
+                      {/* Bloc de progression */}
+                      <div className="space-y-2 bg-slate-50/70 p-3.5 rounded-xl border border-slate-100">
+                        <div className="flex items-center justify-between text-xs font-bold text-slate-700">
+                          <span>Progression du test</span>
+                          <span>{progressPct}%</span>
+                        </div>
+                        <div className="h-2 w-full rounded-full bg-slate-200/70 overflow-hidden">
+                          <div
+                            className="h-full bg-brand-orange rounded-full transition-all duration-300"
+                            style={{ width: `${progressPct}%` }}
+                          />
+                        </div>
+                        <p className="text-[11px] font-medium text-slate-500">
+                          {completed} sur {totalSteps} étapes validées
+                        </p>
+                      </div>
                     </div>
 
-                    <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
-                      <span className="text-[11px] text-slate-400">
-                        {p.statut === "en_attente"
-                          ? "En attente admin"
-                          : p.statut === "acceptee"
-                            ? "Accepté"
-                            : p.statut === "terminee"
-                              ? "Test achevé"
-                              : "Session en cours"}
+                    {/* Pied de carte */}
+                    <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between">
+                      <span className="text-xs font-medium text-slate-400">
+                        Session en cours
                       </span>
                       <Link
-                        href={`/dashboard/missions/${p.mission?.id}`}
-                        className={`inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold text-white shadow-xs transition ${p.statut === "en_attente"
-                            ? "bg-amber-600 hover:bg-amber-700"
-                            : p.statut === "acceptee"
-                              ? "bg-emerald-600 hover:bg-emerald-700"
-                              : "bg-brand-orange hover:bg-brand-orange/90"
-                          }`}
+                        href={`/dashboard/missions/${m.id}`}
+                        className="inline-flex items-center gap-1.5 rounded-xl bg-[#F97316] hover:bg-[#EA580C] px-4 py-2.5 text-xs font-extrabold text-white shadow-xs transition"
                       >
-                        <span>
-                          {p.statut === "en_attente"
-                            ? "Voir candidature"
-                            : p.statut === "acceptee"
-                              ? "Commencer le test"
-                              : "Continuer le test"}
-                        </span>
-                        <ArrowRight size={13} />
+                        <span>Continuer le test</span>
+                        <ArrowRight size={14} />
                       </Link>
                     </div>
                   </div>

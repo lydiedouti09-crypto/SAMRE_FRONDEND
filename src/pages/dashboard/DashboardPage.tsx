@@ -157,302 +157,263 @@ export default function DashboardPage() {
       {/* ======================================================== */}
       {/* =================== VERSION MOBILE ==================== */}
       {/* ======================================================== */}
-      <div className="block lg:hidden min-h-screen bg-[#F6F7F9] px-4 pt-4 pb-28">
-        <div className="max-w-md mx-auto space-y-5">
-          {/* Top Bar (Inspiration Image 4 : Hello Mickel, Dashboard) */}
-          <div className="flex items-center justify-between pb-1">
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">Bonjour 👋</p>
-              <h1 className="mt-1 font-display text-xl font-extrabold tracking-tight text-navy-900 leading-tight">
-                {user?.prenom} {user?.nom}
-              </h1>
-            </div>
+      <div className="block lg:hidden min-h-screen bg-[#F8FAFC] px-4 pt-1 pb-24">
+        <div className="max-w-md mx-auto space-y-2.5">
+          {/* 1. Header Supérieur Mobile (Logo SAMRE à gauche + Cloche & Avatar à droite) */}
+          <div className="flex items-center justify-between pt-1 pb-0.5">
+            <Link href="/dashboard" className="flex items-center gap-2">
+              <img
+                src="/ChatGPT Image 5 oct. 2026, 12_23_50.png"
+                alt="Logo SAMRE"
+                className="h-9 w-9 object-contain"
+                style={{ mixBlendMode: 'multiply' }}
+              />
+            </Link>
 
             <div className="flex items-center gap-2">
+              {/* Cloche de notifications avec point rouge */}
               <Link
                 href="/dashboard/notifications"
                 aria-label="Notifications"
-                className="relative flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200/80 bg-white text-slate-700 shadow-sm transition active:scale-95 hover:bg-slate-50"
+                className="relative flex h-9 w-9 items-center justify-center rounded-full bg-white text-slate-700 shadow-2xs border border-slate-100 transition active:scale-95"
               >
-                <Bell size={18} />
-                {unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-brand-orange text-[9px] font-bold text-white shadow-xs">
-                    {unreadCount > 9 ? "9+" : unreadCount}
-                  </span>
+                <Bell size={18} className="text-slate-700" />
+                {unreadCount > 0 ? (
+                  <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white" />
+                ) : (
+                  <span className="absolute top-1.5 right-1.5 h-1.5 w-1.5 rounded-full bg-red-500 ring-2 ring-white" />
                 )}
               </Link>
 
+              {/* Avatar Utilisateur */}
               <Link href="/dashboard/profil" className="relative block">
                 {user?.photo ? (
                   <img
                     src={user.photo}
                     alt={user.prenom || "Profil"}
-                    className="h-10 w-10 rounded-full object-cover border-2 border-white shadow-sm"
+                    className="h-9 w-9 rounded-full object-cover ring-2 ring-purple-200 shadow-2xs"
                   />
                 ) : (
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-navy-900 text-xs font-bold text-white shadow-sm">
-                    {(user?.prenom?.[0] || "T").toUpperCase()}
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#E9D5FF] text-[#6B21A8] font-extrabold text-xs ring-2 ring-purple-200 shadow-2xs">
+                    {(user?.prenom?.[0] || "P").toUpperCase()}
                   </div>
                 )}
-                <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border border-white bg-emerald-500" />
               </Link>
             </div>
           </div>
 
-          {/* Carte Rémunération & Performances (Inspiration Dribbble Image 4 : Earnings Card) */}
-          <div className="relative overflow-hidden rounded-[28px] border border-slate-200/80 bg-white p-4 shadow-[0_14px_40px_rgba(15,23,42,0.08)] space-y-4">
-            <div className="pointer-events-none absolute -right-12 -top-12 h-32 w-32 rounded-full bg-orange-100/80" />
-            <div className="flex items-center justify-between">
-              <div>
-                <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-brand-orange">
-                  Vue d'ensemble
-                </span>
-                <h2 className="mt-1 font-display text-2xl font-extrabold tracking-tight text-navy-900 leading-none">
-                  Tes performances
-                </h2>
-              </div>
-              <span className="relative rounded-full bg-navy-900 px-2.5 py-1.5 text-[10px] font-bold text-white shadow-sm">
-                {participations.length} test{participations.length > 1 ? "s" : ""}
-              </span>
-            </div>
+          {/* 2. Salutation Bonjour */}
+          <div className="pt-0">
+            <h1 className="font-display text-[21px] font-extrabold tracking-tight text-[#0F172A] leading-tight">
+              Bonjour, {user?.prenom || user?.nom || "pabougante"}
+            </h1>
+            <p className="text-[12px] font-medium text-slate-500 mt-0.5">
+              Voici les tests à réaliser aujourd'hui.
+            </p>
+          </div>
 
-            {/* Grille 2x2 façon Image 4 */}
-            <div className="grid grid-cols-2 gap-2">
-              {/* 1. Gains validés (Available) */}
-              <div className="rounded-2xl border border-slate-100 bg-[#F8FAFC] p-3 shadow-sm">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-medium text-slate-400">Gagné</span>
-                  <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
-                    <Wallet size={13} />
-                  </span>
-                </div>
-                <p className="mt-1.5 font-display text-base font-extrabold text-navy-900">
-                  {totalRemunerationGagnee.toLocaleString("fr-FR")} <span className="text-[10px] font-normal text-slate-500">FCFA</span>
-                </p>
-              </div>
+          {/* 3. Carte Principale de Test Dégradée (Style Épuré sans téléphone 3D) */}
+          {(() => {
+            const activeMission = active?.mission || missions[0];
+            const currentDay = (active?.etapesCompletees ?? 0) + 1;
+            const totalDays = active?.etapesTotal || activeMission?.dureEstime ? parseInt(String(activeMission?.dureEstime)) || 14 : 14;
+            const progressPercent = active?.progression ?? Math.round((currentDay / totalDays) * 100);
+            const appName = activeMission?.application || activeMission?.titre || "SnapClean";
+            const appDesc = activeMission?.description || "Application de nettoyage et d'optimisation pour Android";
+            const playStoreUrl = getApplicationPlayStoreUrl(activeMission) || "https://play.google.com/store/apps";
 
-              {/* 2. Gains en attente (Pending) */}
-              <div className="rounded-2xl border border-slate-100 bg-[#F8FAFC] p-3 shadow-sm">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-medium text-slate-400">À débloquer</span>
-                  <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
-                    <Lock size={13} />
-                  </span>
-                </div>
-                <p className="mt-1.5 font-display text-base font-extrabold text-navy-900">
-                  {totalRemunerationEstimee.toLocaleString("fr-FR")} <span className="text-[10px] font-normal text-slate-500">FCFA</span>
-                </p>
-              </div>
+            return (
+              <div
+                className="relative overflow-hidden rounded-[24px] p-4 text-white shadow-[0_12px_32px_-6px_rgba(99,102,241,0.28)]"
+                style={{
+                  background: 'linear-gradient(135deg, #818CF8 0%, #60A5FA 45%, #93C5FD 100%)',
+                }}
+              >
+                {/* Lueur d'arrière-plan */}
+                <div className="pointer-events-none absolute -right-10 -bottom-10 h-36 w-36 rounded-full bg-white/20 blur-2xl" />
 
-              {/* 3. Étapes validées */}
-              <div className="rounded-2xl border border-slate-100 bg-[#F8FAFC] p-3 shadow-sm">
+                {/* Ligne Supérieure : Badge Statut + Jours/Progression */}
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-medium text-slate-400">Étapes</span>
-                  <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
-                    <CheckCircle2 size={13} />
-                  </span>
-                </div>
-                <p className="mt-1.5 font-display text-base font-extrabold text-navy-900">
-                  {active ? `${active.etapesCompletees || 0}/${active.etapesTotal || 12}` : `${joursValides}`} <span className="text-[10px] font-normal text-slate-500">jours</span>
-                </p>
-              </div>
+                  <div className="inline-flex items-center gap-1.5 rounded-full bg-[#FEF9C3]/90 backdrop-blur-sm px-2.5 py-0.5 text-[10px] font-bold text-[#854D0E] shadow-2xs">
+                    <span className="text-[10px]">✨</span>
+                    <span>{active ? "En cours" : "Disponible"}</span>
+                  </div>
 
-              {/* 4. Série active */}
-              <div className="rounded-2xl border border-slate-100 bg-[#F8FAFC] p-3 shadow-sm">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-medium text-slate-400">Série</span>
-                  <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-orange-50 text-brand-orange">
-                    <Flame size={13} className="fill-brand-orange" />
-                  </span>
-                </div>
-                <p className="mt-1.5 font-display text-base font-extrabold text-brand-orange">
-                  {Math.max(1, joursValides)} <span className="text-[10px] font-normal text-slate-500">jours</span>
-                </p>
-              </div>
-            </div>
-
-            {/* Test actif (Intégration épurée sans bloc sombre massif) */}
-            {active ? (
-              <div className="rounded-2xl border border-blue-100 bg-white/95 p-3.5 shadow-2xs space-y-2.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold text-blue-900 uppercase">
-                    Test actif · Jour {(active.etapesCompletees ?? 0) + 1} sur {active.etapesTotal || 12}
-                  </span>
-                  <span className="text-[11px] font-bold text-navy-900">
-                    {active.progression ?? 0}%
-                  </span>
+                  <div className="flex flex-col items-end">
+                    <span className="text-[11px] font-bold tracking-wide text-white/95">
+                      Jour {currentDay} / {totalDays}
+                    </span>
+                    <div className="flex items-center gap-1.5 mt-1">
+                      <div className="h-1.5 w-16 rounded-full bg-white/30 overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-white transition-all duration-500"
+                          style={{ width: `${Math.min(100, Math.max(7, progressPercent))}%` }}
+                        />
+                      </div>
+                      <span className="text-[9px] font-bold text-white/90">
+                        {progressPercent}%
+                      </span>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="flex items-center gap-3">
-                  <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-50 border border-slate-200/80 p-1 overflow-hidden">
-                    {active.mission?.image ? (
+                {/* Corps de la carte : Icone App Propre + Titre + Description pleine largeur */}
+                <div className="flex items-center gap-3.5 my-3.5">
+                  {/* Icone App avec fond blanc arrondi et propre */}
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white p-1.5 shadow-sm border border-white/60 overflow-hidden">
+                    {activeMission?.image ? (
                       <img
-                        src={getImageUrl(active.mission.image)}
-                        alt={active.mission.application}
-                        className="h-full w-full object-contain rounded-lg"
+                        src={getImageUrl(activeMission.image)}
+                        alt={appName}
+                        className="h-full w-full object-contain rounded-xl"
                       />
                     ) : (
-                      <span className="font-bold text-navy-900 text-xs">
-                        {active.mission?.application?.charAt(0).toUpperCase() || "A"}
-                      </span>
+                      <div className="flex h-full w-full items-center justify-center rounded-xl bg-gradient-to-tr from-cyan-400 to-blue-600 font-display text-lg font-black text-white">
+                        {appName.charAt(0)}
+                      </div>
                     )}
                   </div>
+
                   <div className="min-w-0 flex-1">
-                    <h3 className="font-display text-xs font-bold text-navy-900 truncate">
-                      {active.mission?.titre}
-                    </h3>
-                    <p className="text-[11px] text-slate-500 truncate">
-                      {active.mission?.application} · <span className="text-emerald-600 font-semibold">Android</span>
+                    <h2 className="font-display text-[17px] font-extrabold text-white leading-tight truncate">
+                      {appName}
+                    </h2>
+                    <p className="text-[11.5px] text-white/95 leading-snug line-clamp-2 mt-0.5 font-normal">
+                      {appDesc}
                     </p>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2 pt-1">
+                {/* Boutons d'Action : Google Play + Continuer le test */}
+                <div className="flex items-center gap-2 pt-0.5">
+                  {/* Bouton Google Play blanc arrondi */}
                   <a
-                    href={getApplicationPlayStoreUrl(active.mission)}
+                    href={playStoreUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 py-2.5 text-[11px] font-bold text-white transition active:scale-95 hover:bg-emerald-700 shadow-2xs"
+                    className="flex-1 flex items-center justify-center gap-1.5 rounded-full bg-white py-2 px-3 text-[11px] font-extrabold text-[#0F172A] shadow-sm transition active:scale-95 hover:bg-slate-50"
                   >
-                    <Play size={12} fill="currentColor" />
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                      <path d="M3.609 1.814C3.253 2.19 3 2.793 3 3.593v16.814c0 .8.253 1.403.609 1.779l.092.088 9.42-9.42v-.222L3.701 1.726l-.092.088z" fill="#00D2FF" />
+                      <path d="M16.275 15.997l-3.154-3.154v-.222l3.154-3.154.07.04 3.738 2.124c1.068.606 1.068 1.6 0 2.207l-3.738 2.124-.07.035z" fill="#FFD200" />
+                      <path d="M16.345 15.962L13.12 12.737 3.609 22.247c.353.376.945.422 1.623.036l11.113-6.321" fill="#FF3A44" />
+                      <path d="M16.345 8.038L5.232 1.717c-.678-.386-1.27-.34-1.623.036l9.512 9.51 3.224-3.225" fill="#00E676" />
+                    </svg>
                     <span>Google Play</span>
+                    <ArrowRight size={11} />
                   </a>
 
+                  {/* Bouton Sombre Continuer le test */}
                   <Link
-                    href={`/dashboard/missions/${active.mission?.id}`}
-                    className="flex items-center justify-center gap-1.5 rounded-xl bg-blue-600 py-2.5 text-[11px] font-bold text-white transition active:scale-95 hover:bg-blue-700 shadow-2xs"
+                    href={activeMission ? `/dashboard/missions/${activeMission.id}` : "/dashboard/missions"}
+                    className="flex-1 flex items-center justify-center gap-1.5 rounded-full bg-[#0B1727] py-2 px-3 text-[11px] font-extrabold text-white shadow-md shadow-slate-950/20 transition active:scale-95 hover:bg-[#1E293B]"
                   >
-                    <span>Tester Jour {(active.etapesCompletees ?? 0) + 1}</span>
-                    <ChevronRight size={13} />
+                    <span>Continuer le test</span>
+                    <ArrowRight size={11} />
                   </Link>
                 </div>
               </div>
-            ) : (
-              <Link
-                href="/dashboard/missions"
-                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 py-3 text-xs font-bold text-white shadow-md shadow-blue-500/20 transition active:scale-95 hover:bg-blue-700"
-              >
-                <span>Rejoindre une mission de test</span>
-                <ChevronRight size={14} />
-              </Link>
-            )}
-          </div>
+            );
+          })()}
 
-          {/* Section Missions & Activités (Inspiration Dribbble Image 4 : Transactions & Tabs) */}
-          <div className="space-y-3 pt-2">
-            <div className="flex items-center justify-between">
-              <h3 className="font-display text-sm font-bold text-navy-900">
-                Missions
-              </h3>
-              <Link
-                href="/dashboard/missions"
-                className="text-xs font-semibold text-blue-600 hover:underline"
-              >
-                Tout voir
-              </Link>
+          {/* 4. Section "À faire aujourd'hui" (3 étapes guidées façon Maquette) */}
+          <div className="space-y-2.5 pt-1">
+            <div>
+              <h2 className="font-display text-base font-extrabold text-[#0F172A] leading-tight">
+                À faire aujourd’hui
+              </h2>
+              <p className="text-[11px] font-medium text-slate-400 mt-0.5">
+                3 étapes pour valider votre mission.
+              </p>
             </div>
 
-            {/* Onglets segmentés façon Image 4 ("All", "Earnings", "Withdrawals") */}
-            <div className="grid grid-cols-3 rounded-2xl bg-slate-200/70 p-1 text-xs font-bold text-slate-600">
-              <button
-                type="button"
-                onClick={() => setMissionTab("toutes")}
-                className={`py-1.5 rounded-xl transition ${
-                  missionTab === "toutes" ? "bg-white text-navy-900 shadow-2xs" : "hover:text-navy-900"
-                }`}
-              >
-                Toutes
-              </button>
-              <button
-                type="button"
-                onClick={() => setMissionTab("en_cours")}
-                className={`py-1.5 rounded-xl transition ${
-                  missionTab === "en_cours" ? "bg-white text-navy-900 shadow-2xs" : "hover:text-navy-900"
-                }`}
-              >
-                Mes tests ({participations.length})
-              </button>
-              <button
-                type="button"
-                onClick={() => setMissionTab("disponibles")}
-                className={`py-1.5 rounded-xl transition ${
-                  missionTab === "disponibles" ? "bg-white text-navy-900 shadow-2xs" : "hover:text-navy-900"
-                }`}
-              >
-                Disponibles ({available.length})
-              </button>
-            </div>
+            {/* Liste des 3 étapes avec pastilles numérotées et ligne de connexion */}
+            <div className="relative space-y-3 pt-1">
+              {/* Ligne verticale de connexion en arrière-plan */}
+              <div className="absolute left-[15px] top-6 bottom-6 w-[2px] bg-slate-200/80 -z-0" />
 
-            {/* Barre de recherche discrète */}
-            <div className="relative">
-              <Search
-                size={15}
-                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
-              />
-              <input
-                type="text"
-                placeholder="Rechercher une mission, application..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full rounded-2xl border border-slate-200/80 bg-white py-2.5 pl-10 pr-4 text-xs font-medium text-navy-900 placeholder:text-slate-400 shadow-2xs focus:border-blue-500 focus:outline-none"
-              />
-            </div>
-
-            {/* Liste des cartes façon transactions */}
-            <div className="space-y-2.5">
-              {displayMissions.length === 0 ? (
-                <div className="rounded-2xl border border-slate-100 bg-white p-6 text-center text-xs text-slate-400">
-                  Aucune mission ne correspond à vos critères.
+              {/* Étape 1 : Ouvrir l'application */}
+              <div className="relative z-10 flex items-center gap-3">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#F59E0B] text-white font-extrabold text-xs shadow-md shadow-amber-500/20 ring-4 ring-[#F8FAFC]">
+                  1
                 </div>
-              ) : (
-                displayMissions.map((m) => {
-                  const isJoined = joinedIds.has(m.id);
-                  const part = participations.find((p) => p.mission?.id === m.id);
 
-                  return (
-                    <Link
-                      key={m.id}
-                      href={`/dashboard/missions/${m.id}`}
-                      className="flex items-center justify-between rounded-2xl border border-slate-100 bg-white p-3.5 shadow-2xs transition active:scale-98 hover:shadow-xs"
-                    >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-slate-50 border border-slate-200/70 p-1 overflow-hidden">
-                          {m.image ? (
-                            <img
-                              src={getImageUrl(m.image)}
-                              alt={m.application}
-                              className="h-full w-full object-contain rounded-xl"
-                            />
-                          ) : (
-                            <span className="font-bold text-navy-900 text-xs">
-                              {m.application?.charAt(0).toUpperCase() || "A"}
-                            </span>
-                          )}
-                        </div>
-                        <div className="min-w-0">
-                          <h4 className="font-display text-xs font-bold text-navy-900 truncate">
-                            {m.titre}
-                          </h4>
-                          <p className="text-[11px] text-slate-400 truncate">
-                            {m.application} · <span className="text-slate-500 font-medium">{m.dureEstime || "14j"}</span>
-                          </p>
-                        </div>
-                      </div>
+                <a
+                  href={getApplicationPlayStoreUrl(active?.mission || missions[0]) || "https://play.google.com"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 flex items-center justify-between rounded-2xl bg-white p-3.5 shadow-[0_4px_16px_rgba(0,0,0,0.03)] border border-slate-100 transition active:scale-98 hover:shadow-md"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-amber-50 text-amber-600 border border-amber-100/70">
+                      <Smartphone size={20} />
+                    </div>
+                    <div>
+                      <h3 className="font-display text-[13px] font-bold text-[#0F172A]">
+                        Ouvrir l’application
+                      </h3>
+                      <p className="text-[11px] text-slate-400 mt-0.5 font-normal">
+                        Lancez {active?.mission?.application || "SnapClean"} et explorez l'application.
+                      </p>
+                    </div>
+                  </div>
+                  <ChevronRight size={16} className="text-slate-300 shrink-0" />
+                </a>
+              </div>
 
-                      <div className="shrink-0 text-right ml-2">
-                        <span className="font-display text-xs font-bold text-emerald-600 block">
-                          +{parseFloat(String(m.remuneration || 0)).toLocaleString("fr-FR")} FCFA/jour
-                        </span>
-                        <span className={`text-[10px] font-bold ${
-                          isJoined ? "text-blue-600" : "text-slate-400"
-                        }`}>
-                          {isJoined ? (part?.progression ? `${part.progression}%` : "En cours") : "Participer >"}
-                        </span>
-                      </div>
-                    </Link>
-                  );
-                })
-              )}
+              {/* Étape 2 : Réaliser le scénario */}
+              <div className="relative z-10 flex items-center gap-3">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#6366F1] text-white font-extrabold text-xs shadow-md shadow-indigo-500/20 ring-4 ring-[#F8FAFC]">
+                  2
+                </div>
+
+                <Link
+                  href={active?.mission ? `/dashboard/missions/${active.mission.id}` : "/dashboard/missions"}
+                  className="flex-1 flex items-center justify-between rounded-2xl bg-white p-3.5 shadow-[0_4px_16px_rgba(0,0,0,0.03)] border border-slate-100 transition active:scale-98 hover:shadow-md"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600 border border-indigo-100/70 font-display font-extrabold text-base">
+                      2
+                    </div>
+                    <div>
+                      <h3 className="font-display text-[13px] font-bold text-[#0F172A]">
+                        Réaliser le scénario
+                      </h3>
+                      <p className="text-[11px] text-slate-400 mt-0.5 font-normal">
+                        Suivez les instructions du test.
+                      </p>
+                    </div>
+                  </div>
+                  <ChevronRight size={16} className="text-slate-300 shrink-0" />
+                </Link>
+              </div>
+
+              {/* Étape 3 : Valider le code du jour */}
+              <div className="relative z-10 flex items-center gap-3">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#10B981] text-white font-extrabold text-xs shadow-md shadow-emerald-500/20 ring-4 ring-[#F8FAFC]">
+                  3
+                </div>
+
+                <Link
+                  href={active?.mission ? `/dashboard/missions/${active.mission.id}` : "/dashboard/missions"}
+                  className="flex-1 flex items-center justify-between rounded-2xl bg-white p-3.5 shadow-[0_4px_16px_rgba(0,0,0,0.03)] border border-slate-100 transition active:scale-98 hover:shadow-md"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-100/70">
+                      <CheckCircle2 size={20} />
+                    </div>
+                    <div>
+                      <h3 className="font-display text-[13px] font-bold text-[#0F172A]">
+                        Valider le code du jour
+                      </h3>
+                      <p className="text-[11px] text-slate-400 mt-0.5 font-normal">
+                        Entrez le code dans l’application.
+                      </p>
+                    </div>
+                  </div>
+                  <ChevronRight size={16} className="text-slate-300 shrink-0" />
+                </Link>
+              </div>
             </div>
           </div>
         </div>

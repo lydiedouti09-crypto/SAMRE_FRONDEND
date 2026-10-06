@@ -23,9 +23,12 @@ import {
   Trash2,
   AlertCircle,
   HelpCircle,
+  Crown,
+  Wallet,
+  Settings,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
-import { profileApi, type User } from "@/lib/api";
+import { profileApi, participationsApi, type User, type Participation } from "@/lib/api";
 
 const PAYS_LIST = [
   "Côte d'Ivoire",
@@ -51,6 +54,7 @@ export default function ProfilPage() {
 
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<User | null>(user || null);
+  const [participations, setParticipations] = useState<Participation[]>([]);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
   // Modals
@@ -73,26 +77,21 @@ export default function ProfilPage() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
-    profileApi
-      .show()
-      .then((data) => {
-        setProfile(data);
-        setNom(data.nom || "");
-        setPrenom(data.prenom || "");
-        setTelephone(data.telephone || "");
-        setPays(data.pays || "");
-        setVille(data.ville || "");
-        setGenre(data.genre || "");
-      })
-      .catch(() => {
-        if (user) {
-          setNom(user.nom || "");
-          setPrenom(user.prenom || "");
-          setTelephone(user.telephone || "");
-          setPays(user.pays || "");
-          setVille(user.ville || "");
-          setGenre(user.genre || "");
+    Promise.all([
+      profileApi.show().catch(() => user || null),
+      participationsApi.mine().catch(() => []),
+    ])
+      .then(([data, parts]) => {
+        if (data) {
+          setProfile(data);
+          setNom(data.nom || "");
+          setPrenom(data.prenom || "");
+          setTelephone(data.telephone || "");
+          setPays(data.pays || "");
+          setVille(data.ville || "");
+          setGenre(data.genre || "");
         }
+        setParticipations(parts || []);
       })
       .finally(() => setLoading(false));
   }, [user]);
@@ -221,218 +220,275 @@ export default function ProfilPage() {
   }`.trim();
   const email = profile?.email || user?.email || "";
 
+  // Calcul dynamique des gains et points réels
+  const totalRemunerationGagnee = participations.reduce((acc, p) => {
+    const dailyRate = parseFloat(String(p.mission?.remuneration || 0));
+    const completedDays = Math.max(p.etapesCompletees || 0, new Set(p.joursValides || []).size);
+    return acc + (isNaN(dailyRate) ? 0 : dailyRate * completedDays);
+  }, 0);
+
+  const totalJoursValides = participations.reduce(
+    (sum, p) => sum + (p.etapesCompletees ?? 0),
+    0
+  );
+  const currentPts = (totalJoursValides * 20) + 120;
+  const maxPts = 500;
+  const ptsProgress = Math.min(100, Math.round((currentPts / maxPts) * 100));
+
   return (
     <div className="relative min-h-screen bg-[#F8F9FB] pb-28 text-slate-800">
-      {/* ── 1. Top Sky-Blue Gradient Header (comme Image 5) ── */}
-      <div className="absolute top-0 inset-x-0 h-64 bg-gradient-to-b from-[#BAE6FD] via-[#E0F2FE]/70 to-[#F8F9FB] pointer-events-none" />
+      {/* Messages Toast d'alerte */}
+      {successMsg && (
+        <div className="fixed top-4 right-4 z-50 flex items-center gap-2 rounded-2xl border border-emerald-200/80 bg-white/95 p-3 text-xs font-semibold text-emerald-800 shadow-lg animate-in fade-in">
+          <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
+          <span>{successMsg}</span>
+        </div>
+      )}
+      {errorMsg && (
+        <div className="fixed top-4 right-4 z-50 flex items-center gap-2 rounded-2xl border border-red-200/80 bg-white/95 p-3 text-xs font-semibold text-red-800 shadow-lg animate-in fade-in">
+          <AlertCircle size={16} className="text-red-600 shrink-0" />
+          <span>{errorMsg}</span>
+        </div>
+      )}
 
-      <div className="relative max-w-md mx-auto px-4 pt-6">
-        {/* Navigation Bar / Titre & Cloche */}
-        <div className="flex items-center justify-between mb-5">
-          <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-            Mon Profil
-          </h1>
-          <Link
-            to="/dashboard/notifications"
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-xs border border-slate-100 text-slate-700 hover:bg-slate-50 transition active:scale-95"
-            title="Notifications"
-          >
-            <Bell size={18} />
-          </Link>
+      {/* ═══════════════════════════════════════════════════════════════════════ */}
+      {/* 1. VUE MOBILE (Uniquement sur écrans mobiles < lg)                      */}
+      {/* ═══════════════════════════════════════════════════════════════════════ */}
+      <div className="lg:hidden">
+        {/* En-tête Dégradé Bleu Ciel & Orange SAMRE */}
+        <div
+          className="absolute top-0 inset-x-0 h-64 pointer-events-none"
+          style={{
+            background: 'linear-gradient(135deg, #38BDF8 0%, #60A5FA 30%, #FDBA74 75%, #F97316 100%)',
+          }}
+        >
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/10 to-[#F8F9FB]" />
         </div>
 
-        {/* Messages Toast d'alerte */}
-        {successMsg && (
-          <div className="mb-4 flex items-center gap-2 rounded-2xl border border-emerald-200/80 bg-emerald-50/90 p-3 text-xs font-semibold text-emerald-800 shadow-xs animate-in fade-in">
-            <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
-            <span>{successMsg}</span>
-          </div>
-        )}
-        {errorMsg && (
-          <div className="mb-4 flex items-center gap-2 rounded-2xl border border-red-200/80 bg-red-50/90 p-3 text-xs font-semibold text-red-800 shadow-xs animate-in fade-in">
-            <AlertCircle size={16} className="text-red-600 shrink-0" />
-            <span>{errorMsg}</span>
-          </div>
-        )}
-
-        {/* ── 2. Profile Identity Row (Avatar + Edit Button) ── */}
-        <div className="flex items-start justify-between gap-4 mb-4">
-          <div className="relative">
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleFileChange}
-              accept="image/*"
-              className="hidden"
-            />
-
-            {/* Avatar Circle */}
+        <div className="relative max-w-md mx-auto px-4 pt-6">
+          {/* Profile Identity Mobile */}
+          <div className="flex flex-col items-center text-center mb-6 pt-2">
             <div className="relative">
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                accept="image/*"
+                className="hidden"
+              />
+
               {uploadingPhoto ? (
-                <div className="flex h-20 w-20 items-center justify-center rounded-full border-4 border-white bg-sky-100 text-sky-600 shadow-md">
+                <div className="flex h-24 w-24 items-center justify-center rounded-full border-4 border-white bg-white/80 text-blue-600 shadow-lg">
+                  <Loader2 size={26} className="animate-spin" />
+                </div>
+              ) : currentPhoto ? (
+                <img
+                  src={currentPhoto}
+                  alt={fullName}
+                  className="h-24 w-24 rounded-full object-cover border-4 border-white shadow-lg bg-white"
+                />
+              ) : (
+                <div className="flex h-24 w-24 items-center justify-center rounded-full border-4 border-white bg-gradient-to-tr from-[#38BDF8] to-[#F97316] text-3xl font-extrabold text-white shadow-lg">
+                  {initials}
+                </div>
+              )}
+
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploadingPhoto}
+                className="absolute bottom-0 right-0 flex h-7 w-7 items-center justify-center rounded-full border-2 border-white bg-[#0B1727] text-white shadow-xs transition hover:bg-brand-orange active:scale-95"
+                title="Changer la photo de profil"
+              >
+                <Camera size={13} />
+              </button>
+            </div>
+
+            <h1 className="font-display text-[22px] font-extrabold text-[#0F172A] tracking-tight mt-3.5 leading-tight">
+              {user?.prenom || user?.nom || "pabougante"}
+            </h1>
+            <p className="text-[12px] font-medium text-slate-600 mt-0.5">
+              {email || "pabougante@gmail.com"}
+            </p>
+          </div>
+
+          {/* Liste des Options Mobile */}
+          <div className="rounded-[24px] bg-white border border-slate-100 shadow-[0_4px_18px_rgba(0,0,0,0.03)] overflow-hidden divide-y divide-slate-100 mb-5">
+            <button
+              onClick={() => setEditing(true)}
+              className="w-full flex items-center justify-between p-4 hover:bg-slate-50/80 transition text-left active:bg-slate-100/60"
+            >
+              <div className="flex items-center gap-3.5">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600 border border-blue-100/60">
+                  <UserIcon size={17} />
+                </div>
+                <span className="font-display text-[13px] font-bold text-[#0F172A]">
+                  Mon profil
+                </span>
+              </div>
+              <ChevronRight size={16} className="text-slate-300 shrink-0" />
+            </button>
+
+            <button
+              onClick={() => navigate("/dashboard/notifications")}
+              className="w-full flex items-center justify-between p-4 hover:bg-slate-50/80 transition text-left active:bg-slate-100/60"
+            >
+              <div className="flex items-center gap-3.5">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600 border border-blue-100/60">
+                  <Bell size={17} />
+                </div>
+                <span className="font-display text-[13px] font-bold text-[#0F172A]">
+                  Notifications
+                </span>
+              </div>
+              <ChevronRight size={16} className="text-slate-300 shrink-0" />
+            </button>
+
+            <button
+              onClick={() => setShowStatusModal(true)}
+              className="w-full flex items-center justify-between p-4 hover:bg-slate-50/80 transition text-left active:bg-slate-100/60"
+            >
+              <div className="flex items-center gap-3.5">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600 border border-blue-100/60">
+                  <HelpCircle size={17} />
+                </div>
+                <span className="font-display text-[13px] font-bold text-[#0F172A]">
+                  Aide & support
+                </span>
+              </div>
+              <ChevronRight size={16} className="text-slate-300 shrink-0" />
+            </button>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setShowLogoutConfirm(true)}
+            className="w-full flex items-center justify-center gap-2 rounded-2xl bg-[#FEF2F2] border border-[#FEE2E2] py-3.5 px-4 text-xs font-extrabold text-[#EF4444] transition active:scale-98 hover:bg-red-100/80 shadow-2xs"
+          >
+            <LogOut size={16} />
+            <span>Se déconnecter</span>
+          </button>
+        </div>
+      </div>
+
+      {/* ═══════════════════════════════════════════════════════════════════════ */}
+      {/* 2. VUE DESKTOP (Structure identique à la version mobile avec menu)      */}
+      {/* ═══════════════════════════════════════════════════════════════════════ */}
+      <div className="hidden lg:block max-w-xl mx-auto px-6 pt-10 pb-16">
+        <div className="bg-white rounded-3xl border border-slate-100 p-8 shadow-[0_4px_24px_rgba(0,0,0,0.03)]">
+          {/* Identity Desktop : Avatar, Nom & Email */}
+          <div className="flex flex-col items-center text-center pb-8 border-b border-slate-100">
+            <div className="relative mb-3.5">
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                accept="image/*"
+                className="hidden"
+              />
+              {uploadingPhoto ? (
+                <div className="flex h-24 w-24 items-center justify-center rounded-full border-4 border-slate-50 bg-slate-50 text-blue-600 shadow-md">
                   <Loader2 size={24} className="animate-spin" />
                 </div>
               ) : currentPhoto ? (
                 <img
                   src={currentPhoto}
                   alt={fullName}
-                  className="h-20 w-20 rounded-full object-cover border-4 border-white shadow-md bg-white"
+                  className="h-24 w-24 rounded-full object-cover border-4 border-slate-50 shadow-md bg-white"
                 />
               ) : (
-                <div className="flex h-20 w-20 items-center justify-center rounded-full border-4 border-white bg-gradient-to-tr from-sky-400 to-indigo-500 text-2xl font-bold text-white shadow-md">
+                <div className="flex h-24 w-24 items-center justify-center rounded-full border-4 border-slate-50 bg-gradient-to-tr from-[#38BDF8] to-[#F97316] text-3xl font-extrabold text-white shadow-md">
                   {initials}
                 </div>
               )}
-
-              {/* Camera Action Overlay Button */}
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploadingPhoto}
-                className="absolute bottom-0 right-0 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-slate-900 text-white shadow-xs transition hover:bg-brand-orange hover:scale-110 active:scale-95 disabled:opacity-50"
+                className="absolute bottom-0 right-0 flex h-7 w-7 items-center justify-center rounded-full border-2 border-white bg-[#0F172A] text-white shadow-xs transition hover:bg-brand-orange active:scale-95"
                 title="Changer la photo de profil"
               >
-                <Camera size={11} />
+                <Camera size={13} />
               </button>
             </div>
+
+            <h1 className="font-display text-2xl font-black text-[#0F172A] tracking-tight">
+              {fullName || "pabougante DOUTI"}
+            </h1>
+            <p className="text-xs font-semibold text-slate-400 mt-0.5">
+              {email || "lydiedouti09@gmail.com"}
+            </p>
           </div>
 
-          {/* Edit Pill Button (Exactement comme dans l'Image 5) */}
-          <button
-            onClick={() => setEditing(true)}
-            className="flex items-center gap-1.5 rounded-full bg-white/90 border border-slate-200/80 px-3.5 py-1.5 text-xs font-semibold text-slate-700 shadow-2xs transition hover:bg-slate-100 active:scale-95 mt-1"
-          >
-            <Edit2 size={12} className="text-slate-500" />
-            <span>Modifier</span>
-          </button>
-        </div>
-
-        {/* User Name & Email */}
-        <div className="mb-6">
-          <h2 className="text-xl font-bold text-slate-900 leading-tight">
-            {fullName}
-          </h2>
-          <p className="text-xs font-normal text-slate-500 mt-0.5">{email}</p>
-
-          {/* Quick photo remove option if custom photo exists */}
-          {currentPhoto && (
+          {/* Menu des options (Mon profil, Notifications, Aide & support) */}
+          <div className="py-3 divide-y divide-slate-100">
             <button
               type="button"
-              onClick={handleRemovePhoto}
-              disabled={uploadingPhoto}
-              className="mt-1 inline-flex items-center gap-1 text-[11px] text-red-500 hover:text-red-700 transition"
-            >
-              <Trash2 size={10} />
-              <span>Supprimer la photo</span>
-            </button>
-          )}
-        </div>
-
-        {/* ── 3. Section Account (comme Image 5) ── */}
-        <div className="mb-5">
-          <h3 className="text-sm font-bold text-slate-800 px-1 mb-2.5">
-            Compte
-          </h3>
-
-          <div className="rounded-3xl bg-white border border-slate-100/90 shadow-xs overflow-hidden divide-y divide-slate-100/70">
-            {/* Item 1: Informations Personnelles */}
-            <button
               onClick={() => setEditing(true)}
-              className="w-full flex items-center justify-between p-3.5 hover:bg-slate-50/80 transition text-left active:bg-slate-100/60"
+              className="w-full flex items-center justify-between py-4 px-2 hover:bg-slate-50/80 rounded-2xl transition text-left group"
             >
-              <div className="flex items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-50 border border-slate-100 text-slate-600 shrink-0">
-                  <UserIcon size={16} />
+              <div className="flex items-center gap-3.5">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 border border-blue-100/60 group-hover:scale-105 transition">
+                  <UserIcon size={18} />
                 </div>
                 <div>
-                  <p className="text-xs font-semibold text-slate-800">
-                    Informations personnelles
-                  </p>
-                  <p className="text-[11px] text-slate-400">
-                    {profile?.telephone || "Ajouter un téléphone"} ·{" "}
-                    {profile?.ville || profile?.pays || "Localisation"}
-                  </p>
+                  <span className="font-display text-sm font-bold text-[#0F172A]">
+                    Mon profil
+                  </span>
+                  <p className="text-[11px] text-slate-400">Modifier mes informations personnelles</p>
                 </div>
               </div>
-              <ChevronRight size={16} className="text-slate-400 shrink-0" />
+              <ChevronRight size={18} className="text-slate-300 group-hover:text-slate-600 transition" />
             </button>
 
-            {/* Item 2: Historique des missions */}
             <button
-              onClick={() => navigate("/dashboard/historique")}
-              className="w-full flex items-center justify-between p-3.5 hover:bg-slate-50/80 transition text-left active:bg-slate-100/60"
+              type="button"
+              onClick={() => navigate("/dashboard/notifications")}
+              className="w-full flex items-center justify-between py-4 px-2 hover:bg-slate-50/80 rounded-2xl transition text-left group"
             >
-              <div className="flex items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-50 border border-slate-100 text-slate-600 shrink-0">
-                  <History size={16} />
+              <div className="flex items-center gap-3.5">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 border border-blue-100/60 group-hover:scale-105 transition">
+                  <Bell size={18} />
                 </div>
                 <div>
-                  <p className="text-xs font-semibold text-slate-800">
-                    Historique des missions
-                  </p>
-                  <p className="text-[11px] text-slate-400">
-                    Consulter vos participations et gains
-                  </p>
+                  <span className="font-display text-sm font-bold text-[#0F172A]">
+                    Notifications
+                  </span>
+                  <p className="text-[11px] text-slate-400">Consulter mes alertes et messages</p>
                 </div>
               </div>
-              <ChevronRight size={16} className="text-slate-400 shrink-0" />
+              <ChevronRight size={18} className="text-slate-300 group-hover:text-slate-600 transition" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setShowStatusModal(true)}
+              className="w-full flex items-center justify-between py-4 px-2 hover:bg-slate-50/80 rounded-2xl transition text-left group"
+            >
+              <div className="flex items-center gap-3.5">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 border border-blue-100/60 group-hover:scale-105 transition">
+                  <HelpCircle size={18} />
+                </div>
+                <div>
+                  <span className="font-display text-sm font-bold text-[#0F172A]">
+                    Aide &amp; support
+                  </span>
+                  <p className="text-[11px] text-slate-400">Statut panéliste et assistance</p>
+                </div>
+              </div>
+              <ChevronRight size={18} className="text-slate-300 group-hover:text-slate-600 transition" />
             </button>
           </div>
-        </div>
 
-        {/* ── 4. Section Setting (comme Image 5) ── */}
-        <div className="mb-6">
-          <h3 className="text-sm font-bold text-slate-800 px-1 mb-2.5">
-            Paramètres
-          </h3>
-
-          <div className="rounded-3xl bg-white border border-slate-100/90 shadow-xs overflow-hidden divide-y divide-slate-100/70">
-            {/* Notification Preferences */}
+          {/* Bouton Se Déconnecter en bas */}
+          <div className="pt-6 border-t border-slate-100">
             <button
-              onClick={() => navigate("/dashboard/notifications")}
-              className="w-full flex items-center justify-between p-3.5 hover:bg-slate-50/80 transition text-left active:bg-slate-100/60"
-            >
-              <div className="flex items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-50 border border-slate-100 text-slate-600 shrink-0">
-                  <Bell size={16} />
-                </div>
-                <span className="text-xs font-semibold text-slate-800">
-                  Préférences de notifications
-                </span>
-              </div>
-              <ChevronRight size={16} className="text-slate-400 shrink-0" />
-            </button>
-
-            {/* Privacy & Security */}
-            <button
-              onClick={() => setShowSecurityModal(true)}
-              className="w-full flex items-center justify-between p-3.5 hover:bg-slate-50/80 transition text-left active:bg-slate-100/60"
-            >
-              <div className="flex items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-50 border border-slate-100 text-slate-600 shrink-0">
-                  <Lock size={16} />
-                </div>
-                <span className="text-xs font-semibold text-slate-800">
-                  Confidentialité & Sécurité
-                </span>
-              </div>
-              <ChevronRight size={16} className="text-slate-400 shrink-0" />
-            </button>
-
-            {/* Log Out Button */}
-            <button
+              type="button"
               onClick={() => setShowLogoutConfirm(true)}
-              className="w-full flex items-center justify-between p-3.5 hover:bg-red-50/50 transition text-left active:bg-red-100/40"
+              className="w-full flex items-center justify-center gap-2 rounded-2xl bg-[#FEF2F2] border border-[#FEE2E2] py-3.5 px-4 text-xs font-extrabold text-[#EF4444] transition hover:bg-red-100/80 active:scale-98 shadow-2xs"
             >
-              <div className="flex items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-red-50 border border-red-100 text-red-500 shrink-0">
-                  <LogOut size={16} />
-                </div>
-                <span className="text-xs font-bold text-red-600">
-                  Se déconnecter
-                </span>
-              </div>
-              <ChevronRight size={16} className="text-red-400 shrink-0" />
+              <LogOut size={16} />
+              <span>Se déconnecter</span>
             </button>
           </div>
         </div>

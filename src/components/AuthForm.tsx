@@ -117,7 +117,6 @@ export default function AuthForm({ mode = "login" }: { mode?: Mode }) {
       } else {
         const loggedUser = await login(form.email, form.password);
         if (loggedUser?.role === "admin") {
-          // Si un administrateur se connecte via cette page, on configure son token admin et on le redirige vers l'administration
           setAdminToken(getToken() || "");
           router.replace("/admin");
           return;
@@ -130,7 +129,6 @@ export default function AuthForm({ mode = "login" }: { mode?: Mode }) {
     }
   }
 
-  // Image 1 pour connexion, Image 2 pour inscription, Image 3 pour mot de passe oublié
   const currentIllustration = isForgotPassword
     ? "/undraw_forgot-password_nttj.png"
     : isSignup
@@ -144,56 +142,41 @@ export default function AuthForm({ mode = "login" }: { mode?: Mode }) {
       : "Illustration Connexion SAMRE";
 
   return (
-    <div className="h-screen w-full bg-[#fdfdfd] relative overflow-hidden font-sans antialiased text-slate-800 flex items-center justify-center p-4">
-
-      {/* ─── TOUCHE SAMRÉ : HALOS D'AMBIANCE CHAUDE (ORANGE & BLEU NUIT) EN ARRIÈRE-PLAN ─── */}
-      <div className="pointer-events-none absolute -top-28 -left-28 h-[450px] w-[450px] rounded-full bg-gradient-to-br from-[#f2811d]/14 to-[#fed7aa]/20 blur-3xl" />
-      <div className="pointer-events-none absolute top-1/3 -right-28 h-[500px] w-[500px] rounded-full bg-gradient-to-bl from-[#38bdf8]/12 via-[#f2811d]/8 to-transparent blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-28 left-1/4 h-[400px] w-[400px] rounded-full bg-[#0a1c38]/6 blur-3xl" />
-
-      {/* ─── CONTENU PRINCIPAL : ADAPTÉ PC (2 COLONNES) ET MOBILE (1 COLONNE CENTRÉE) ─── */}
-      <main className="relative z-10 w-full max-w-[1100px] mx-auto px-2 sm:px-6">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
-
-          {/* ═══════════════════════════════════════════════════════════════════════ */}
-          {/* PANNEAU GAUCHE PC : ILLUSTRATION FONDUE NATURELLEMENT DANS LE BLANC  */}
-          {/* (Visible sur PC / Masqué sur Mobile pour garder le format compact)   */}
-          {/* ═══════════════════════════════════════════════════════════════════════ */}
+    <div className="min-h-[100dvh] w-full bg-white sm:bg-[#F8FAFC] relative font-sans antialiased text-slate-800 flex items-center justify-center py-6 px-4 sm:px-6">
+      {/* Conteneur principal parfaitement centré et symétrique */}
+      <main className="relative z-10 w-full max-w-[420px] lg:max-w-[1000px] mx-auto min-w-0">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center min-w-0">
+          
+          {/* Panneau gauche PC uniquement */}
           <div className="hidden lg:flex lg:col-span-6 items-center justify-center p-4">
-            <div className="relative w-full max-w-[460px] flex items-center justify-center">
+            <div className="relative w-full max-w-[420px] flex items-center justify-center">
               <img
                 key={`pc-${currentIllustration}`}
                 src={currentIllustration}
                 alt={illustrationAlt}
-                className="w-full h-auto max-h-[390px] object-contain transition-transform duration-500 hover:scale-102"
-                style={{ mixBlendMode: "multiply" }}
+                className="w-full h-auto max-h-[380px] object-contain transition-transform duration-500 hover:scale-102"
               />
             </div>
           </div>
 
-          {/* ═══════════════════════════════════════════════════════════════════════ */}
-          {/* PANNEAU DROIT (PC) / CARTE CENTRÉE (MOBILE)                           */}
-          {/* ═══════════════════════════════════════════════════════════════════════ */}
-          <div className="col-span-12 lg:col-span-6 flex justify-center items-center">
-            <div className="w-full max-w-[420px] bg-white rounded-[28px] p-5 sm:p-6 shadow-xl shadow-slate-200/70 border border-slate-100/90 relative">
-
-              {/* 1. Illustration intégrée : Visible UNIQUEMENT sur mobile, masquée sur PC */}
-              <div className="flex lg:hidden flex-col items-center justify-center mb-3">
-                <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-white flex items-center justify-center p-2">
-                  {/* Aura douce orange & bleue */}
-                  <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-[#f2811d]/12 via-white to-blue-500/8 blur-md pointer-events-none" />
+          {/* Formulaire : Marges gauche et droite strictement identiques */}
+          <div className="col-span-12 lg:col-span-6 flex justify-center items-center w-full min-w-0">
+            <div className="w-full bg-white sm:rounded-[28px] sm:p-8 sm:shadow-[0_10px_35px_rgba(15,23,42,0.06)] sm:border sm:border-slate-100 relative px-3 py-4 sm:px-8 min-w-0">
+              
+              {/* Illustration mobile */}
+              <div className="flex lg:hidden flex-col items-center justify-center mb-4">
+                <div className="w-24 h-24 flex items-center justify-center">
                   <img
                     key={`card-${currentIllustration}`}
                     src={currentIllustration}
                     alt={illustrationAlt}
-                    className="relative z-10 w-full h-full object-contain transition-transform duration-300 hover:scale-105"
-                    style={{ mixBlendMode: "multiply" }}
+                    className="w-full h-full object-contain"
                   />
                 </div>
               </div>
 
-              {/* 2. Titre & Sous-titre */}
-              <div className="text-center mb-4">
+              {/* Titre & Sous-titre */}
+              <div className="text-center mb-5">
                 <h2 className="font-display text-xl sm:text-2xl font-black text-[#0a1c38] tracking-tight">
                   {isForgotPassword
                     ? "Mot de passe oublié"
@@ -201,7 +184,7 @@ export default function AuthForm({ mode = "login" }: { mode?: Mode }) {
                       ? "Créez votre compte"
                       : "Bienvenue sur samre"}
                 </h2>
-                <p className="mt-0.5 text-xs text-slate-500">
+                <p className="mt-1 text-xs text-slate-500 leading-relaxed">
                   {isForgotPassword
                     ? "Entrez votre email pour réinitialiser votre accès."
                     : isSignup
@@ -214,13 +197,13 @@ export default function AuthForm({ mode = "login" }: { mode?: Mode }) {
               {error && (
                 <div className="mb-4 rounded-2xl border border-red-200 bg-red-50 p-3 text-xs font-semibold text-red-700 flex items-center gap-2">
                   <span className="h-1.5 w-1.5 rounded-full bg-red-500 shrink-0" />
-                  <span>{error}</span>
+                  <span className="flex-1">{error}</span>
                 </div>
               )}
 
               {/* ─── VUE MOT DE PASSE OUBLIÉ ─── */}
               {isForgotPassword ? (
-                <div className="w-full">
+                <div className="w-full min-w-0">
                   {successMsg ? (
                     <div className="space-y-4 text-center py-2">
                       <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 shadow-xs">
@@ -239,15 +222,15 @@ export default function AuthForm({ mode = "login" }: { mode?: Mode }) {
                           setError(null);
                           setSuccessMsg(null);
                         }}
-                        className="flex w-full items-center justify-center rounded-full bg-[#0a1c38] py-3.5 text-xs font-bold text-white shadow-md transition hover:bg-[#122c54]"
+                        className="flex w-full items-center justify-center rounded-xl bg-[#0a1c38] py-3.5 text-xs font-bold text-white shadow-md transition hover:bg-[#122c54]"
                       >
                         <span>Retour à la connexion</span>
                       </button>
                     </div>
                   ) : (
-                    <form onSubmit={handleForgotPassword} className="space-y-4 w-full">
-                      <div>
-                        <label className="block text-xs font-bold text-slate-700 mb-1 pl-1">
+                    <form onSubmit={handleForgotPassword} className="space-y-4 w-full min-w-0">
+                      <div className="w-full">
+                        <label className="block text-xs font-bold text-slate-700 mb-1.5">
                           Email
                         </label>
                         <input
@@ -257,14 +240,14 @@ export default function AuthForm({ mode = "login" }: { mode?: Mode }) {
                           value={forgotEmail}
                           onChange={(e) => setForgotEmail(e.target.value)}
                           placeholder="Entrez votre adresse email"
-                          className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-800 text-xs sm:text-sm placeholder:text-slate-400 outline-none transition focus:border-[#f2811d] focus:ring-4 focus:ring-[#f2811d]/12 shadow-xs"
+                          className="w-full block box-border px-4 py-3 rounded-xl bg-[#eef4fb] text-slate-800 text-xs sm:text-sm placeholder:text-slate-400 outline-none transition focus:bg-white focus:ring-2 focus:ring-[#f2811d]/30"
                         />
                       </div>
 
                       <button
                         type="submit"
                         disabled={loading}
-                        className="mt-2 flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#f2811d] to-[#ea580c] py-3 text-xs sm:text-sm font-bold text-white shadow-md shadow-[#f2811d]/25 transition hover:brightness-105 active:scale-[0.99] disabled:opacity-60"
+                        className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#f2811d] to-[#ea580c] py-3.5 text-xs sm:text-sm font-bold text-white shadow-md shadow-[#f2811d]/25 transition hover:brightness-105 active:scale-[0.99] disabled:opacity-60"
                       >
                         {loading ? (
                           <>
@@ -292,18 +275,18 @@ export default function AuthForm({ mode = "login" }: { mode?: Mode }) {
                   )}
                 </div>
               ) : (
-                /* ─── FORMULAIRE CONNEXION & INSCRIPTION SANS LES BOUTONS GOOGLE/RESEAUX ─── */
+                /* ─── FORMULAIRE CONNEXION & INSCRIPTION ─── */
                 <form
                   onSubmit={(e) => {
                     e.preventDefault();
                     handleSubmit();
                   }}
-                  className="space-y-3 w-full"
+                  className="space-y-3.5 w-full min-w-0"
                 >
                   {/* Champ Nom complet (Inscription uniquement) */}
                   {isSignup && (
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1 pl-1">
+                    <div className="w-full">
+                      <label className="block text-xs font-bold text-slate-700 mb-1.5">
                         Nom complet
                       </label>
                       <input
@@ -312,14 +295,14 @@ export default function AuthForm({ mode = "login" }: { mode?: Mode }) {
                         value={[form.prenom, form.nom].filter(Boolean).join(" ")}
                         onChange={handleFullNameChange}
                         placeholder="Entrez votre nom complet"
-                        className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-800 text-xs sm:text-sm placeholder:text-slate-400 outline-none transition focus:border-[#f2811d] focus:ring-4 focus:ring-[#f2811d]/12 shadow-xs"
+                        className="w-full block box-border px-4 py-3 rounded-xl bg-[#eef4fb] text-slate-800 text-xs sm:text-sm placeholder:text-slate-400 outline-none transition focus:bg-white focus:ring-2 focus:ring-[#f2811d]/30"
                       />
                     </div>
                   )}
 
                   {/* Champ Email */}
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1 pl-1">
+                  <div className="w-full">
+                    <label className="block text-xs font-bold text-slate-700 mb-1.5">
                       Email
                     </label>
                     <input
@@ -329,15 +312,15 @@ export default function AuthForm({ mode = "login" }: { mode?: Mode }) {
                       value={form.email}
                       onChange={update("email")}
                       placeholder="Entrez votre adresse email"
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-800 text-xs sm:text-sm placeholder:text-slate-400 outline-none transition focus:border-[#f2811d] focus:ring-4 focus:ring-[#f2811d]/12 shadow-xs"
+                      className="w-full block box-border px-4 py-3 rounded-xl bg-[#eef4fb] text-slate-800 text-xs sm:text-sm placeholder:text-slate-400 outline-none transition focus:bg-white focus:ring-2 focus:ring-[#f2811d]/30"
                     />
                   </div>
 
-                  {/* Champ Téléphone (Inscription uniquement - pour Mobile Money T-Money & Flooz) */}
+                  {/* Champ Téléphone (Inscription uniquement) */}
                   {isSignup && (
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1 pl-1 flex items-center justify-between">
-                        <span>Téléphone</span>
+                    <div className="w-full">
+                      <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                        Téléphone
                       </label>
                       <input
                         type="tel"
@@ -345,17 +328,17 @@ export default function AuthForm({ mode = "login" }: { mode?: Mode }) {
                         value={form.telephone}
                         onChange={update("telephone")}
                         placeholder="+228 90 00 00 00"
-                        className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-800 text-xs sm:text-sm placeholder:text-slate-400 outline-none transition focus:border-[#f2811d] focus:ring-4 focus:ring-[#f2811d]/12 shadow-xs"
+                        className="w-full block box-border px-4 py-3 rounded-xl bg-[#eef4fb] text-slate-800 text-xs sm:text-sm placeholder:text-slate-400 outline-none transition focus:bg-white focus:ring-2 focus:ring-[#f2811d]/30"
                       />
                     </div>
                   )}
 
                   {/* Champ Mot de passe */}
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1 pl-1">
+                  <div className="w-full">
+                    <label className="block text-xs font-bold text-slate-700 mb-1.5">
                       Mot de passe
                     </label>
-                    <div className="relative">
+                    <div className="relative w-full">
                       <input
                         type={showPassword ? "text" : "password"}
                         required
@@ -363,7 +346,7 @@ export default function AuthForm({ mode = "login" }: { mode?: Mode }) {
                         value={form.password}
                         onChange={update("password")}
                         placeholder={isSignup ? "Créez un mot de passe (6+ caractères)" : "Entrez votre mot de passe"}
-                        className="w-full px-3.5 py-2.5 pr-11 rounded-xl bg-white border border-slate-200 text-slate-800 text-xs sm:text-sm placeholder:text-slate-400 outline-none transition focus:border-[#f2811d] focus:ring-4 focus:ring-[#f2811d]/12 shadow-xs"
+                        className="w-full block box-border px-4 py-3 pr-11 rounded-xl bg-[#eef4fb] text-slate-800 text-xs sm:text-sm placeholder:text-slate-400 outline-none transition focus:bg-white focus:ring-2 focus:ring-[#f2811d]/30"
                       />
                       <button
                         type="button"
@@ -378,8 +361,8 @@ export default function AuthForm({ mode = "login" }: { mode?: Mode }) {
 
                   {/* Ligne "Remember me" et "Forgot Password?" (Connexion uniquement) */}
                   {!isSignup && (
-                    <div className="flex items-center justify-between pt-0.5 px-1">
-                      <label className="flex items-center gap-2 cursor-pointer select-none text-xs font-medium text-slate-600">
+                    <div className="flex items-center justify-between gap-1 pt-1 w-full">
+                      <label className="flex items-center gap-1.5 cursor-pointer select-none text-xs font-medium text-slate-600 shrink-0">
                         <input
                           type="checkbox"
                           checked={rememberMe}
@@ -395,19 +378,19 @@ export default function AuthForm({ mode = "login" }: { mode?: Mode }) {
                           setActiveMode("forgot-password");
                           setError(null);
                         }}
-                        className="text-xs font-bold text-[#f2811d] hover:text-[#ea580c] transition"
+                        className="text-xs font-bold text-[#f2811d] hover:text-[#ea580c] transition shrink-0"
                       >
-                        Mot de passe oublié?
+                        Mot de passe oublié ?
                       </button>
                     </div>
                   )}
 
-                  {/* Bouton CTA plein avec touche SAMRÉ */}
-                  <div className="pt-1.5">
+                  {/* Bouton CTA */}
+                  <div className="pt-2 w-full">
                     <button
                       type="submit"
                       disabled={loading}
-                      className={`w-full py-3 rounded-full font-bold text-xs sm:text-sm text-white shadow-md active:scale-[0.99] transition flex items-center justify-center gap-2 disabled:opacity-60 ${isSignup
+                      className={`w-full py-3.5 rounded-xl font-bold text-xs sm:text-sm text-white shadow-md active:scale-[0.99] transition flex items-center justify-center gap-2 disabled:opacity-60 ${isSignup
                         ? "bg-gradient-to-r from-[#f2811d] to-[#ea580c] shadow-[#f2811d]/25 hover:brightness-105"
                         : "bg-[#0a1c38] hover:bg-[#122c54] shadow-[#0a1c38]/20"
                         }`}
@@ -423,8 +406,8 @@ export default function AuthForm({ mode = "login" }: { mode?: Mode }) {
                     </button>
                   </div>
 
-                  {/* Footer avec lien d'inversion de mode (SANS LES TRUCS GOOGLE) */}
-                  <div className="pt-3 text-center text-xs text-slate-500 border-t border-slate-100 mt-3">
+                  {/* Footer avec lien d'inversion de mode */}
+                  <div className="pt-3 text-center text-xs text-slate-500 border-t border-slate-100 mt-4 w-full">
                     {isSignup ? (
                       <span>
                         Vous avez déjà un compte?{" "}
@@ -463,7 +446,7 @@ export default function AuthForm({ mode = "login" }: { mode?: Mode }) {
 
         </div>
       </main>
-
     </div>
   );
 }
+

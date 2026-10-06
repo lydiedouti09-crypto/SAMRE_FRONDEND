@@ -26,22 +26,19 @@ export default function DesktopSidebar() {
     <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-slate-200/90 bg-white px-3.5 py-4 text-slate-800 lg:flex">
       {/* Brand logo SAMRE officiel */}
       <div className="mb-6 flex items-center justify-between px-2 pt-1 border-b border-slate-100 pb-4">
-        <Link href="/dashboard" className="flex items-center gap-3 group">
-          <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-50 p-1.5 ring-1 ring-slate-200/80 transition group-hover:scale-105">
-            <Image
-              src="/logo.png"
-              alt="Samré Logo"
-              width={36}
-              height={36}
-              className="h-8 w-8 object-contain drop-shadow-xs"
-              priority
-            />
-          </div>
-          <div className="flex flex-col">
-            <span className="font-display text-lg font-black tracking-wider text-navy-950">
+        <Link href="/dashboard" className="flex items-center gap-2.5 group">
+          <img
+            src="/ChatGPT Image 5 oct. 2026, 12_23_50.png"
+            alt="Logo SAMRE"
+            className="h-10 w-10 shrink-0 object-contain drop-shadow-xs transition group-hover:scale-105"
+          />
+          <div className="flex flex-col justify-center">
+            <span className="font-display text-lg font-black tracking-wider text-navy-950 leading-none">
               SAMRE
             </span>
-            <span className="text-[10px] text-slate-400 font-medium">Plateforme de test</span>
+            <span className="text-[10px] text-slate-400 font-medium mt-1 leading-none">
+              Plateforme de test
+            </span>
           </div>
         </Link>
       </div>
