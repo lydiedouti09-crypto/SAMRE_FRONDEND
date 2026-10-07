@@ -169,8 +169,8 @@ export default function DashboardPage() {
               {active
                 ? "Voici vos tests du jour à valider."
                 : pending
-                ? "Votre candidature est en cours d'examen."
-                : "Bienvenue sur votre espace de testeur d'applications."}
+                  ? "Votre candidature est en cours d'examen."
+                  : "Bienvenue sur votre espace de testeur d'applications."}
             </p>
           </div>
 
@@ -496,32 +496,106 @@ export default function DashboardPage() {
           {/* ══════════════════════════════════════════════════════════════ */}
           {!active && !pending && (
             <div className="space-y-4">
-              {/* Carte Hero d'accueil & invitation à postuler */}
+              {/* Carte Hero d'accueil & invitation à postuler (Design Premium avec Téléphone 3D & Récompenses) */}
               <div
-                className="relative overflow-hidden rounded-[26px] p-5 text-white shadow-[0_12px_36px_-6px_rgba(15,23,42,0.25)]"
+                className="relative overflow-hidden rounded-[26px] p-5 text-white shadow-[0_16px_40px_-8px_rgba(11,23,39,0.35)] border border-white/10"
                 style={{
                   background:
-                    "linear-gradient(135deg, #0B1727 0%, #1E293B 55%, #0284C7 100%)",
+                    "linear-gradient(135deg, #0B1727 0%, #0F233E 45%, #0284C7 100%)",
                 }}
               >
-                <div className="inline-flex items-center gap-1.5 rounded-full bg-cyan-400/20 backdrop-blur-sm px-3 py-1 text-[10px] font-extrabold text-cyan-200 border border-cyan-400/30">
-                  <Sparkles size={11} className="text-cyan-300" />
-                  <span>Espace Testeur Officiel</span>
+                {/* Lumières décoratives d'ambiance */}
+                <div className="absolute -top-16 -right-16 w-48 h-48 bg-cyan-400/20 rounded-full blur-3xl pointer-events-none" />
+                <div className="absolute -bottom-16 -left-16 w-48 h-48 bg-orange-500/15 rounded-full blur-3xl pointer-events-none" />
+
+                {/* Contenu principal : Texte à gauche + Téléphone 3D & Récompenses à droite */}
+                <div className="relative flex items-center justify-between gap-3 mb-4">
+                  <div className="min-w-0 flex-1">
+                    <h2 className="font-display text-[18px] sm:text-[20px] font-black text-white leading-tight">
+                      Prêt pour votre premier test rémunéré ?
+                    </h2>
+                    <p className="text-[11.5px] text-slate-200/90 mt-1.5 leading-relaxed font-medium">
+                      Postulez aux applications disponibles, réalisez vos tests quotidiens et recevez vos rémunérations garanties par Mobile Money.
+                    </p>
+                  </div>
+
+                  {/* Illustration 3D Smartphone & Récompenses flottantes */}
+                  <div className="relative w-28 h-28 shrink-0 flex items-center justify-center">
+                    <div className="absolute inset-0 bg-gradient-to-tr from-cyan-400/20 via-orange-400/15 to-emerald-400/20 rounded-full blur-lg animate-pulse" />
+                    <svg viewBox="0 0 120 120" className="w-full h-full drop-shadow-[0_12px_24px_rgba(0,0,0,0.45)]" fill="none">
+                      {/* Smartphone 3D incliné */}
+                      <g transform="rotate(14 62 60)">
+                        {/* Coque */}
+                        <rect x="34" y="14" width="52" height="92" rx="11" fill="#0B132B" stroke="#334155" strokeWidth="2.5" />
+                        {/* Écran */}
+                        <rect x="37" y="18" width="46" height="84" rx="8" fill="url(#dashPhoneGrad)" />
+                        {/* Barre du haut */}
+                        <rect x="52" y="20" width="16" height="3" rx="1.5" fill="#1E293B" />
+
+                        {/* Mini UI sur l'écran */}
+                        <rect x="41" y="28" width="38" height="20" rx="5" fill="white" fillOpacity="0.18" />
+                        <circle cx="48" cy="38" r="4.5" fill="#F97316" />
+                        <rect x="55" y="34" width="20" height="3.5" rx="1.75" fill="white" />
+                        <rect x="55" y="40" width="14" height="2.5" rx="1.25" fill="#94A3B8" />
+
+                        {/* Barre de progression verte */}
+                        <rect x="41" y="53" width="38" height="6.5" rx="3.25" fill="#22C55E" />
+                        <rect x="41" y="63" width="30" height="3.5" rx="1.75" fill="white" fillOpacity="0.35" />
+                        <rect x="41" y="70" width="34" height="3.5" rx="1.75" fill="white" fillOpacity="0.25" />
+                        <rect x="41" y="77" width="22" height="3.5" rx="1.75" fill="white" fillOpacity="0.25" />
+
+                        {/* Home indicator */}
+                        <rect x="51" y="96" width="18" height="2.5" rx="1.25" fill="white" fillOpacity="0.6" />
+                      </g>
+
+                      {/* Billets de banque flottants */}
+                      <g transform="translate(12, 26) rotate(-16)">
+                        <rect width="28" height="16" rx="3.5" fill="#16A34A" stroke="#14532D" strokeWidth="1" />
+                        <rect x="2" y="2" width="24" height="12" rx="2" fill="#22C55E" />
+                        <circle cx="14" cy="8" r="3.5" fill="#15803D" />
+                        <text x="14" y="9.8" fontSize="4.5" fontWeight="900" fill="white" textAnchor="middle">FCFA</text>
+                      </g>
+
+                      <g transform="translate(74, 18) rotate(20)">
+                        <rect width="24" height="14" rx="3" fill="#10B981" stroke="#064E3B" strokeWidth="1" />
+                        <rect x="2" y="2" width="20" height="10" rx="2" fill="#34D399" />
+                        <circle cx="12" cy="7" r="3" fill="#047857" />
+                      </g>
+
+                      {/* Pièces dorées étincelantes */}
+                      <g transform="translate(18, 68)">
+                        <circle cx="8" cy="8" r="8" fill="#F59E0B" stroke="#B45309" strokeWidth="1" />
+                        <circle cx="8" cy="8" r="6" fill="#FBBF24" />
+                        <text x="8" y="11" fontSize="9" fontWeight="900" fill="#78350F" textAnchor="middle">✦</text>
+                      </g>
+
+                      <g transform="translate(86, 60)">
+                        <circle cx="7" cy="7" r="7" fill="#F59E0B" stroke="#B45309" strokeWidth="1" />
+                        <circle cx="7" cy="7" r="5" fill="#FDE047" />
+                        <text x="7" y="10" fontSize="8" fontWeight="900" fill="#78350F" textAnchor="middle">$</text>
+                      </g>
+
+                      {/* Étoiles & Étincelles */}
+                      <path d="M22 16 L24 20 L28 22 L24 24 L22 28 L20 24 L16 22 L20 20 Z" fill="#FDE047" />
+                      <path d="M102 46 L103.5 49 L106.5 50.5 L103.5 52 L102 55 L100.5 52 L97.5 50.5 L100.5 49 Z" fill="#FDE047" />
+                      <path d="M78 88 L79.2 90.2 L81.5 91.5 L79.2 92.8 L78 95 L76.8 92.8 L74.5 91.5 L76.8 90.2 Z" fill="#67E8F9" />
+
+                      <defs>
+                        <linearGradient id="dashPhoneGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" stopColor="#1E293B" />
+                          <stop offset="60%" stopColor="#0F172A" />
+                          <stop offset="100%" stopColor="#0284C7" />
+                        </linearGradient>
+                      </defs>
+                    </svg>
+                  </div>
                 </div>
 
-                <div className="mt-3.5 mb-3">
-                  <h2 className="font-display text-[19px] font-black text-white leading-tight">
-                    Prêt pour votre premier test rémunéré ?
-                  </h2>
-                  <p className="text-xs text-slate-300 mt-1.5 leading-relaxed">
-                    Postulez aux applications mobiles Android disponibles, réalisez vos tests quotidiens pendant 14 jours et recevez vos rémunérations par Mobile Money.
-                  </p>
-                </div>
-
-                <div className="pt-2">
+                {/* Bouton d'action principal */}
+                <div>
                   <Link
                     href="/dashboard/missions"
-                    className="w-full flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#F97316] to-[#EA580C] py-3 px-4 text-xs font-black text-white shadow-lg shadow-orange-500/30 transition active:scale-95 hover:brightness-105"
+                    className="w-full flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#F97316] via-[#FB923C] to-[#EA580C] py-3.5 px-5 text-xs font-black text-white shadow-lg shadow-orange-500/35 transition active:scale-95 hover:brightness-105 hover:shadow-orange-500/50"
                   >
                     <span>Explorer les missions disponibles</span>
                     <ArrowRight size={14} />
