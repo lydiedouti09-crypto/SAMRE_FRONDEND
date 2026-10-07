@@ -179,7 +179,6 @@ async function request<T>(
   }
 
   const res = await fetch(`${API_URL}${path}`, {
-    credentials: "include",
     ...options,
     headers,
   });
@@ -221,7 +220,6 @@ async function adminRequest<T>(
   }
 
   const res = await fetch(`${API_URL}${path}`, {
-    credentials: "include",
     ...options,
     headers,
   });
