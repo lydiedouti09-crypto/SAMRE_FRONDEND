@@ -54,12 +54,16 @@ export function sanitizeText(input?: string | null): string {
 }
 
 export function getImageUrl(path?: string | null): string {
-  if (!path || path.trim() === "") return "";
-  if (path.startsWith("http://") || path.startsWith("https://") || path.startsWith("data:")) {
-    return sanitizeUrl(path, "");
+  if (!path || typeof path !== "string") return "";
+  const trimmed = path.trim();
+  if (!trimmed || trimmed === "null" || trimmed === "undefined" || trimmed === "none") {
+    return "";
+  }
+  if (trimmed.startsWith("http://") || trimmed.startsWith("https://") || trimmed.startsWith("data:")) {
+    return sanitizeUrl(trimmed, "");
   }
   const baseUrl = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
-  return `${baseUrl.replace(/\/+$/, "")}/${path.replace(/^\/+/, "")}`;
+  return `${baseUrl.replace(/\/+$/, "")}/${trimmed.replace(/^\/+/, "")}`;
 }
 
 export function getApplicationPlayStoreUrl(mission?: Mission | null): string {

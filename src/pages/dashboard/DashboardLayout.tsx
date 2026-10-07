@@ -1,9 +1,9 @@
 import AuthGuard from "@/components/dashboard/AuthGuard";
 import BottomNav from "@/components/dashboard/BottomNav";
 import DesktopSidebar from "@/components/dashboard/DesktopSidebar";
+import UserAvatar from "@/components/ui/UserAvatar";
 import { Outlet } from "react-router-dom";
 import { useAuth } from "@/lib/auth-context";
-import { getImageUrl } from "@/lib/api";
 import Link, { usePathname } from "@/lib/router";
 
 export default function DashboardLayout() {
@@ -18,8 +18,6 @@ export default function DashboardLayout() {
     return "Tableau de Bord";
   };
 
-  const userInitials =
-    ((user?.prenom?.[0] || "") + (user?.nom?.[0] || "")).toUpperCase() || "PA";
   const userDisplayName =
     [user?.prenom, user?.nom].filter(Boolean).join(" ") || "Testeur Samré";
 
@@ -51,17 +49,13 @@ export default function DashboardLayout() {
                   {userDisplayName}
                 </p>
               </div>
-              {user?.photo ? (
-                <img
-                  src={getImageUrl(user.photo)}
-                  alt={userDisplayName}
-                  className="h-10 w-10 rounded-full object-cover ring-2 ring-brand-orange/30 shadow-xs group-hover:ring-brand-orange transition"
-                />
-              ) : (
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-orange text-xs font-black text-white shadow-xs ring-2 ring-brand-orange/20">
-                  {userInitials}
-                </div>
-              )}
+              <UserAvatar
+                photo={user?.photo}
+                prenom={user?.prenom}
+                nom={user?.nom}
+                size="md"
+                ringClassName="ring-2 ring-brand-orange/30 shadow-xs group-hover:ring-brand-orange transition"
+              />
             </Link>
           </header>
 

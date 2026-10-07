@@ -9,7 +9,7 @@ import {
   LogOut,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
-import { getImageUrl } from "@/lib/api";
+import UserAvatar from "@/components/ui/UserAvatar";
 
 const links = [
   { href: "/dashboard", label: "Tableau de Bord", icon: LayoutDashboard, exact: true },
@@ -79,17 +79,13 @@ export default function DesktopSidebar() {
             href="/dashboard/profil"
             className="flex items-center gap-2.5 min-w-0 flex-1 group hover:opacity-90 transition pr-1"
           >
-            {user?.photo ? (
-              <img
-                src={getImageUrl(user.photo)}
-                alt={user.prenom || "Profil"}
-                className="h-8 w-8 rounded-full object-cover ring-1 ring-slate-200 shrink-0"
-              />
-            ) : (
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-orange text-xs font-bold text-white shrink-0 shadow-2xs">
-                {((user?.prenom?.[0] || "T") + (user?.nom?.[0] || "")).toUpperCase()}
-              </div>
-            )}
+            <UserAvatar
+              photo={user?.photo}
+              prenom={user?.prenom}
+              nom={user?.nom}
+              size="sm"
+              ringClassName="ring-1 ring-slate-200"
+            />
             <div className="min-w-0 flex-1">
               <p className="text-xs font-bold text-navy-950 truncate leading-tight group-hover:text-brand-orange transition">
                 {user?.prenom} {user?.nom}

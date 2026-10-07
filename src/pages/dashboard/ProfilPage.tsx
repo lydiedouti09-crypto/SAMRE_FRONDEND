@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { profileApi, participationsApi, getImageUrl, type User, type Participation } from "@/lib/api";
+import UserAvatar from "@/components/ui/UserAvatar";
 
 const PAYS_LIST = [
   "Côte d'Ivoire",
@@ -281,16 +282,15 @@ export default function ProfilPage() {
                 <div className="flex h-24 w-24 items-center justify-center rounded-full border-4 border-white bg-white/80 text-blue-600 shadow-lg">
                   <Loader2 size={26} className="animate-spin" />
                 </div>
-              ) : currentPhoto ? (
-                <img
-                  src={getImageUrl(currentPhoto)}
-                  alt={fullName}
-                  className="h-24 w-24 rounded-full object-cover border-4 border-white shadow-lg bg-white"
-                />
               ) : (
-                <div className="flex h-24 w-24 items-center justify-center rounded-full border-4 border-white bg-gradient-to-tr from-[#38BDF8] to-[#F97316] text-3xl font-extrabold text-white shadow-lg">
-                  {initials}
-                </div>
+                <UserAvatar
+                  photo={currentPhoto}
+                  name={fullName}
+                  prenom={profile?.prenom || user?.prenom}
+                  nom={profile?.nom || user?.nom}
+                  size="xl"
+                  ringClassName="border-4 border-white shadow-lg"
+                />
               )}
 
               <button
@@ -390,16 +390,15 @@ export default function ProfilPage() {
                 <div className="flex h-24 w-24 items-center justify-center rounded-full border-4 border-slate-50 bg-slate-50 text-blue-600 shadow-md">
                   <Loader2 size={24} className="animate-spin" />
                 </div>
-              ) : currentPhoto ? (
-                <img
-                  src={getImageUrl(currentPhoto)}
-                  alt={fullName}
-                  className="h-24 w-24 rounded-full object-cover border-4 border-slate-50 shadow-md bg-white"
-                />
               ) : (
-                <div className="flex h-24 w-24 items-center justify-center rounded-full border-4 border-slate-50 bg-gradient-to-tr from-[#38BDF8] to-[#F97316] text-3xl font-extrabold text-white shadow-md">
-                  {initials}
-                </div>
+                <UserAvatar
+                  photo={currentPhoto}
+                  name={fullName}
+                  prenom={profile?.prenom || user?.prenom}
+                  nom={profile?.nom || user?.nom}
+                  size="xl"
+                  ringClassName="border-4 border-slate-50 shadow-md"
+                />
               )}
               <button
                 type="button"
