@@ -395,21 +395,21 @@ export default function MissionsPage() {
           </div>
         </div>
 
-        {/* Grille de Cartes 2 colonnes Desktop (comme Image 1) */}
+        {/* Liste Compacte Desktop (1 ligne par application) */}
         {loading ? (
-          <div className="flex min-h-[300px] flex-col items-center justify-center gap-2">
-            <Loader2 size={28} className="animate-spin text-brand-orange" />
+          <div className="flex min-h-[220px] flex-col items-center justify-center gap-2">
+            <Loader2 size={26} className="animate-spin text-brand-orange" />
             <p className="text-xs text-slate-400">Chargement des missions...</p>
           </div>
         ) : tab === "available" ? (
           filteredAvailable.length === 0 ? (
-            <div className="rounded-3xl border border-slate-100 bg-white p-14 text-center shadow-xs">
-              <p className="text-sm font-semibold text-slate-500">
+            <div className="rounded-2xl border border-slate-100 bg-white p-10 text-center shadow-xs">
+              <p className="text-sm font-medium text-slate-500">
                 {searchQuery ? "Aucune mission ne correspond à votre recherche." : "Aucune mission disponible pour le moment."}
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="flex flex-col gap-3">
               {filteredAvailable.map((m) => {
                 const badge = getAppBadgeStyle(m.application || m.titre);
                 const appName = m.application || m.titre;
@@ -418,67 +418,61 @@ export default function MissionsPage() {
                 return (
                   <div
                     key={m.id}
-                    className="flex flex-col justify-between rounded-2xl bg-white p-6 shadow-xs border border-slate-100 hover:shadow-md transition"
+                    className="group flex items-center justify-between gap-4 rounded-2xl bg-white px-5 py-3.5 shadow-2xs border border-slate-100 hover:border-slate-200 hover:shadow-xs transition-all duration-150"
                   >
-                    <div>
-                      {/* En-tête de carte */}
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-3">
-                          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white border border-slate-200 p-1 shadow-2xs overflow-hidden">
-                            {m.image ? (
-                              <img
-                                src={getImageUrl(m.image)}
-                                alt={appName}
-                                className="h-full w-full object-contain rounded-lg"
-                              />
-                            ) : (
-                              <div className={`flex h-full w-full items-center justify-center rounded-lg bg-gradient-to-br ${badge.gradient} text-white font-extrabold text-sm`}>
-                                {badge.letter}
-                              </div>
-                            )}
+                    {/* Gauche : Icône + Titre & Badges */}
+                    <div className="flex items-center gap-4 min-w-0 flex-1">
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-50 border border-slate-200/80 p-1 shadow-2xs overflow-hidden">
+                        {m.image ? (
+                          <img
+                            src={getImageUrl(m.image)}
+                            alt={appName}
+                            className="h-full w-full object-contain rounded-lg"
+                          />
+                        ) : (
+                          <div className={`flex h-full w-full items-center justify-center rounded-lg bg-gradient-to-br ${badge.gradient} text-white font-extrabold text-sm`}>
+                            {badge.letter}
                           </div>
-
-                          <span className={`px-2.5 py-1 rounded-lg text-xs font-extrabold uppercase ${badge.tagColor}`}>
-                            {appName}
-                          </span>
-                        </div>
-
-                        <span className="rounded-full bg-emerald-50 border border-emerald-200/60 px-3 py-1 text-xs font-bold text-emerald-600">
-                          Disponible
-                        </span>
+                        )}
                       </div>
 
-                      {/* Titre */}
-                      <h3 className="font-display text-base font-extrabold text-[#0F172A] mt-1 mb-4">
-                        Tester l&apos;application {appName}
-                      </h3>
-
-                      {/* Bloc de progression */}
-                      <div className="space-y-2 bg-slate-50/70 p-3.5 rounded-xl border border-slate-100">
-                        <div className="flex items-center justify-between text-xs font-bold text-slate-700">
-                          <span>Progression du test</span>
-                          <span>0%</span>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 flex-wrap mb-1">
+                          <span className={`px-2 py-0.5 rounded-md text-[11px] font-extrabold uppercase ${badge.tagColor}`}>
+                            {appName}
+                          </span>
+                          <h3 className="font-display text-sm font-bold text-[#0F172A] truncate">
+                            Tester l&apos;application {appName}
+                          </h3>
+                          <span className="rounded-full bg-emerald-50 border border-emerald-200/60 px-2 py-0.5 text-[10px] font-bold text-emerald-600">
+                            Disponible
+                          </span>
                         </div>
-                        <div className="h-2 w-full rounded-full bg-slate-200/70 overflow-hidden">
-                          <div className="h-full bg-brand-orange rounded-full" style={{ width: "0%" }} />
-                        </div>
-                        <p className="text-[11px] font-medium text-slate-500">
-                          0 sur {totalSteps} étapes validées
+                        <p className="text-xs text-slate-400 font-medium">
+                          0 sur {totalSteps} étapes • Nouvelle opportunité
                         </p>
                       </div>
                     </div>
 
-                    {/* Pied de carte */}
-                    <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between">
-                      <span className="text-xs font-medium text-slate-400">
-                        Nouvelle opportunité
-                      </span>
+                    {/* Centre : Barre de progression compacte */}
+                    <div className="hidden md:flex flex-col gap-1 w-44 shrink-0">
+                      <div className="flex items-center justify-between text-[11px] font-bold text-slate-600">
+                        <span>Progression</span>
+                        <span>0%</span>
+                      </div>
+                      <div className="h-1.5 w-full rounded-full bg-slate-100 overflow-hidden">
+                        <div className="h-full bg-brand-orange rounded-full" style={{ width: "0%" }} />
+                      </div>
+                    </div>
+
+                    {/* Droite : Bouton d'action */}
+                    <div className="shrink-0">
                       <Link
                         href={`/dashboard/missions/${m.id}`}
-                        className="inline-flex items-center gap-1.5 rounded-xl bg-[#F97316] hover:bg-[#EA580C] px-4 py-2.5 text-xs font-extrabold text-white shadow-xs transition"
+                        className="inline-flex items-center gap-1.5 rounded-xl bg-[#F97316] hover:bg-[#EA580C] px-4 py-2 text-xs font-bold text-white shadow-2xs transition-colors"
                       >
                         <span>Démarrer le test</span>
-                        <ArrowRight size={14} />
+                        <ArrowRight size={13} />
                       </Link>
                     </div>
                   </div>
@@ -488,13 +482,13 @@ export default function MissionsPage() {
           )
         ) : (
           filteredParticipations.length === 0 ? (
-            <div className="rounded-3xl border border-slate-100 bg-white p-14 text-center shadow-xs">
-              <p className="text-sm font-semibold text-slate-500">
+            <div className="rounded-2xl border border-slate-100 bg-white p-10 text-center shadow-xs">
+              <p className="text-sm font-medium text-slate-500">
                 {searchQuery ? "Aucune mission en cours ne correspond à votre recherche." : "Vous n'avez aucune mission en cours actuellement."}
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="flex flex-col gap-3">
               {filteredParticipations.map((p) => {
                 const m = p.mission;
                 if (!m) return null;
@@ -507,70 +501,64 @@ export default function MissionsPage() {
                 return (
                   <div
                     key={p.id}
-                    className="flex flex-col justify-between rounded-2xl bg-white p-6 shadow-xs border border-slate-100 hover:shadow-md transition"
+                    className="group flex items-center justify-between gap-4 rounded-2xl bg-white px-5 py-3.5 shadow-2xs border border-slate-100 hover:border-slate-200 hover:shadow-xs transition-all duration-150"
                   >
-                    <div>
-                      {/* En-tête de carte */}
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-3">
-                          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white border border-slate-200 p-1 shadow-2xs overflow-hidden">
-                            {m.image ? (
-                              <img
-                                src={getImageUrl(m.image)}
-                                alt={appName}
-                                className="h-full w-full object-contain rounded-lg"
-                              />
-                            ) : (
-                              <div className={`flex h-full w-full items-center justify-center rounded-lg bg-gradient-to-br ${badge.gradient} text-white font-extrabold text-sm`}>
-                                {badge.letter}
-                              </div>
-                            )}
+                    {/* Gauche : Icône + Titre & Badges */}
+                    <div className="flex items-center gap-4 min-w-0 flex-1">
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-50 border border-slate-200/80 p-1 shadow-2xs overflow-hidden">
+                        {m.image ? (
+                          <img
+                            src={getImageUrl(m.image)}
+                            alt={appName}
+                            className="h-full w-full object-contain rounded-lg"
+                          />
+                        ) : (
+                          <div className={`flex h-full w-full items-center justify-center rounded-lg bg-gradient-to-br ${badge.gradient} text-white font-extrabold text-sm`}>
+                            {badge.letter}
                           </div>
-
-                          <span className={`px-2.5 py-1 rounded-lg text-xs font-extrabold uppercase ${badge.tagColor}`}>
-                            {appName}
-                          </span>
-                        </div>
-
-                        <span className="rounded-full bg-blue-50 border border-blue-200/60 px-3 py-1 text-xs font-bold text-blue-600">
-                          En cours de test
-                        </span>
+                        )}
                       </div>
 
-                      {/* Titre */}
-                      <h3 className="font-display text-base font-extrabold text-[#0F172A] mt-1 mb-4">
-                        Tester l&apos;application {appName}
-                      </h3>
-
-                      {/* Bloc de progression */}
-                      <div className="space-y-2 bg-slate-50/70 p-3.5 rounded-xl border border-slate-100">
-                        <div className="flex items-center justify-between text-xs font-bold text-slate-700">
-                          <span>Progression du test</span>
-                          <span>{progressPct}%</span>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 flex-wrap mb-1">
+                          <span className={`px-2 py-0.5 rounded-md text-[11px] font-extrabold uppercase ${badge.tagColor}`}>
+                            {appName}
+                          </span>
+                          <h3 className="font-display text-sm font-bold text-[#0F172A] truncate">
+                            Tester l&apos;application {appName}
+                          </h3>
+                          <span className="rounded-full bg-blue-50 border border-blue-200/60 px-2 py-0.5 text-[10px] font-bold text-blue-600">
+                            En cours
+                          </span>
                         </div>
-                        <div className="h-2 w-full rounded-full bg-slate-200/70 overflow-hidden">
-                          <div
-                            className="h-full bg-brand-orange rounded-full transition-all duration-300"
-                            style={{ width: `${progressPct}%` }}
-                          />
-                        </div>
-                        <p className="text-[11px] font-medium text-slate-500">
-                          {completed} sur {totalSteps} étapes validées
+                        <p className="text-xs text-slate-400 font-medium">
+                          {completed} sur {totalSteps} étapes validées • Session active
                         </p>
                       </div>
                     </div>
 
-                    {/* Pied de carte */}
-                    <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between">
-                      <span className="text-xs font-medium text-slate-400">
-                        Session en cours
-                      </span>
+                    {/* Centre : Barre de progression */}
+                    <div className="hidden md:flex flex-col gap-1 w-44 shrink-0">
+                      <div className="flex items-center justify-between text-[11px] font-bold text-slate-600">
+                        <span>Progression</span>
+                        <span className="text-brand-orange">{progressPct}%</span>
+                      </div>
+                      <div className="h-1.5 w-full rounded-full bg-slate-100 overflow-hidden">
+                        <div
+                          className="h-full bg-brand-orange rounded-full transition-all duration-300"
+                          style={{ width: `${progressPct}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Droite : Bouton d'action */}
+                    <div className="shrink-0">
                       <Link
                         href={`/dashboard/missions/${m.id}`}
-                        className="inline-flex items-center gap-1.5 rounded-xl bg-[#F97316] hover:bg-[#EA580C] px-4 py-2.5 text-xs font-extrabold text-white shadow-xs transition"
+                        className="inline-flex items-center gap-1.5 rounded-xl bg-[#F97316] hover:bg-[#EA580C] px-4 py-2 text-xs font-bold text-white shadow-2xs transition-colors"
                       >
                         <span>Continuer le test</span>
-                        <ArrowRight size={14} />
+                        <ArrowRight size={13} />
                       </Link>
                     </div>
                   </div>

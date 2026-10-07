@@ -65,9 +65,12 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
   }, [refreshAdmin]);
 
   const adminLogin = async (email: string, password: string): Promise<User> => {
-    const { token } = await adminAuthApi.login(email, password);
-    setAdminToken(token);
-    const me = await adminAuthApi.me(token);
+    const res = await adminAuthApi.login(email, password);
+    if (!res || !res.token) {
+      throw new Error("Identifiants incorrects ou réponse d'authentification invalide.");
+    }
+    setAdminToken(res.token);
+    const me = await adminAuthApi.me(res.token);
 
     if (me.role !== "admin") {
       clearAdminToken();

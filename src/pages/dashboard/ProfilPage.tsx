@@ -307,13 +307,13 @@ export default function ProfilPage() {
             <h1 className="font-display text-[22px] font-extrabold text-[#0F172A] tracking-tight mt-3.5 leading-tight">
               {user?.prenom || user?.nom || "pabougante"}
             </h1>
-            <p className="text-[12px] font-medium text-slate-600 mt-0.5">
+            <p className="text-[12px] font-medium text-slate-600 mt-1 mb-2">
               {email || "pabougante@gmail.com"}
             </p>
           </div>
 
-          {/* Liste des Options Mobile */}
-          <div className="rounded-[24px] bg-white border border-slate-100 shadow-[0_4px_18px_rgba(0,0,0,0.03)] overflow-hidden divide-y divide-slate-100 mb-5">
+          {/* Liste des Options Mobile (abaissée pour un espacement parfait) */}
+          <div className="mt-4 rounded-[24px] bg-white border border-slate-100 shadow-[0_4px_20px_rgba(0,0,0,0.04)] overflow-hidden divide-y divide-slate-100 mb-6">
             <button
               onClick={() => setEditing(true)}
               className="w-full flex items-center justify-between p-4 hover:bg-slate-50/80 transition text-left active:bg-slate-100/60"
@@ -363,7 +363,7 @@ export default function ProfilPage() {
           <button
             type="button"
             onClick={() => setShowLogoutConfirm(true)}
-            className="w-full flex items-center justify-center gap-2 rounded-2xl bg-[#FEF2F2] border border-[#FEE2E2] py-3.5 px-4 text-xs font-extrabold text-[#EF4444] transition active:scale-98 hover:bg-red-100/80 shadow-2xs"
+            className="w-full flex items-center justify-center gap-2 rounded-2xl bg-[#FEF2F2] border border-[#FEE2E2] py-3.5 px-4 text-xs font-extrabold text-[#EF4444] transition active:scale-98 hover:bg-red-100/80 shadow-2xs mb-8"
           >
             <LogOut size={16} />
             <span>Se déconnecter</span>

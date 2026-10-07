@@ -256,12 +256,17 @@ export default function NotificationsPage() {
                               target="_blank"
                               rel="noopener noreferrer"
                               onClick={(e) => e.stopPropagation()}
-                              className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white shadow-xs transition hover:bg-emerald-700 active:scale-98"
+                              className="inline-flex items-center gap-2 rounded-xl bg-white border border-slate-200 px-3.5 py-2 text-xs font-bold text-navy-950 shadow-2xs transition hover:bg-slate-50 active:scale-98"
                               title="Installer directement depuis le Play Store"
                             >
-                              <Play size={13} fill="currentColor" />
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="shrink-0">
+                                <path d="M3.609 1.814C3.253 2.19 3 2.793 3 3.593v16.814c0 .8.253 1.403.609 1.779l.092.088 9.42-9.42v-.222L3.701 1.726l-.092.088z" fill="#00D2FF" />
+                                <path d="M16.275 15.997l-3.154-3.154v-.222l3.154-3.154.07.04 3.738 2.124c1.068.606 1.068 1.6 0 2.207l-3.738 2.124-.07.035z" fill="#FFD200" />
+                                <path d="M16.345 15.962L13.12 12.737 3.609 22.247c.353.376.945.422 1.623.036l11.113-6.321" fill="#FF3A44" />
+                                <path d="M16.345 8.038L5.232 1.717c-.678-.386-1.27-.34-1.623.036l9.512 9.51 3.224-3.225" fill="#00E676" />
+                              </svg>
                               <span>Installer {appName} sur Google Play</span>
-                              <ExternalLink size={12} />
+                              <ExternalLink size={12} className="text-slate-400" />
                             </a>
 
                             {matchedPart?.mission?.id && (

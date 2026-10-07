@@ -60,8 +60,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [refresh]);
 
   const login = async (email: string, password: string): Promise<User> => {
-    const { token } = await authApi.login(email, password);
-    setToken(token);
+    const res = await authApi.login(email, password);
+    if (!res || !res.token) {
+      throw new Error("Identifiants incorrects ou réponse d'authentification invalide.");
+    }
+    setToken(res.token);
     const me = await authApi.me();
     setUser(me);
     return me;
