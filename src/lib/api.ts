@@ -1,5 +1,16 @@
-export const API_URL: string =
-  import.meta.env.VITE_API_URL ?? "http://localhost:8000";
+export const API_URL: string = (() => {
+  const envUrl = import.meta.env.VITE_API_URL;
+  if (envUrl && typeof envUrl === "string" && envUrl.trim() !== "" && envUrl !== "undefined") {
+    return envUrl.trim().replace(/\/+$/, "");
+  }
+  if (typeof window !== "undefined") {
+    if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
+      return "http://localhost:8000";
+    }
+    return window.location.origin;
+  }
+  return "http://localhost:8000";
+})();
 
 // ── Session Testeur / Utilisateur ────────────────────────────────────
 const TOKEN_KEY = "samre_token";
@@ -69,8 +80,9 @@ export function getImageUrl(path?: string | null): string {
   if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
     return sanitizeUrl(trimmed, "");
   }
-  const baseUrl = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
-  return `${baseUrl.replace(/\/+$/, "")}/${trimmed.replace(/^\/+/, "")}`;
+  const baseUrl = API_URL.replace(/\/+$/, "");
+  const cleanPath = trimmed.replace(/^\/+/, "");
+  return `${baseUrl}/${cleanPath}`;
 }
 
 export function getApplicationPlayStoreUrl(mission?: Mission | null): string {
@@ -416,6 +428,9 @@ export const authApi = {
     email: string;
     telephone: string;
     password: string;
+    pays?: string;
+    ville?: string;
+    genre?: string;
   }) => api.post<User>("/api/register", data),
   forgotPassword: (email: string) =>
     api.post<{ message: string }>("/api/forgot-password", { email }),

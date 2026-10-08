@@ -18,6 +18,9 @@ type AuthContextValue = {
     email: string;
     telephone: string;
     password: string;
+    pays?: string;
+    ville?: string;
+    genre?: string;
   }) => Promise<void>;
   logout: (redirectTo?: string | unknown) => void;
   refresh: () => Promise<void>;
@@ -76,6 +79,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     email: string;
     telephone: string;
     password: string;
+    pays?: string;
+    ville?: string;
+    genre?: string;
   }) => {
     await authApi.register(data);
     // Le backend ne renvoie pas de token à l'inscription :

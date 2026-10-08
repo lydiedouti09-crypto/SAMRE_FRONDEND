@@ -99,11 +99,23 @@ export default function AdminApplicationsPage() {
       setErrorMsg("Veuillez sélectionner un fichier image valide (PNG, JPG, WebP, SVG).");
       return;
     }
+
+    // Aperçu immédiat via FileReader
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      if (typeof ev.target?.result === "string") {
+        setLogo(ev.target.result);
+      }
+    };
+    reader.readAsDataURL(file);
+
     try {
       setUploadingLogo(true);
       setErrorMsg("");
       const res = await adminApi.uploadImage(file);
-      setLogo(res.url);
+      if (res && res.url) {
+        setLogo(res.url);
+      }
     } catch (err: any) {
       setErrorMsg(err.message || "Erreur lors du téléversement du logo.");
     } finally {
@@ -146,11 +158,22 @@ export default function AdminApplicationsPage() {
       setDailyPagesError("Veuillez sélectionner un fichier image valide.");
       return;
     }
+
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      if (typeof ev.target?.result === "string") {
+        updateSelectedDailyPage("imageUrl", ev.target.result);
+      }
+    };
+    reader.readAsDataURL(file);
+
     try {
       setUploadingDailyImage(true);
       setDailyPagesError("");
       const result = await adminApi.uploadImage(file);
-      updateSelectedDailyPage("imageUrl", result.url);
+      if (result && result.url) {
+        updateSelectedDailyPage("imageUrl", result.url);
+      }
     } catch (err) {
       setDailyPagesError(err instanceof Error ? err.message : "Échec du téléversement de l’image.");
     } finally {

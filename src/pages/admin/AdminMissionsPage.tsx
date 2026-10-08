@@ -35,6 +35,7 @@ import {
 import {
   adminApi,
   applicationsApi,
+  getImageUrl,
   type AdminMission,
   type MissionPayload,
   type ApplicationItem,
@@ -179,17 +180,28 @@ function AdminMissionsContent() {
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    // Aperçu immédiat avec FileReader
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      if (typeof ev.target?.result === "string") {
+        setImage(ev.target.result);
+      }
+    };
+    reader.readAsDataURL(file);
+
     setUploadingImage(true);
     setErrorMsg("");
     try {
       const res = await adminApi.uploadImage(file);
-      if (res.url) {
+      if (res && res.url) {
         setImage(res.url);
       }
     } catch (err: any) {
       setErrorMsg(err.message || "Erreur lors de l'upload de l'image.");
     } finally {
       setUploadingImage(false);
+      if (e.target) e.target.value = "";
     }
   };
 
@@ -886,11 +898,7 @@ function AdminMissionsContent() {
                         >
                           {image ? (
                             <img
-                              src={
-                                image.startsWith("http")
-                                  ? image
-                                  : `${import.meta.env.VITE_API_URL ?? "http://localhost:8000"}${image}`
-                              }
+                              src={getImageUrl(image)}
                               alt="Logo preview"
                               className="h-full w-full object-contain p-1"
                               style={{ width: "100%", height: "100%", maxWidth: "76px", maxHeight: "76px", objectFit: "contain" }}
