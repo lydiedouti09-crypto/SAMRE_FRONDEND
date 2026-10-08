@@ -543,19 +543,27 @@ export default function ProfilPage() {
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold text-slate-600 mb-1">
-                  Numéro de téléphone
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-[11px] font-semibold text-slate-600">
+                    Numéro de téléphone
+                  </label>
+                  <span className="inline-flex items-center gap-1 text-[10px] font-medium text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">
+                    <Lock size={10} />
+                    Non modifiable
+                  </span>
+                </div>
                 <div className="relative">
                   <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 pointer-events-none">
                     <Phone size={13} />
                   </span>
                   <input
                     type="tel"
+                    readOnly
+                    disabled
                     value={telephone}
-                    onChange={(e) => setTelephone(e.target.value)}
-                    placeholder="+225 07 00 00 00 00"
-                    className="w-full rounded-xl border border-slate-200 pl-8 pr-3 py-2 text-xs text-slate-900 focus:border-brand-orange focus:outline-none focus:ring-1 focus:ring-brand-orange bg-slate-50/50"
+                    placeholder="+228 90 00 00 00"
+                    className="w-full rounded-xl border border-slate-200/80 pl-8 pr-3 py-2 text-xs text-slate-500 bg-slate-100/70 cursor-not-allowed select-none"
+                    title="Le numéro de téléphone ne peut pas être modifié"
                   />
                 </div>
               </div>
