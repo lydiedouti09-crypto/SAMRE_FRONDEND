@@ -58,11 +58,6 @@ export default function ProfilPage() {
   const [participations, setParticipations] = useState<Participation[]>([]);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
-  // Données de l'utilisateur connecté
-  const currentPhoto = profile?.photo || user?.photo || null;
-  const fullName = [profile?.prenom || user?.prenom, profile?.nom || user?.nom].filter(Boolean).join(" ");
-  const email = profile?.email || user?.email || "";
-
   // Modals
   const [editing, setEditing] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
