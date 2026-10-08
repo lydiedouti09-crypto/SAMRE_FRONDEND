@@ -771,10 +771,10 @@ export default function DashboardPage() {
                         </div>
                         <div>
                           <h3 className="font-display text-[13px] font-bold text-[#0F172A]">
-                            Validation de l&apos;administrateur
+                            Candidature à l&apos;étude
                           </h3>
                           <p className="text-[11px] text-slate-400 mt-0.5 font-normal">
-                            L&apos;équipe valide votre profil de testeur.
+                            Votre candidature est examinée avant votre participation.
                           </p>
                         </div>
                       </div>
@@ -794,10 +794,10 @@ export default function DashboardPage() {
                         </div>
                         <div>
                           <h3 className="font-display text-[13px] font-bold text-[#0F172A]">
-                            14 jours de tests & Gains
+                            Testez & Gagnez
                           </h3>
                           <p className="text-[11px] text-slate-400 mt-0.5 font-normal">
-                            Validez vos étapes et encaissez par Mobile Money.
+                            Réalisez les étapes demandées et recevez votre récompense.
                           </p>
                         </div>
                       </div>

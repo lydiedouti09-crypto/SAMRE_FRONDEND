@@ -58,6 +58,11 @@ export default function ProfilPage() {
   const [participations, setParticipations] = useState<Participation[]>([]);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
+  // Données de l'utilisateur connecté
+  const currentPhoto = profile?.photo || user?.photo || null;
+  const fullName = [profile?.prenom || user?.prenom, profile?.nom || user?.nom].filter(Boolean).join(" ");
+  const email = profile?.email || user?.email || "";
+
   // Modals
   const [editing, setEditing] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -266,9 +271,9 @@ export default function ProfilPage() {
           <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/10 to-[#F8F9FB]" />
         </div>
 
-        <div className="relative max-w-md mx-auto px-4 pt-8">
+        <div className="relative max-w-md mx-auto px-4 pt-10">
           {/* Profile Identity Mobile */}
-          <div className="flex flex-col items-center text-center mb-4 pt-3">
+          <div className="flex flex-col items-center text-center mb-4 pt-4">
             <div className="relative">
               <input
                 type="file"
@@ -312,8 +317,8 @@ export default function ProfilPage() {
             </p>
           </div>
 
-          {/* Liste des Options Mobile (abaissée significativement) */}
-          <div className="mt-8 rounded-[24px] bg-white border border-slate-100 shadow-[0_4px_20px_rgba(0,0,0,0.04)] overflow-hidden divide-y divide-slate-100 mb-5">
+          {/* Liste des Options Mobile (abaissée confortablement) */}
+          <div className="mt-12 rounded-[24px] bg-white border border-slate-100 shadow-[0_4px_24px_rgba(0,0,0,0.04)] overflow-hidden divide-y divide-slate-100 mb-6">
             <button
               onClick={() => setEditing(true)}
               className="w-full flex items-center justify-between p-4 hover:bg-slate-50/80 transition text-left active:bg-slate-100/60"
@@ -363,7 +368,7 @@ export default function ProfilPage() {
           <button
             type="button"
             onClick={() => setShowLogoutConfirm(true)}
-            className="w-full flex items-center justify-center gap-2 rounded-2xl bg-[#FEF2F2] border border-[#FEE2E2] py-3.5 px-4 text-xs font-extrabold text-[#EF4444] transition active:scale-98 hover:bg-red-100/80 shadow-2xs mb-8"
+            className="w-full flex items-center justify-center gap-2 rounded-2xl bg-[#FEF2F2] border border-[#FEE2E2] py-3.5 px-4 text-xs font-extrabold text-[#EF4444] transition active:scale-98 hover:bg-red-100/80 shadow-2xs mb-10"
           >
             <LogOut size={16} />
             <span>Se déconnecter</span>

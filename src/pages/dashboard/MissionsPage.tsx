@@ -125,10 +125,15 @@ export default function MissionsPage() {
       {/* ═══════════════════════════════════════════════════════════════════════ */}
       <div className="lg:hidden px-4 pt-4 space-y-5 max-w-md mx-auto">
         <div className="pt-1">
-          <h1 className="font-display text-2xl font-extrabold tracking-tight text-[#0F172A] leading-tight">
-            Mes missions
-          </h1>
-          <p className="text-xs font-medium text-slate-500 mt-1 leading-snug">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-orange/10 text-brand-orange">
+              <Briefcase size={20} />
+            </div>
+            <h1 className="font-display text-xl font-bold tracking-tight text-[#0F172A]">
+              Mes missions
+            </h1>
+          </div>
+          <p className="text-xs font-medium text-slate-500 mt-1.5 leading-snug">
             Découvrez toutes les applications disponibles et choisissez celle qui vous convient.
           </p>
         </div>

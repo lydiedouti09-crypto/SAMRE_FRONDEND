@@ -36,7 +36,11 @@ export function clearAdminToken() {
 export function sanitizeUrl(url?: string | null, fallback: string = "#"): string {
   if (!url || typeof url !== "string") return fallback;
   const trimmed = url.trim();
-  // Protection contre XSS via protocoles dangereux (javascript:, vbscript:, data:, file:)
+  // Autoriser explicitement les images Base64 sécurisées
+  if (/^data:image\/(png|jpeg|jpg|webp|gif|svg\+xml);base64,/i.test(trimmed)) {
+    return trimmed;
+  }
+  // Protection contre XSS via protocoles dangereux (javascript:, vbscript:, data: non-image, file:)
   if (/^(javascript|vbscript|data|file):/i.test(trimmed)) {
     return fallback;
   }
@@ -59,7 +63,10 @@ export function getImageUrl(path?: string | null): string {
   if (!trimmed || trimmed === "null" || trimmed === "undefined" || trimmed === "none") {
     return "";
   }
-  if (trimmed.startsWith("http://") || trimmed.startsWith("https://") || trimmed.startsWith("data:")) {
+  if (/^data:image\/(png|jpeg|jpg|webp|gif|svg\+xml);base64,/i.test(trimmed)) {
+    return trimmed;
+  }
+  if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
     return sanitizeUrl(trimmed, "");
   }
   const baseUrl = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
