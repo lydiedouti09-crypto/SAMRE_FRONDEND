@@ -44,7 +44,6 @@ const PAYS_LIST = [
   "Gabon",
   "Congo",
   "RD Congo",
-  "France",
   "Autre",
 ];
 
@@ -216,9 +215,8 @@ export default function ProfilPage() {
   ).toUpperCase();
 
   const currentPhoto = profile?.photo || user?.photo;
-  const fullName = `${profile?.prenom || user?.prenom || "Testeur"} ${
-    profile?.nom || user?.nom || ""
-  }`.trim();
+  const fullName = `${profile?.prenom || user?.prenom || "Testeur"} ${profile?.nom || user?.nom || ""
+    }`.trim();
   const email = profile?.email || user?.email || "";
 
   // Calcul dynamique des gains et points réels
@@ -589,7 +587,7 @@ export default function ProfilPage() {
                     type="text"
                     value={ville}
                     onChange={(e) => setVille(e.target.value)}
-                    placeholder="Ex: Abidjan"
+                    placeholder="Ex: Lomé"
                     className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-slate-900 focus:border-brand-orange focus:outline-none focus:ring-1 focus:ring-brand-orange bg-slate-50/50"
                   />
                 </div>

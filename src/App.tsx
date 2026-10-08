@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/lib/auth-context";
 import Preloader from "@/components/Preloader";
+import ScrollToTop from "@/components/ScrollToTop";
 
 // Public Pages
 import HomePage from "@/pages/HomePage";
@@ -34,6 +35,7 @@ export default function App() {
   return (
     <AuthProvider>
       <Preloader>
+        <ScrollToTop />
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<HomePage />} />

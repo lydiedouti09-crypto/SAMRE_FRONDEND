@@ -5,11 +5,38 @@ import {
   EyeOff,
   Loader2,
   CheckCircle2,
+  ChevronDown,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { authApi, getToken, setAdminToken } from "@/lib/api";
 
 type Mode = "login" | "signup" | "forgot-password";
+
+interface CountryOption {
+  name: string;
+  code: string;
+  dialCode: string;
+  flag: string;
+}
+
+const COUNTRY_OPTIONS: CountryOption[] = [
+  { name: "Togo", code: "TG", dialCode: "+228", flag: "🇹🇬" },
+  { name: "Côte d'Ivoire", code: "CI", dialCode: "+225", flag: "🇨🇮" },
+  { name: "Bénin", code: "BJ", dialCode: "+229", flag: "🇧🇯" },
+  { name: "Sénégal", code: "SN", dialCode: "+221", flag: "🇸🇳" },
+  { name: "Cameroun", code: "CM", dialCode: "+237", flag: "🇨🇲" },
+  { name: "Burkina Faso", code: "BF", dialCode: "+226", flag: "🇧🇫" },
+  { name: "Mali", code: "ML", dialCode: "+223", flag: "🇲🇱" },
+  { name: "Guinée", code: "GN", dialCode: "+224", flag: "🇬🇳" },
+  { name: "Niger", code: "NE", dialCode: "+227", flag: "🇳🇪" },
+  { name: "Gabon", code: "GA", dialCode: "+241", flag: "🇬🇦" },
+  { name: "Congo", code: "CG", dialCode: "+242", flag: "🇨🇬" },
+  { name: "RD Congo", code: "CD", dialCode: "+243", flag: "🇨🇩" },
+  { name: "Ghana", code: "GH", dialCode: "+233", flag: "🇬🇭" },
+  { name: "Nigeria", code: "NG", dialCode: "+234", flag: "🇳🇬" },
+  { name: "France", code: "FR", dialCode: "+33", flag: "🇫🇷" },
+  { name: "Autre", code: "XX", dialCode: "+", flag: "🌍" },
+];
 
 export default function AuthForm({ mode = "login" }: { mode?: Mode }) {
   const router = useRouter();
@@ -23,17 +50,21 @@ export default function AuthForm({ mode = "login" }: { mode?: Mode }) {
   }, [mode]);
 
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [forgotEmail, setForgotEmail] = useState("");
 
+  const [selectedCountry, setSelectedCountry] = useState<CountryOption>(COUNTRY_OPTIONS[0]);
+  const [phoneLocal, setPhoneLocal] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
   const [form, setForm] = useState({
     nom: "",
     prenom: "",
     email: "",
-    telephone: "",
     password: "",
   });
 
@@ -91,31 +122,56 @@ export default function AuthForm({ mode = "login" }: { mode?: Mode }) {
   async function handleSubmit() {
     setError(null);
 
-    if (isSignup && (!form.prenom || !form.nom)) {
+    if (isSignup) {
       if (!form.prenom) {
         setError("Veuillez saisir votre nom complet.");
         return;
       }
-    }
-    if (!form.email || !form.password) {
-      setError("Email et mot de passe sont requis.");
-      return;
-    }
-    if (isSignup && form.password.length < 6) {
-      setError("Le mot de passe doit comporter au moins 6 caractères.");
-      return;
+      if (!form.email) {
+        setError("L'adresse email est requise.");
+        return;
+      }
+      if (!phoneLocal.trim()) {
+        setError("Le numéro de téléphone est obligatoire.");
+        return;
+      }
+      if (!form.password) {
+        setError("Le mot de passe est obligatoire.");
+        return;
+      }
+      if (form.password.length < 6) {
+        setError("Le mot de passe doit comporter au moins 6 caractères.");
+        return;
+      }
+      if (form.password !== confirmPassword) {
+        setError("Les mots de passe ne correspondent pas.");
+        return;
+      }
+    } else {
+      if (!form.email || !form.password) {
+        setError("Veuillez renseigner votre email / téléphone et votre mot de passe.");
+        return;
+      }
     }
 
     setLoading(true);
     try {
       if (isSignup) {
+        // Formatter le numéro de téléphone complet avec indicatif pays
+        const cleanLocal = phoneLocal.trim().replace(/^0+/, "");
+        const fullPhone = selectedCountry.dialCode === "+"
+          ? `+${cleanLocal}`
+          : `${selectedCountry.dialCode} ${cleanLocal}`;
+
         await register({
           ...form,
+          telephone: fullPhone,
           nom: form.nom || form.prenom,
+          pays: selectedCountry.name !== "Autre" ? selectedCountry.name : undefined,
         });
         router.push("/dashboard");
       } else {
-        const loggedUser = await login(form.email, form.password);
+        const loggedUser = await login(form.email.trim(), form.password);
         if (loggedUser?.role === "admin") {
           setAdminToken(getToken() || "");
           router.replace("/admin");
@@ -188,7 +244,7 @@ export default function AuthForm({ mode = "login" }: { mode?: Mode }) {
                   {isForgotPassword
                     ? "Entrez votre email pour réinitialiser votre accès."
                     : isSignup
-                      ? "Inscrivez-vous pour commencer à utiliser la platforme"
+                      ? "Inscrivez-vous pour commencer à utiliser la plateforme"
                       : "Connectez-vous à votre compte pour continuer."}
                 </p>
               </div>
@@ -300,43 +356,82 @@ export default function AuthForm({ mode = "login" }: { mode?: Mode }) {
                     </div>
                   )}
 
-                  {/* Champ Email */}
+                  {/* Champ Email ou Numéro de téléphone (Connexion) / Email (Inscription) */}
                   <div className="w-full">
                     <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                      Email
+                      {isSignup ? "Email" : "Email ou Téléphone"}
                     </label>
                     <input
-                      type="email"
+                      type={isSignup ? "email" : "text"}
                       required
-                      autoComplete="email"
+                      autoComplete={isSignup ? "email" : "username"}
                       value={form.email}
                       onChange={update("email")}
-                      placeholder="Entrez votre adresse email"
+                      placeholder={isSignup ? "Entrez votre adresse email" : "Entrez votre email ou numéro"}
                       className="w-full block box-border px-4 py-3 rounded-xl bg-[#eef4fb] text-slate-800 text-xs sm:text-sm placeholder:text-slate-400 outline-none transition focus:bg-white focus:ring-2 focus:ring-[#f2811d]/30"
                     />
                   </div>
 
-                  {/* Champ Téléphone (Inscription uniquement) */}
+                  {/* Champ Téléphone avec Drapeau & Indicatif (Inscription uniquement) */}
                   {isSignup && (
                     <div className="w-full">
                       <label className="block text-xs font-bold text-slate-700 mb-1.5">
                         Téléphone
                       </label>
-                      <input
-                        type="tel"
-                        required
-                        value={form.telephone}
-                        onChange={update("telephone")}
-                        placeholder="+228 90 00 00 00"
-                        className="w-full block box-border px-4 py-3 rounded-xl bg-[#eef4fb] text-slate-800 text-xs sm:text-sm placeholder:text-slate-400 outline-none transition focus:bg-white focus:ring-2 focus:ring-[#f2811d]/30"
-                      />
+                      <div className="relative flex items-center w-full rounded-xl bg-[#eef4fb] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#f2811d]/30 transition overflow-hidden">
+                        {/* Sélecteur de pays avec vrai drapeau image et indicatif */}
+                        <div className="relative flex items-center shrink-0 border-r border-slate-200/80 bg-slate-100/90 hover:bg-slate-200/70 transition px-3 py-2.5 cursor-pointer">
+                          <div className="flex items-center gap-2 pointer-events-none">
+                            {selectedCountry.code !== "XX" ? (
+                              <img
+                                src={`https://flagcdn.com/w40/${selectedCountry.code.toLowerCase()}.png`}
+                                alt={selectedCountry.name}
+                                className="w-6 h-4 object-cover rounded-xs shadow-2xs border border-slate-300/80 shrink-0"
+                              />
+                            ) : (
+                              <span className="text-sm leading-none">🌍</span>
+                            )}
+                            <span className="text-xs font-bold text-slate-800 tracking-tight">
+                              {selectedCountry.dialCode}
+                            </span>
+                            <ChevronDown size={14} className="text-slate-400" />
+                          </div>
+
+                          {/* Select natif transparent superposé pour le choix sur mobile et desktop */}
+                          <select
+                            value={selectedCountry.code}
+                            onChange={(e) => {
+                              const found = COUNTRY_OPTIONS.find((c) => c.code === e.target.value);
+                              if (found) setSelectedCountry(found);
+                            }}
+                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer text-xs"
+                            title="Sélectionner un pays"
+                          >
+                            {COUNTRY_OPTIONS.map((c) => (
+                              <option key={c.code} value={c.code} className="text-slate-800 bg-white">
+                                {c.name} ({c.dialCode})
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        {/* Numéro local */}
+                        <input
+                          type="tel"
+                          required
+                          value={phoneLocal}
+                          onChange={(e) => setPhoneLocal(e.target.value)}
+                          placeholder="90 00 00 00"
+                          className="w-full flex-1 px-3.5 py-3 bg-transparent text-slate-800 text-xs sm:text-sm placeholder:text-slate-400 outline-none"
+                        />
+                      </div>
                     </div>
                   )}
 
                   {/* Champ Mot de passe */}
                   <div className="w-full">
                     <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                      Mot de passe
+                      {isSignup ? "Créer un mot de passe" : "Mot de passe"}
                     </label>
                     <div className="relative w-full">
                       <input
@@ -345,7 +440,7 @@ export default function AuthForm({ mode = "login" }: { mode?: Mode }) {
                         autoComplete={isSignup ? "new-password" : "current-password"}
                         value={form.password}
                         onChange={update("password")}
-                        placeholder={isSignup ? "Créez un mot de passe (6+ caractères)" : "Entrez votre mot de passe"}
+                        placeholder={isSignup ? "Créer un mot de passe (6+ caractères)" : "Entrez votre mot de passe"}
                         className="w-full block box-border px-4 py-3 pr-11 rounded-xl bg-[#eef4fb] text-slate-800 text-xs sm:text-sm placeholder:text-slate-400 outline-none transition focus:bg-white focus:ring-2 focus:ring-[#f2811d]/30"
                       />
                       <button
@@ -358,6 +453,34 @@ export default function AuthForm({ mode = "login" }: { mode?: Mode }) {
                       </button>
                     </div>
                   </div>
+
+                  {/* Champ Confirmer le mot de passe (Inscription uniquement) */}
+                  {isSignup && (
+                    <div className="w-full">
+                      <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                        Confirmer le mot de passe
+                      </label>
+                      <div className="relative w-full">
+                        <input
+                          type={showConfirmPassword ? "text" : "password"}
+                          required
+                          autoComplete="new-password"
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          placeholder="Confirmer le mot de passe"
+                          className="w-full block box-border px-4 py-3 pr-11 rounded-xl bg-[#eef4fb] text-slate-800 text-xs sm:text-sm placeholder:text-slate-400 outline-none transition focus:bg-white focus:ring-2 focus:ring-[#f2811d]/30"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400 hover:text-slate-700 transition"
+                          aria-label={showConfirmPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                        >
+                          {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                        </button>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Ligne "Remember me" et "Forgot Password?" (Connexion uniquement) */}
                   {!isSignup && (
@@ -449,4 +572,3 @@ export default function AuthForm({ mode = "login" }: { mode?: Mode }) {
     </div>
   );
 }
-
