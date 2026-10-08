@@ -8,7 +8,6 @@ import {
   Terminal,
   Play,
   Trash2,
-  Smartphone,
   Calendar,
   Users,
 } from "lucide-react";
