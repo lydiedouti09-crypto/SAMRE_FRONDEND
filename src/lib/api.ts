@@ -215,7 +215,10 @@ async function request<T>(
         401,
         "Identifiants incorrects (email/téléphone ou mot de passe invalide)."
       );
-      throw new ApiError(msg, 401);
+      const translated = /invalid credentials/i.test(msg)
+        ? "Identifiants incorrects (email/téléphone ou mot de passe invalide)."
+        : msg;
+      throw new ApiError(translated, 401);
     }
     clearToken();
     throw new ApiError("Session expirée. Reconnectez-vous.", 401);
