@@ -266,9 +266,9 @@ export default function ProfilPage() {
           <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/10 to-[#F8F9FB]" />
         </div>
 
-        <div className="relative max-w-md mx-auto px-4 pt-6">
+        <div className="relative max-w-md mx-auto px-4 pt-8">
           {/* Profile Identity Mobile */}
-          <div className="flex flex-col items-center text-center mb-6 pt-2">
+          <div className="flex flex-col items-center text-center mb-4 pt-3">
             <div className="relative">
               <input
                 type="file"
@@ -304,16 +304,16 @@ export default function ProfilPage() {
               </button>
             </div>
 
-            <h1 className="font-display text-[22px] font-extrabold text-[#0F172A] tracking-tight mt-3.5 leading-tight">
-              {user?.prenom || user?.nom || "pabougante"}
+            <h1 className="font-display text-[22px] font-extrabold text-[#0F172A] tracking-tight mt-4 leading-tight">
+              {fullName || user?.prenom || user?.nom || "Mon Compte"}
             </h1>
-            <p className="text-[12px] font-medium text-slate-600 mt-1 mb-2">
-              {email || "pabougante@gmail.com"}
+            <p className="text-[12px] font-medium text-slate-600 mt-1">
+              {email || user?.email || ""}
             </p>
           </div>
 
-          {/* Liste des Options Mobile (abaissée pour un espacement parfait) */}
-          <div className="mt-4 rounded-[24px] bg-white border border-slate-100 shadow-[0_4px_20px_rgba(0,0,0,0.04)] overflow-hidden divide-y divide-slate-100 mb-6">
+          {/* Liste des Options Mobile (abaissée significativement) */}
+          <div className="mt-8 rounded-[24px] bg-white border border-slate-100 shadow-[0_4px_20px_rgba(0,0,0,0.04)] overflow-hidden divide-y divide-slate-100 mb-5">
             <button
               onClick={() => setEditing(true)}
               className="w-full flex items-center justify-between p-4 hover:bg-slate-50/80 transition text-left active:bg-slate-100/60"
@@ -412,10 +412,10 @@ export default function ProfilPage() {
             </div>
 
             <h1 className="font-display text-2xl font-black text-[#0F172A] tracking-tight">
-              {fullName || "pabougante DOUTI"}
+              {fullName || user?.prenom || user?.nom || "Mon Compte"}
             </h1>
             <p className="text-xs font-semibold text-slate-400 mt-0.5">
-              {email || "lydiedouti09@gmail.com"}
+              {email || user?.email || ""}
             </p>
           </div>
 

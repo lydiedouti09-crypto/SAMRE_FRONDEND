@@ -444,46 +444,86 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              {/* Étapes du processus d'intégration */}
-              <div className="rounded-3xl bg-white p-4.5 border border-slate-100 shadow-[0_4px_18px_rgba(0,0,0,0.03)] space-y-3">
-                <h3 className="font-display text-sm font-extrabold text-[#0F172A]">
-                  Prochaines étapes
-                </h3>
+              {/* Prochaines étapes (Style Timeline Stepper Image 2) */}
+              <div className="space-y-2.5 pt-1">
+                <div>
+                  <h2 className="font-display text-base font-extrabold text-[#0F172A] leading-tight">
+                    Prochaines étapes
+                  </h2>
+                  <p className="text-[11px] font-medium text-slate-400 mt-0.5">
+                    Le parcours pour démarrer votre mission.
+                  </p>
+                </div>
 
-                <div className="space-y-2.5 text-xs">
-                  <div className="flex items-start gap-3 p-2.5 rounded-2xl bg-amber-50/70 border border-amber-100/60">
-                    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-500 text-white font-extrabold text-[11px] mt-0.5">
+                <div className="relative space-y-3 pt-1">
+                  <div className="absolute left-[15px] top-6 bottom-6 w-[2px] bg-slate-200/80 -z-0" />
+
+                  {/* Étape 1 */}
+                  <div className="relative z-10 flex items-center gap-3">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#F59E0B] text-white font-extrabold text-xs shadow-md shadow-amber-500/20 ring-4 ring-[#F8FAFC]">
                       1
                     </div>
-                    <div>
-                      <p className="font-bold text-amber-950">Examen de votre profil</p>
-                      <p className="text-[11px] text-amber-800/80 mt-0.5">
-                        Validation de votre appareil Android par l'équipe SAMRE.
-                      </p>
+                    <div className="flex-1 flex items-center justify-between rounded-2xl bg-white p-3.5 shadow-[0_4px_16px_rgba(0,0,0,0.03)] border border-slate-100">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-amber-50 text-amber-600 border border-amber-100/70">
+                          <CheckCircle2 size={20} />
+                        </div>
+                        <div>
+                          <h3 className="font-display text-[13px] font-bold text-[#0F172A]">
+                            Examen de votre profil
+                          </h3>
+                          <p className="text-[11px] text-slate-400 mt-0.5 font-normal">
+                            Validation de votre appareil par l&apos;équipe SAMRE.
+                          </p>
+                        </div>
+                      </div>
+                      <ChevronRight size={16} className="text-slate-300 shrink-0" />
                     </div>
                   </div>
 
-                  <div className="flex items-start gap-3 p-2.5 rounded-2xl bg-slate-50 border border-slate-100">
-                    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-200 text-slate-600 font-bold text-[11px] mt-0.5">
+                  {/* Étape 2 */}
+                  <div className="relative z-10 flex items-center gap-3">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#6366F1] text-white font-extrabold text-xs shadow-md shadow-indigo-500/20 ring-4 ring-[#F8FAFC]">
                       2
                     </div>
-                    <div>
-                      <p className="font-bold text-slate-800">Téléchargement de l'application</p>
-                      <p className="text-[11px] text-slate-500 mt-0.5">
-                        Vous recevrez le lien Play Store et vos identifiants de test.
-                      </p>
+                    <div className="flex-1 flex items-center justify-between rounded-2xl bg-white p-3.5 shadow-[0_4px_16px_rgba(0,0,0,0.03)] border border-slate-100">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600 border border-indigo-100/70 font-display font-extrabold text-base">
+                          <Smartphone size={20} />
+                        </div>
+                        <div>
+                          <h3 className="font-display text-[13px] font-bold text-[#0F172A]">
+                            Téléchargement de l&apos;app
+                          </h3>
+                          <p className="text-[11px] text-slate-400 mt-0.5 font-normal">
+                            Lien Play Store et identifiants de test fournis.
+                          </p>
+                        </div>
+                      </div>
+                      <ChevronRight size={16} className="text-slate-300 shrink-0" />
                     </div>
                   </div>
 
-                  <div className="flex items-start gap-3 p-2.5 rounded-2xl bg-slate-50 border border-slate-100">
-                    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-200 text-slate-600 font-bold text-[11px] mt-0.5">
+                  {/* Étape 3 */}
+                  <div className="relative z-10 flex items-center gap-3">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#10B981] text-white font-extrabold text-xs shadow-md shadow-emerald-500/20 ring-4 ring-[#F8FAFC]">
                       3
                     </div>
-                    <div>
-                      <p className="font-bold text-slate-800">14 jours de tests & Paiement</p>
-                      <p className="text-[11px] text-slate-500 mt-0.5">
-                        Testez 5 min/jour et recevez vos gains par Mobile Money.
-                      </p>
+                    <div className="flex-1 flex items-center justify-between rounded-2xl bg-white p-3.5 shadow-[0_4px_16px_rgba(0,0,0,0.03)] border border-slate-100">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-100/70">
+                          <Wallet size={20} />
+                        </div>
+                        <div>
+                          <h3 className="font-display text-[13px] font-bold text-[#0F172A]">
+                            14 jours de tests & Paiement
+                          </h3>
+                          <p className="text-[11px] text-slate-400 mt-0.5 font-normal">
+                            Testez 5 min/jour et recevez vos gains Mobile Money.
+                          </p>
+                        </div>
+                      </div>
+                      <ChevronRight size={16} className="text-slate-300 shrink-0" />
                     </div>
                   </div>
                 </div>
@@ -512,7 +552,7 @@ export default function DashboardPage() {
                 <div className="relative flex items-center justify-between gap-3 mb-4">
                   <div className="min-w-0 flex-1">
                     <h2 className="font-display text-[18px] sm:text-[20px] font-black text-white leading-tight">
-                      Prêt pour votre premier test rémunéré ?
+                      Prêt pour vos premiers tests rémunérés ?
                     </h2>
                     <p className="text-[11.5px] text-slate-200/90 mt-1.5 leading-relaxed font-medium">
                       Postulez aux applications disponibles, réalisez vos tests quotidiens et recevez vos rémunérations garanties par Mobile Money.
@@ -679,46 +719,89 @@ export default function DashboardPage() {
                 )}
               </div>
 
-              {/* Guide en 3 étapes : Comment fonctionnent les tests ? */}
-              <div className="rounded-3xl bg-white p-4.5 border border-slate-100 shadow-[0_4px_18px_rgba(0,0,0,0.03)] space-y-3">
-                <h3 className="font-display text-sm font-extrabold text-[#0F172A]">
-                  Comment se déroulent vos tests ?
-                </h3>
+              {/* Guide en 3 étapes : Comment se déroulent vos tests ? (Style Timeline Stepper Image 2) */}
+              <div className="space-y-2.5 pt-1">
+                <div>
+                  <h2 className="font-display text-base font-extrabold text-[#0F172A] leading-tight">
+                    Comment se déroulent vos tests ?
+                  </h2>
+                  <p className="text-[11px] font-medium text-slate-400 mt-0.5">
+                    3 étapes pour démarrer et recevoir vos gains.
+                  </p>
+                </div>
 
-                <div className="space-y-2.5 text-xs">
-                  <div className="flex items-start gap-3 p-2.5 rounded-2xl bg-blue-50/60 border border-blue-100/60">
-                    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white font-extrabold text-[11px] mt-0.5">
+                <div className="relative space-y-3 pt-1">
+                  <div className="absolute left-[15px] top-6 bottom-6 w-[2px] bg-slate-200/80 -z-0" />
+
+                  {/* Étape 1 */}
+                  <div className="relative z-10 flex items-center gap-3">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#F59E0B] text-white font-extrabold text-xs shadow-md shadow-amber-500/20 ring-4 ring-[#F8FAFC]">
                       1
                     </div>
-                    <div>
-                      <p className="font-bold text-slate-800">1. Postulez à une mission</p>
-                      <p className="text-[11px] text-slate-500 mt-0.5">
-                        Choisissez une application disponible dans le catalogue.
-                      </p>
-                    </div>
+                    <Link
+                      href="/dashboard/missions"
+                      className="flex-1 flex items-center justify-between rounded-2xl bg-white p-3.5 shadow-[0_4px_16px_rgba(0,0,0,0.03)] border border-slate-100 transition active:scale-98 hover:shadow-md group"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-amber-50 text-amber-600 border border-amber-100/70">
+                          <Smartphone size={20} />
+                        </div>
+                        <div>
+                          <h3 className="font-display text-[13px] font-bold text-[#0F172A] group-hover:text-brand-orange transition">
+                            Postuler à une mission
+                          </h3>
+                          <p className="text-[11px] text-slate-400 mt-0.5 font-normal">
+                            Choisissez une application dans le catalogue.
+                          </p>
+                        </div>
+                      </div>
+                      <ChevronRight size={16} className="text-slate-300 shrink-0" />
+                    </Link>
                   </div>
 
-                  <div className="flex items-start gap-3 p-2.5 rounded-2xl bg-amber-50/60 border border-amber-100/60">
-                    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-500 text-white font-extrabold text-[11px] mt-0.5">
+                  {/* Étape 2 */}
+                  <div className="relative z-10 flex items-center gap-3">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#6366F1] text-white font-extrabold text-xs shadow-md shadow-indigo-500/20 ring-4 ring-[#F8FAFC]">
                       2
                     </div>
-                    <div>
-                      <p className="font-bold text-slate-800">2. Validation de l'administrateur</p>
-                      <p className="text-[11px] text-slate-500 mt-0.5">
-                        L'équipe examine et valide votre candidature de testeur.
-                      </p>
+                    <div className="flex-1 flex items-center justify-between rounded-2xl bg-white p-3.5 shadow-[0_4px_16px_rgba(0,0,0,0.03)] border border-slate-100">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600 border border-indigo-100/70 font-display font-extrabold text-base">
+                          <CheckCircle2 size={20} />
+                        </div>
+                        <div>
+                          <h3 className="font-display text-[13px] font-bold text-[#0F172A]">
+                            Validation de l&apos;administrateur
+                          </h3>
+                          <p className="text-[11px] text-slate-400 mt-0.5 font-normal">
+                            L&apos;équipe valide votre profil de testeur.
+                          </p>
+                        </div>
+                      </div>
+                      <ChevronRight size={16} className="text-slate-300 shrink-0" />
                     </div>
                   </div>
 
-                  <div className="flex items-start gap-3 p-2.5 rounded-2xl bg-emerald-50/60 border border-emerald-100/60">
-                    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white font-extrabold text-[11px] mt-0.5">
+                  {/* Étape 3 */}
+                  <div className="relative z-10 flex items-center gap-3">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#10B981] text-white font-extrabold text-xs shadow-md shadow-emerald-500/20 ring-4 ring-[#F8FAFC]">
                       3
                     </div>
-                    <div>
-                      <p className="font-bold text-slate-800">3. Testez 14 jours & Encaissez</p>
-                      <p className="text-[11px] text-slate-500 mt-0.5">
-                        Ouvrez l'app 5 min par jour et recevez votre paiement par Mobile Money.
-                      </p>
+                    <div className="flex-1 flex items-center justify-between rounded-2xl bg-white p-3.5 shadow-[0_4px_16px_rgba(0,0,0,0.03)] border border-slate-100">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-100/70">
+                          <Wallet size={20} />
+                        </div>
+                        <div>
+                          <h3 className="font-display text-[13px] font-bold text-[#0F172A]">
+                            14 jours de tests & Gains
+                          </h3>
+                          <p className="text-[11px] text-slate-400 mt-0.5 font-normal">
+                            Validez vos étapes et encaissez par Mobile Money.
+                          </p>
+                        </div>
+                      </div>
+                      <ChevronRight size={16} className="text-slate-300 shrink-0" />
                     </div>
                   </div>
                 </div>
