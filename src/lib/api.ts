@@ -207,6 +207,16 @@ async function request<T>(
   });
 
   if (res.status === 401) {
+    if (path.includes("/login")) {
+      const text = await res.text();
+      const data = parseResponseBody(text ? text.trim() : "", res.status);
+      const msg = extractErrorMessage(
+        data,
+        401,
+        "Identifiants incorrects (email/téléphone ou mot de passe invalide)."
+      );
+      throw new ApiError(msg, 401);
+    }
     clearToken();
     throw new ApiError("Session expirée. Reconnectez-vous.", 401);
   }
@@ -248,6 +258,16 @@ async function adminRequest<T>(
   });
 
   if (res.status === 401) {
+    if (path.includes("/login")) {
+      const text = await res.text();
+      const data = parseResponseBody(text ? text.trim() : "", res.status);
+      const msg = extractErrorMessage(
+        data,
+        401,
+        "Identifiants administrateur incorrects."
+      );
+      throw new ApiError(msg, 401);
+    }
     clearAdminToken();
     throw new ApiError("Session administrateur expirée. Reconnectez-vous.", 401);
   }
