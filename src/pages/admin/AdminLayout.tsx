@@ -59,13 +59,13 @@ function AdminLayoutInner() {
         <div className="p-5 pb-6 border-b border-slate-800/80">
           <div className="flex items-center gap-3">
             <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-800/60 p-1.5 ring-1 ring-white/10">
-              <Image
-                src="/logo.png"
+              <img
+                src="/samre-logo.png"
                 alt="Samré Admin"
-                width={36}
-                height={36}
                 className="h-8 w-8 object-contain"
-                priority
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).src = "/logo.png";
+                }}
               />
             </div>
             <div className="flex flex-col">
@@ -139,8 +139,14 @@ function AdminLayoutInner() {
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Top Header Mobile */}
         <header className="flex h-14 items-center justify-between border-b border-slate-200 bg-white px-4 lg:hidden">
-          <div className="flex items-center gap-2">
-            <Image src="/logo.png" alt="Samré Logo" width={28} height={28} />
+            <img
+              src="/samre-logo.png"
+              alt="Samré Logo"
+              className="h-7 w-7 object-contain"
+              onError={(e) => {
+                (e.currentTarget as HTMLImageElement).src = "/logo.png";
+              }}
+            />
             <span className="font-bold text-navy-900">samré ADMIN</span>
           </div>
           <button onClick={() => adminLogout()} className="text-xs font-semibold text-rose-500 hover:underline">

@@ -56,13 +56,13 @@ export default function AdminLoginPage() {
         <div className="mb-8 flex flex-col items-center text-center">
           <Link href="/" className="group mb-4 flex items-center gap-3">
             <div className="relative flex h-12 w-12 items-center justify-center rounded-2xl bg-[#0F1C33] p-2 ring-1 ring-white/15 transition-transform duration-200 group-hover:scale-105">
-              <Image
-                src="/logo.png"
+              <img
+                src="/samre-logo.png"
                 alt="SAMRE Logo"
-                width={36}
-                height={36}
-                className="object-contain"
-                priority
+                className="h-9 w-9 object-contain"
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).src = "/logo.png";
+                }}
               />
             </div>
             <div className="text-left">

@@ -127,10 +127,12 @@ export default function DashboardPage() {
           <div className="flex items-center justify-between pt-1 pb-0.5">
             <Link href="/dashboard" className="flex items-center gap-2">
               <img
-                src="/ChatGPT Image 5 oct. 2026, 12_23_50.png"
+                src="/samre-logo.png"
                 alt="Logo SAMRE"
                 className="h-9 w-9 object-contain"
-                style={{ mixBlendMode: "multiply" }}
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).src = "/logo.png";
+                }}
               />
             </Link>
 

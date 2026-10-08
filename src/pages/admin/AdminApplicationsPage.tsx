@@ -760,8 +760,13 @@ export default function AdminApplicationsPage() {
                                   style={{ width: "100%", height: "100%", maxWidth: "36px", maxHeight: "36px", objectFit: "contain" }}
                                   onError={(e) => {
                                     (e.currentTarget as HTMLElement).style.display = "none";
+                                    const fallback = e.currentTarget.parentElement?.querySelector(".fallback-initials");
+                                    if (fallback) (fallback as HTMLElement).style.display = "flex";
                                   }}
                                 />
+                                <div className="fallback-initials hidden absolute inset-0 h-full w-full items-center justify-center bg-gradient-to-tr from-blue-600 via-indigo-600 to-violet-600 text-white shadow-2xs font-bold text-xs tracking-tight">
+                                  {app.nom.slice(0, 2).toUpperCase()}
+                                </div>
                               </div>
                             ) : (
                               <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-violet-600 text-white shadow-2xs font-bold text-xs tracking-tight">
@@ -983,8 +988,13 @@ export default function AdminApplicationsPage() {
                               style={{ width: "100%", height: "100%", maxWidth: "36px", maxHeight: "36px", objectFit: "contain" }}
                               onError={(e) => {
                                 (e.currentTarget as HTMLElement).style.display = "none";
+                                const fallback = e.currentTarget.parentElement?.querySelector(".fallback-initials");
+                                if (fallback) (fallback as HTMLElement).style.display = "flex";
                               }}
                             />
+                            <div className="fallback-initials hidden absolute inset-0 h-full w-full items-center justify-center bg-gradient-to-tr from-blue-600 via-indigo-600 to-violet-600 text-white shadow-2xs font-bold text-xs tracking-tight">
+                              {app.nom.slice(0, 2).toUpperCase()}
+                            </div>
                           </div>
                         ) : (
                           <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-violet-600 text-white shadow-2xs font-bold text-xs tracking-tight">

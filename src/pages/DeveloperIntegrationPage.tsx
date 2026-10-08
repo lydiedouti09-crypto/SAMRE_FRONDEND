@@ -12,7 +12,7 @@ import {
   Calendar,
   Users,
 } from "lucide-react";
-import { sdkApi, type IntegrationInfo } from "@/lib/api";
+import { sdkApi, getImageUrl, type IntegrationInfo } from "@/lib/api";
 import SamreLogo from "@/components/SamreLogo";
 
 export default function DeveloperIntegrationPage() {
@@ -132,9 +132,27 @@ export default function DeveloperIntegrationPage() {
         {/* RÉCAPITULATIF DE L'APPLICATION */}
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3.5">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-[#FB682E] to-amber-500 text-white font-extrabold text-base shadow-xs">
-              {app.nom.slice(0, 2).toUpperCase()}
-            </div>
+            {app.logo ? (
+              <div className="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-slate-200/80 bg-white p-1.5 shadow-xs overflow-hidden">
+                <img
+                  src={getImageUrl(app.logo)}
+                  alt={app.nom}
+                  className="h-full w-full object-contain rounded-xl"
+                  onError={(e) => {
+                    (e.currentTarget as HTMLElement).style.display = "none";
+                    const fallback = e.currentTarget.parentElement?.querySelector(".fallback-initials");
+                    if (fallback) (fallback as HTMLElement).style.display = "flex";
+                  }}
+                />
+                <div className="fallback-initials hidden absolute inset-0 h-full w-full items-center justify-center bg-gradient-to-tr from-[#FB682E] to-amber-500 text-white font-extrabold text-base">
+                  {app.nom.slice(0, 2).toUpperCase()}
+                </div>
+              </div>
+            ) : (
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-tr from-[#FB682E] to-amber-500 text-white font-extrabold text-base shadow-xs">
+                {app.nom.slice(0, 2).toUpperCase()}
+              </div>
+            )}
             <div>
               <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
                 {app.nom}

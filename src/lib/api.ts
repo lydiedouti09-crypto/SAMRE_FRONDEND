@@ -842,6 +842,7 @@ export type IntegrationInfo = {
     id: number;
     nom: string;
     description?: string;
+    logo?: string;
     plateforme: string;
     version: string;
     statut: string;

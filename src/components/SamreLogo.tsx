@@ -9,13 +9,12 @@ export const SamreLogo: React.FC<SamreLogoProps> = ({ size = 58, showTagline = t
   return (
     <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.65rem', textDecoration: 'none' }}>
       <img
-        src="/ChatGPT Image 5 oct. 2026, 12_23_50.png"
+        src="/samre-logo.png"
         alt="Logo SAMRE"
         style={{
           width: `${size}px`,
           height: `${size}px`,
           objectFit: 'contain',
-          mixBlendMode: 'multiply',
           flexShrink: 0,
         }}
       />

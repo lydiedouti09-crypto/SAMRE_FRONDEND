@@ -30,8 +30,11 @@ export const Footer: React.FC = () => {
           {/* Identity */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
             <img
-              src="/ChatGPT Image 5 oct. 2026, 12_23_50.png"
+              src="/samre-logo.png"
               alt="Logo SAMRE"
+              onError={(e) => {
+                (e.currentTarget as HTMLImageElement).src = "/logo.png";
+              }}
               style={{
                 height: '46px',
                 width: 'auto',

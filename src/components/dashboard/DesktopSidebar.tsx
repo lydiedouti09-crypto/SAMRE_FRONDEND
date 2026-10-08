@@ -29,9 +29,12 @@ export default function DesktopSidebar() {
       <div className="mb-6 flex items-center justify-between px-2 pt-1 border-b border-slate-100 pb-4">
         <Link href="/dashboard" className="flex items-center gap-2.5 group">
           <img
-            src="/ChatGPT Image 5 oct. 2026, 12_23_50.png"
+            src="/samre-logo.png"
             alt="Logo SAMRE"
             className="h-10 w-10 shrink-0 object-contain drop-shadow-xs transition group-hover:scale-105"
+            onError={(e) => {
+              (e.currentTarget as HTMLImageElement).src = "/logo.png";
+            }}
           />
           <div className="flex flex-col justify-center">
             <span className="font-display text-lg font-black tracking-wider text-navy-950 leading-none">
