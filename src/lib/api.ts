@@ -80,7 +80,7 @@ export function getImageUrl(path?: string | null): string {
   if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
     return sanitizeUrl(trimmed, "");
   }
-  const baseUrl = API_URL.replace(/\/+$/, "");
+  const baseUrl = API_URL.replace(/\/+$/, "").replace(/\/api$/i, "");
   const cleanPath = trimmed.replace(/^\/+/, "");
   return `${baseUrl}/${cleanPath}`;
 }

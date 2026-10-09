@@ -1388,16 +1388,25 @@ export default function AdminApplicationsPage() {
                   </label>
                   <div className="flex items-center gap-4 rounded-2xl border border-slate-200 bg-slate-50/70 p-3.5">
                     {logo ? (
-                      <div className="relative flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-white p-1.5 shadow-xs">
+                      <div className="relative flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-white p-1.5 shadow-xs overflow-hidden">
                         <img
                           src={getImageUrl(logo)}
                           alt="Logo preview"
                           className="h-full w-full object-contain rounded-xl"
+                          onError={(e) => {
+                            (e.currentTarget as HTMLElement).style.display = "none";
+                            const fallback = e.currentTarget.parentElement?.querySelector(".modal-fallback-icon");
+                            if (fallback) (fallback as HTMLElement).style.display = "flex";
+                          }}
                         />
+                        <div className="modal-fallback-icon hidden absolute inset-0 h-full w-full flex-col items-center justify-center bg-slate-100 text-slate-400 text-[10px] font-semibold text-center p-1">
+                          <ImageIcon className="h-5 w-5 stroke-1 mb-0.5 text-slate-400" />
+                          <span>Image</span>
+                        </div>
                         <button
                           type="button"
                           onClick={() => setLogo("")}
-                          className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-rose-500 text-white shadow-xs hover:bg-rose-600 transition"
+                          className="absolute -top-1.5 -right-1.5 z-10 flex h-5 w-5 items-center justify-center rounded-full bg-rose-500 text-white shadow-xs hover:bg-rose-600 transition"
                           title="Supprimer le logo"
                         >
                           <X className="h-3 w-3" />
