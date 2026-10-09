@@ -42,6 +42,7 @@ import {
   type Etape,
   type Reference,
 } from "@/lib/api";
+import { AppLogoImage } from "@/components/ui/AppLogoImage";
 
 export default function MissionDetailPage() {
   const params = useParams();
@@ -469,23 +470,13 @@ export default function MissionDetailPage() {
         {/* Présentation de la mission */}
         <section className="rounded-2xl border border-slate-100 bg-white p-5 shadow-xs">
           <div className="flex items-start gap-4">
-            <div
-              className="relative flex h-14 w-14 min-w-[56px] max-w-[56px] shrink-0 items-center justify-center rounded-2xl bg-white border border-slate-200/80 p-1.5 shadow-xs overflow-hidden"
-              style={{ width: "56px", height: "56px", minWidth: "56px", maxWidth: "56px" }}
-            >
-              {mission.image ? (
-                <img
-                  src={getImageUrl(mission.image)}
-                  alt={mission.application}
-                  className="h-full w-full object-contain rounded-xl"
-                  style={{ width: "100%", height: "100%", maxWidth: "50px", maxHeight: "50px", objectFit: "contain" }}
-                />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center rounded-xl bg-brand-orange/10 font-bold text-brand-orange text-lg">
-                  {mission.application?.charAt(0).toUpperCase() || "A"}
-                </div>
-              )}
-            </div>
+            <AppLogoImage
+              src={mission.image}
+              alt={mission.application}
+              name={mission.application || mission.titre}
+              className="h-14 w-14 min-w-[56px] rounded-2xl bg-white border border-slate-200/80 p-1.5 shadow-xs"
+              fallbackClassName="bg-gradient-to-tr from-[#FB682E] to-amber-500 text-white font-extrabold text-lg"
+            />
             <div className="min-w-0 flex-1">
               <h1 className="font-display text-base font-bold text-navy-900 leading-tight">
                 {mission.titre}

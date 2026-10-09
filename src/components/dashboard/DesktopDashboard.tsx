@@ -19,6 +19,7 @@ import {
   type Participation,
   type DailyCodeInfo,
 } from "@/lib/api";
+import { AppLogoImage } from "@/components/ui/AppLogoImage";
 
 type Props = {
   prenom?: string;
@@ -350,19 +351,13 @@ export default function DesktopDashboard({
             <div className="rounded-xl border border-slate-100 bg-[#FBFBFC] p-4">
               <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 <div className="flex items-start gap-3.5">
-                  <div className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white border border-slate-200/80 p-1.5 shadow-xs overflow-hidden">
-                    {active.mission?.image ? (
-                      <img
-                        src={getImageUrl(active.mission.image)}
-                        alt={active.mission.application}
-                        className="h-full w-full object-contain rounded-xl"
-                      />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center rounded-xl bg-brand-orange/10 font-bold text-brand-orange text-base">
-                        {active.mission?.application?.charAt(0).toUpperCase() || "A"}
-                      </div>
-                    )}
-                  </div>
+                  <AppLogoImage
+                    src={active.mission?.image}
+                    alt={active.mission?.application}
+                    name={active.mission?.application || active.mission?.titre}
+                    className="h-12 w-12 shrink-0 rounded-2xl bg-white border border-slate-200/80 p-1.5 shadow-xs"
+                    fallbackClassName="bg-brand-orange/10 font-bold text-brand-orange text-base"
+                  />
                   <div>
                     <h4 className="font-display text-sm font-bold text-navy-900">
                       {active.mission?.titre}
@@ -474,19 +469,15 @@ export default function DesktopDashboard({
                 >
                   <div>
                     <div className="flex items-start justify-between gap-2">
-                      <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white border border-slate-200/80 p-1 shadow-xs overflow-hidden">
-                        {m.image ? (
-                          <img
-                            src={getImageUrl(m.image)}
-                            alt={m.application}
-                            className="h-full w-full object-contain rounded-lg"
-                          />
-                        ) : (
-                          <div className="flex h-full w-full items-center justify-center rounded-lg bg-brand-orange/10 font-bold text-brand-orange text-xs">
-                            {m.application?.charAt(0).toUpperCase() || "A"}
-                          </div>
-                        )}
-                      </div>
+                      <AppLogoImage
+                        src={m.image}
+                        alt={m.application}
+                        name={m.application || m.titre}
+                        className="h-10 w-10 shrink-0 rounded-xl bg-white border border-slate-200/80 p-1 shadow-xs"
+                        imageClassName="h-full w-full object-contain rounded-lg"
+                        fallbackClassName="bg-brand-orange/10 font-bold text-brand-orange text-xs"
+                        roundedClassName="rounded-lg"
+                      />
                       <span className="rounded-md bg-slate-50 border border-slate-200/70 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
                         App Mobile
                       </span>

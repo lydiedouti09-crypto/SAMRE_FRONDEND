@@ -14,6 +14,7 @@ import {
   type Mission,
   type Participation,
 } from "@/lib/api";
+import { AppLogoImage } from "@/components/ui/AppLogoImage";
 
 // Couleurs de badges et gradients selon l'application
 function getAppBadgeStyle(appName: string) {
@@ -209,19 +210,13 @@ export default function MissionsPage() {
                     className="flex items-center justify-between gap-3.5 rounded-[22px] bg-white p-4 shadow-[0_4px_16px_rgba(0,0,0,0.03)] border border-slate-100/90 transition active:scale-98 hover:shadow-md"
                   >
                     <div className="flex items-center gap-3.5 min-w-0 flex-1">
-                      <div className="relative flex h-14 w-14 min-w-[56px] shrink-0 items-center justify-center rounded-2xl bg-white border border-slate-100 p-1 shadow-2xs overflow-hidden">
-                        {m.image ? (
-                          <img
-                            src={getImageUrl(m.image)}
-                            alt={appName}
-                            className="h-full w-full object-contain rounded-xl"
-                          />
-                        ) : (
-                          <div className={`flex h-full w-full items-center justify-center rounded-xl bg-gradient-to-br ${badge.gradient} text-white font-extrabold text-lg`}>
-                            {badge.letter}
-                          </div>
-                        )}
-                      </div>
+                      <AppLogoImage
+                        src={m.image}
+                        alt={appName}
+                        name={appName}
+                        className="h-14 w-14 min-w-[56px] rounded-2xl bg-white border border-slate-100 p-1 shadow-2xs"
+                        fallbackClassName={`bg-gradient-to-br ${badge.gradient} text-white font-extrabold text-lg`}
+                      />
 
                       <div className="min-w-0 flex-1 space-y-1">
                         <div className="flex items-center gap-2 flex-wrap">
@@ -275,19 +270,13 @@ export default function MissionsPage() {
                     className="flex items-center justify-between gap-3.5 rounded-[22px] bg-white p-4 shadow-[0_4px_16px_rgba(0,0,0,0.03)] border border-slate-100/90 transition active:scale-98 hover:shadow-md"
                   >
                     <div className="flex items-center gap-3.5 min-w-0 flex-1">
-                      <div className="relative flex h-14 w-14 min-w-[56px] shrink-0 items-center justify-center rounded-2xl bg-white border border-slate-100 p-1 shadow-2xs overflow-hidden">
-                        {m.image ? (
-                          <img
-                            src={getImageUrl(m.image)}
-                            alt={appName}
-                            className="h-full w-full object-contain rounded-xl"
-                          />
-                        ) : (
-                          <div className={`flex h-full w-full items-center justify-center rounded-xl bg-gradient-to-br ${badge.gradient} text-white font-extrabold text-lg`}>
-                            {badge.letter}
-                          </div>
-                        )}
-                      </div>
+                      <AppLogoImage
+                        src={m.image}
+                        alt={appName}
+                        name={appName}
+                        className="h-14 w-14 min-w-[56px] rounded-2xl bg-white border border-slate-100 p-1 shadow-2xs"
+                        fallbackClassName={`bg-gradient-to-br ${badge.gradient} text-white font-extrabold text-lg`}
+                      />
 
                       <div className="min-w-0 flex-1 space-y-1">
                         <div className="flex items-center gap-2 flex-wrap">
@@ -428,19 +417,15 @@ export default function MissionsPage() {
                   >
                     {/* Gauche : Icône + Titre & Badges */}
                     <div className="flex items-center gap-4 min-w-0 flex-1">
-                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-50 border border-slate-200/80 p-1 shadow-2xs overflow-hidden">
-                        {m.image ? (
-                          <img
-                            src={getImageUrl(m.image)}
-                            alt={appName}
-                            className="h-full w-full object-contain rounded-lg"
-                          />
-                        ) : (
-                          <div className={`flex h-full w-full items-center justify-center rounded-lg bg-gradient-to-br ${badge.gradient} text-white font-extrabold text-sm`}>
-                            {badge.letter}
-                          </div>
-                        )}
-                      </div>
+                      <AppLogoImage
+                        src={m.image}
+                        alt={appName}
+                        name={appName}
+                        className="h-11 w-11 shrink-0 rounded-xl bg-slate-50 border border-slate-200/80 p-1 shadow-2xs"
+                        imageClassName="h-full w-full object-contain rounded-lg"
+                        fallbackClassName={`bg-gradient-to-br ${badge.gradient} text-white font-extrabold text-sm`}
+                        roundedClassName="rounded-lg"
+                      />
 
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 flex-wrap mb-1">
@@ -511,19 +496,15 @@ export default function MissionsPage() {
                   >
                     {/* Gauche : Icône + Titre & Badges */}
                     <div className="flex items-center gap-4 min-w-0 flex-1">
-                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-50 border border-slate-200/80 p-1 shadow-2xs overflow-hidden">
-                        {m.image ? (
-                          <img
-                            src={getImageUrl(m.image)}
-                            alt={appName}
-                            className="h-full w-full object-contain rounded-lg"
-                          />
-                        ) : (
-                          <div className={`flex h-full w-full items-center justify-center rounded-lg bg-gradient-to-br ${badge.gradient} text-white font-extrabold text-sm`}>
-                            {badge.letter}
-                          </div>
-                        )}
-                      </div>
+                      <AppLogoImage
+                        src={m.image}
+                        alt={appName}
+                        name={appName}
+                        className="h-11 w-11 shrink-0 rounded-xl bg-slate-50 border border-slate-200/80 p-1 shadow-2xs"
+                        imageClassName="h-full w-full object-contain rounded-lg"
+                        fallbackClassName={`bg-gradient-to-br ${badge.gradient} text-white font-extrabold text-sm`}
+                        roundedClassName="rounded-lg"
+                      />
 
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 flex-wrap mb-1">

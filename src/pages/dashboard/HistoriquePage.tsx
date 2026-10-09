@@ -19,6 +19,7 @@ import {
   getImageUrl,
   type Participation,
 } from "@/lib/api";
+import { AppLogoImage } from "@/components/ui/AppLogoImage";
 
 function getAppBadgeStyle(appName: string) {
   const name = (appName || "").toLowerCase();
@@ -243,25 +244,15 @@ export default function HistoriquePage() {
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     {/* Colonne gauche : Application et Titre */}
                     <div className="flex items-start gap-3.5 min-w-0">
-                      <div
-                        className="relative flex h-12 w-12 min-w-[48px] max-w-[48px] shrink-0 items-center justify-center rounded-2xl bg-white border border-slate-200/80 p-1 shadow-xs overflow-hidden"
-                        style={{ width: "48px", height: "48px", minWidth: "48px", maxWidth: "48px" }}
-                      >
-                        {appImage ? (
-                          <img
-                            src={getImageUrl(appImage)}
-                            alt={appName}
-                            className="h-full w-full object-contain rounded-xl"
-                            style={{ width: "100%", height: "100%", maxWidth: "44px", maxHeight: "44px", objectFit: "contain" }}
-                          />
-                        ) : (
-                          <div
-                            className={`flex h-full w-full items-center justify-center rounded-xl bg-gradient-to-br ${badge.gradient} text-white font-bold text-base shadow-2xs`}
-                          >
-                            {badge.letter}
-                          </div>
-                        )}
-                        <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-brand-orange text-[9px] font-black text-white ring-2 ring-white shadow-xs">
+                      <div className="relative shrink-0">
+                        <AppLogoImage
+                          src={appImage}
+                          alt={appName}
+                          name={appName}
+                          className="h-12 w-12 min-w-[48px] rounded-2xl bg-white border border-slate-200/80 p-1 shadow-xs"
+                          fallbackClassName={`bg-gradient-to-br ${badge.gradient} text-white font-bold text-base`}
+                        />
+                        <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-brand-orange text-[9px] font-black text-white ring-2 ring-white shadow-xs z-10">
                           ✓
                         </span>
                       </div>

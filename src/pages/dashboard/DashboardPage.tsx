@@ -33,6 +33,7 @@ import {
 } from "@/lib/api";
 import DesktopDashboard from "@/components/dashboard/DesktopDashboard";
 import UserAvatar from "@/components/ui/UserAvatar";
+import { AppLogoImage } from "@/components/ui/AppLogoImage";
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -230,19 +231,13 @@ export default function DashboardPage() {
                   </div>
 
                   <div className="flex items-center gap-3.5 my-3.5">
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white p-1.5 shadow-sm border border-white/60 overflow-hidden">
-                      {mission.image ? (
-                        <img
-                          src={getImageUrl(mission.image)}
-                          alt={appName}
-                          className="h-full w-full object-contain rounded-xl"
-                        />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center rounded-xl bg-gradient-to-tr from-cyan-400 to-blue-600 font-display text-lg font-black text-white">
-                          {appName.charAt(0)}
-                        </div>
-                      )}
-                    </div>
+                    <AppLogoImage
+                      src={mission.image}
+                      alt={appName}
+                      name={appName}
+                      className="h-12 w-12 shrink-0 rounded-2xl bg-white p-1.5 shadow-sm border border-white/60"
+                      fallbackClassName="bg-gradient-to-tr from-cyan-400 to-blue-600 font-display text-lg font-black text-white"
+                    />
 
                     <div className="min-w-0 flex-1">
                       <h2 className="font-display text-[17px] font-extrabold text-white leading-tight truncate">
@@ -403,19 +398,13 @@ export default function DashboardPage() {
                 </div>
 
                 <div className="flex items-center gap-3.5 my-4">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white p-1.5 shadow-sm border border-white/60 overflow-hidden">
-                    {pending.mission.image ? (
-                      <img
-                        src={getImageUrl(pending.mission.image)}
-                        alt={pending.mission.titre}
-                        className="h-full w-full object-contain rounded-xl"
-                      />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center rounded-xl bg-amber-500 font-display text-lg font-black text-white">
-                        {(pending.mission.application || pending.mission.titre || "M").charAt(0)}
-                      </div>
-                    )}
-                  </div>
+                  <AppLogoImage
+                    src={pending.mission.image}
+                    alt={pending.mission.titre}
+                    name={pending.mission.application || pending.mission.titre}
+                    className="h-12 w-12 shrink-0 rounded-2xl bg-white p-1.5 shadow-sm border border-white/60"
+                    fallbackClassName="bg-amber-500 font-display text-lg font-black text-white"
+                  />
 
                   <div className="min-w-0 flex-1">
                     <h2 className="font-display text-[17px] font-extrabold text-white leading-tight truncate">
@@ -669,19 +658,13 @@ export default function DashboardPage() {
                         className="flex items-center justify-between rounded-2xl bg-white p-3.5 shadow-[0_4px_16px_rgba(0,0,0,0.03)] border border-slate-100 transition active:scale-98 hover:shadow-md group"
                       >
                         <div className="flex items-center gap-3 min-w-0">
-                          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-slate-50 p-1.5 border border-slate-100 overflow-hidden">
-                            {m.image ? (
-                              <img
-                                src={getImageUrl(m.image)}
-                                alt={m.titre}
-                                className="h-full w-full object-contain rounded-xl"
-                              />
-                            ) : (
-                              <div className="flex h-full w-full items-center justify-center rounded-xl bg-gradient-to-tr from-blue-500 to-indigo-600 font-display text-base font-extrabold text-white">
-                                {(m.application || m.titre || "A").charAt(0)}
-                              </div>
-                            )}
-                          </div>
+                          <AppLogoImage
+                            src={m.image}
+                            alt={m.titre}
+                            name={m.application || m.titre}
+                            className="h-12 w-12 shrink-0 rounded-2xl bg-slate-50 p-1.5 border border-slate-100"
+                            fallbackClassName="bg-gradient-to-tr from-blue-500 to-indigo-600 font-display text-base font-extrabold text-white"
+                          />
 
                           <div className="min-w-0 flex-1">
                             <h3 className="font-display text-[13px] font-bold text-[#0F172A] truncate group-hover:text-brand-orange transition">
